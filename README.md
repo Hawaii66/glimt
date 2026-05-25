@@ -1,56 +1,71 @@
-# Welcome to your Expo app 👋
+# Glimt
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Minimal social app: one photo + short caption. No feed, likes, or comments — just small everyday moments from friends.
 
-## Get started
+**Stack:** [Expo SDK 56](https://docs.expo.dev/versions/v56.0.0/) · [Expo Router](https://docs.expo.dev/router/introduction/) · TypeScript · [Convex](https://docs.convex.dev/)
 
-1. Install dependencies
+## Prerequisites
 
-   ```bash
-   npm install
-   ```
+- Node.js **^20.19.4**, **^22.13.0**, or newer (SDK 56 / React Native 0.85 expect a recent LTS)
+- npm
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Setup
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Convex backend
 
-### Other setup steps
+**Option A — local dev (already configured if you used anonymous init):**
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```bash
+npx convex dev
+```
 
-## Learn more
+**Option B — Convex cloud + EAS (recommended for production):**
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+eas integrations:convex:connect
+npx convex dev
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+This writes `EXPO_PUBLIC_CONVEX_URL` to `.env.local`. Expo reads `EXPO_PUBLIC_*` variables automatically.
 
-## Join the community
+### Run the app
 
-Join our community of developers creating universal apps.
+In a second terminal:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npm start
+```
+
+## Project layout
+
+```
+src/
+  app/          # Expo Router screens
+  lib/          # Shared client code (Convex client)
+convex/         # Backend schema & functions
+assets/         # Images, icons
+```
+
+## Scripts
+
+| Command | Description |
+|--------|-------------|
+| `npm start` | Expo dev server |
+| `npm run convex:dev` | Convex dev server (syncs `convex/`) |
+| `npm run android` / `ios` / `web` | Platform shortcuts |
+
+## MVP (not implemented yet)
+
+- Take photo → caption → post
+- Home screen widget: one random friend’s latest glimt
+- Tap widget → open post
+
+## Docs
+
+- [Expo SDK 56](https://docs.expo.dev/versions/v56.0.0/)
+- [Using Convex with Expo](https://docs.expo.dev/guides/using-convex/)
+- [Convex React Native quickstart](https://docs.convex.dev/quickstart/react-native)

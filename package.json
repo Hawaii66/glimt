@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "dependencies": {
     "@expo/ui": "~56.0.13",
+    "convex": "^1.39.1",
     "expo": "~56.0.4",
     "expo-constants": "~56.0.15",
     "expo-device": "~56.0.4",
@@ -33,7 +34,7 @@
   },
   "scripts": {
     "start": "expo start",
-    "reset-project": "node ./scripts/reset-project.js",
+    "convex:dev": "convex dev",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
