@@ -56,6 +56,38 @@ npm start
 | `npm start` | Expo dev server (`mobile/`) |
 | `npm run android` / `ios` / `web` | Platform shortcuts |
 
+## EAS Update (OTA)
+
+Three channels: **development**, **staging**, **production** (see `mobile/eas.json`).
+
+1. From `mobile/`, link EAS and configure updates:
+
+   ```bash
+   eas login
+   eas init
+   eas update:configure
+   ```
+
+   Add `EAS_PROJECT_ID` to `mobile/.env.local` (or let `eas init` write it into the config).
+
+2. Build per channel:
+
+   ```bash
+   eas build --profile development
+   eas build --profile staging
+   eas build --profile production
+   ```
+
+3. Publish JS updates:
+
+   ```bash
+   npm run update:development -- --message "your message"
+   npm run update:staging -- --message "your message"
+   npm run update:production -- --message "your message"
+   ```
+
+   Staging builds use the **preview** EAS environment for secrets; the OTA channel is still `staging`.
+
 ## MVP (not implemented yet)
 
 - Take photo → caption → post
