@@ -10,7 +10,7 @@ const MyWidget = (props: MyWidgetProps, environment: WidgetEnvironment) => {
   'widget';
   return (
     <VStack>
-      <Text modifiers={[font({ weight: 'bold', size: 16 }), foregroundStyle('#000000')]}>
+      <Text>
         Count: {props.count}
       </Text>
       <Text>Family: {environment.widgetFamily}</Text>
