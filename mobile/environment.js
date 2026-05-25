@@ -33,8 +33,8 @@ function envToInfo(env) {
         name: "Glimt Dev",
         icon: "./assets/images/icon-dev.png",
         iconAndroid: "./assets/images/icon-android-dev.png",
-        version: "1.0.0",
-        runtimeVersion: "1.0.0-dev",
+        version: "0.0.1",
+        runtimeVersion: "0.0.1",
         scheme: "glimt-dev",
         bundleIdentifier: "app.glimt.mobile.dev",
       };
@@ -43,8 +43,8 @@ function envToInfo(env) {
         name: "Glimt Stage",
         icon: "./assets/images/icon-stage.png",
         iconAndroid: "./assets/images/icon-android-stage.png",
-        version: "1.0.0",
-        runtimeVersion: "1.0.0",
+        version: "0.0.1",
+        runtimeVersion: "0.0.1",
         scheme: "glimt-stage",
         bundleIdentifier: "app.glimt.mobile.stage",
       };
@@ -53,8 +53,8 @@ function envToInfo(env) {
         name: "Glimt",
         icon: "./assets/images/icon.png",
         iconAndroid: "./assets/images/android-icon-foreground.png",
-        version: "1.0.0",
-        runtimeVersion: "1.0.0",
+        version: "0.0.1",
+        runtimeVersion: "0.0.1",
         scheme: "glimt",
         bundleIdentifier: "app.glimt.mobile",
       };

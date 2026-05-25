@@ -1,7 +1,7 @@
 {
   "name": "glimt-mobile",
   "main": "expo-router/entry",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "dependencies": {
     "@expo/ui": "~56.0.13",
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -64,7 +64,9 @@
     "lint": "expo lint",
     "update:development": "eas update --channel development --environment development",
     "update:staging": "eas update --channel staging --environment preview",
-    "update:production": "eas update --channel production --environment production"
+    "update:production": "eas update --channel production --environment production",
+    "eas:build": "eas build",
+    "fingerprint": "npx @expo/fingerprint"
   },
   "private": true
 }

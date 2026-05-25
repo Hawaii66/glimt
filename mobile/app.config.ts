@@ -16,7 +16,7 @@ const { envToInfo, parseMobileEnvironment } = require("./environment.js") as {
 const DEFAULT_EAS_PROJECT_ID = "b92605ee-1590-47dd-a260-11dc4b24b3bf";
 const easProjectId = process.env.EAS_PROJECT_ID ?? DEFAULT_EAS_PROJECT_ID;
 
-function buildPlugins(envIcon: string): NonNullable<ExpoConfig["plugins"]> {
+function buildPlugins(envIcon: string,bundleIdentifier:string): NonNullable<ExpoConfig["plugins"]> {
   return [
     "expo-router",
     [
@@ -94,10 +94,13 @@ function buildPlugins(envIcon: string): NonNullable<ExpoConfig["plugins"]> {
       {
         widgets: [
           {
+            bundleIdentifier:bundleIdentifier,
+            groupIdentifier: `group.${bundleIdentifier}`,
             name: "FriendGlimt",
             displayName: "Glimt",
             description: "A random friend's latest moment.",
-            supportedFamilies: ["systemSmall", "systemMedium"],
+            supportedFamilies: ["systemSmall", "systemMedium", "systemLarge"],
+            contentMarginsDisabled: true
           },
         ],
       },
@@ -146,7 +149,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       output: "static",
       favicon: "./assets/images/favicon.png",
     },
-    plugins: buildPlugins(envInfo.icon),
+    plugins: buildPlugins(envInfo.icon, envInfo.bundleIdentifier),
     experiments: {
       typedRoutes: true,
       reactCompiler: true,

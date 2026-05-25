@@ -8,8 +8,10 @@
       "distribution": "internal",
       "channel": "development",
       "environment": "development",
+      "node": "22.13.0",
       "env": {
-        "MOBILE_ENVIRONMENT": "dev"
+        "MOBILE_ENVIRONMENT": "dev",
+        "EAS_PROJECT_ID": "b92605ee-1590-47dd-a260-11dc4b24b3bf"
       },
       "ios": {
         "simulator": true
@@ -19,16 +21,20 @@
       "distribution": "internal",
       "channel": "staging",
       "environment": "preview",
+      "node": "22.13.0",
       "env": {
-        "MOBILE_ENVIRONMENT": "stage"
+        "MOBILE_ENVIRONMENT": "stage",
+        "EAS_PROJECT_ID": "b92605ee-1590-47dd-a260-11dc4b24b3bf"
       }
     },
     "production": {
       "channel": "production",
       "environment": "production",
       "autoIncrement": true,
+      "node": "22.13.0",
       "env": {
-        "MOBILE_ENVIRONMENT": "prod"
+        "MOBILE_ENVIRONMENT": "prod",
+        "EAS_PROJECT_ID": "b92605ee-1590-47dd-a260-11dc4b24b3bf"
       }
     }
   },

@@ -10,7 +10,8 @@
     "android": "npm run android -w mobile",
     "ios": "npm run ios -w mobile",
     "web": "npm run web -w mobile",
-    "lint": "npm run lint -w mobile"
+    "lint": "npm run lint -w mobile",
+    "eas:build": "npm run eas:build -w mobile"
   },
   "devDependencies": {
     "convex": "^1.39.1"

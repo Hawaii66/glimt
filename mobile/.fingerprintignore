@@ -1,0 +1,20 @@
+# Local env (not native compatibility)
+.env*
+!.env.example
+
+# Expo / Metro caches
+.expo/**
+.metro-health-check*
+
+# Generated native projects (CNG — hash native source via prebuild output when present)
+ios/**
+android/**
+
+# Monorepo siblings (outside the mobile app)
+../convex/**
+../.convex/**
+
+# Tooling / IDE
+../.git/**
+../.vscode/**
+**/.DS_Store
