@@ -33,6 +33,8 @@ npm run convex:dev
 
 Uses `.env.local` at the repo root (`CONVEX_DEPLOYMENT`). After `convex dev` or `eas integrations:convex:connect`, ensure `mobile/.env.local` has the `EXPO_PUBLIC_CONVEX_*` URLs (see `mobile/.env.example`).
 
+Set `MOBILE_ENVIRONMENT=dev|stage|prod` in `mobile/.env.local` to pick app name, icons, bundle id, and URL scheme (default: `dev`).
+
 ### Run the mobile app
 
 In a second terminal, from the repo root:
@@ -53,7 +55,8 @@ npm start
 | Command | Description |
 |--------|-------------|
 | `npm run convex:dev` | Convex dev server |
-| `npm start` | Expo dev server (`mobile/`) |
+| `npm start` | Expo dev server (`mobile/`, uses `MOBILE_ENVIRONMENT` from `.env.local`) |
+| `npm run start:dev` / `start:stage` / `start:prod` | Start with a specific environment (in `mobile/`) |
 | `npm run android` / `ios` / `web` | Platform shortcuts |
 
 ## EAS Update (OTA)

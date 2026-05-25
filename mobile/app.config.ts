@@ -1,13 +1,30 @@
 import type { ConfigContext, ExpoConfig } from "expo/config";
 
-const easProjectId = process.env.EAS_PROJECT_ID;
+const { envToInfo, parseMobileEnvironment } = require("./environment.js") as {
+  envToInfo: (env: "dev" | "stage" | "prod") => {
+    name: string;
+    icon: string;
+    iconAndroid: string;
+    version: string;
+    runtimeVersion: string;
+    scheme: string;
+    bundleIdentifier: string;
+  };
+  parseMobileEnvironment: (value: string | undefined) => "dev" | "stage" | "prod";
+};
 
-export default ({ config }: ConfigContext): ExpoConfig => {
-  const plugins: NonNullable<ExpoConfig["plugins"]> = [
+const DEFAULT_EAS_PROJECT_ID = "b92605ee-1590-47dd-a260-11dc4b24b3bf";
+const easProjectId = process.env.EAS_PROJECT_ID ?? DEFAULT_EAS_PROJECT_ID;
+
+function buildPlugins(envIcon: string): NonNullable<ExpoConfig["plugins"]> {
+  return [
     "expo-router",
     [
       "expo-splash-screen",
       {
+        image: envIcon,
+        imageWidth: 100,
+        resizeMode: "contain",
         backgroundColor: "#208AEF",
         android: {
           image: "./assets/images/splash-icon.png",
@@ -20,7 +37,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     [
       "expo-camera",
       {
-        cameraPermission: "Allow $(PRODUCT_NAME) to access your camera to capture glimts.",
+        cameraPermission:
+          "Allow $(PRODUCT_NAME) to access your camera to capture glimts.",
         microphonePermission: false,
         recordAudioAndroid: false,
         barcodeScannerEnabled: false,
@@ -85,32 +103,64 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       },
     ],
   ];
+}
+
+export default ({ config }: ConfigContext): ExpoConfig => {
+  // Default to dev so tooling (eas init, expo config) works without .env.local loaded.
+  const mobileEnvironment = parseMobileEnvironment(
+    process.env.MOBILE_ENVIRONMENT ?? "dev",
+  );
+  const envInfo = envToInfo(mobileEnvironment);
 
   return {
     ...config,
-    name: config.name ?? "glimt",
-    slug: config.slug ?? "glimt",
+    name: envInfo.name,
+    slug: "glimt",
+    version: envInfo.version,
+    runtimeVersion: envInfo.runtimeVersion,
+    orientation: "portrait",
+    icon: envInfo.icon,
+    scheme: envInfo.scheme,
+    userInterfaceStyle: "automatic",
     ios: {
       ...config.ios,
+      icon: "./assets/expo.icon",
+      bundleIdentifier: envInfo.bundleIdentifier,
       usesAppleSignIn: true,
+      infoPlist: {
+        ITSAppUsesNonExemptEncryption: false,
+      },
     },
-    plugins,
-    runtimeVersion: {
-      policy: "appVersion",
+    android: {
+      ...config.android,
+      package: envInfo.bundleIdentifier,
+      adaptiveIcon: {
+        foregroundImage: envInfo.iconAndroid,
+        backgroundColor: "#E6F4FE",
+        backgroundImage: "./assets/images/android-icon-background.png",
+        monochromeImage: "./assets/images/android-icon-monochrome.png",
+      },
+      predictiveBackGestureEnabled: false,
     },
-    ...(easProjectId
-      ? {
-          updates: {
-            url: `https://u.expo.dev/${easProjectId}`,
-          },
-          extra: {
-            ...config.extra,
-            eas: {
-              ...(typeof config.extra?.eas === "object" ? config.extra.eas : {}),
-              projectId: easProjectId,
-            },
-          },
-        }
-      : {}),
+    web: {
+      output: "static",
+      favicon: "./assets/images/favicon.png",
+    },
+    plugins: buildPlugins(envInfo.icon),
+    experiments: {
+      typedRoutes: true,
+      reactCompiler: true,
+    },
+    extra: {
+      ...config.extra,
+      mobileEnvironment,
+      eas: {
+        ...(typeof config.extra?.eas === "object" ? config.extra.eas : {}),
+        projectId: easProjectId,
+      },
+    },
+    updates: {
+      url: `https://u.expo.dev/${easProjectId}`,
+    },
   };
 };

@@ -8,6 +8,9 @@
       "distribution": "internal",
       "channel": "development",
       "environment": "development",
+      "env": {
+        "MOBILE_ENVIRONMENT": "dev"
+      },
       "ios": {
         "simulator": true
       }
@@ -15,12 +18,18 @@
     "staging": {
       "distribution": "internal",
       "channel": "staging",
-      "environment": "preview"
+      "environment": "preview",
+      "env": {
+        "MOBILE_ENVIRONMENT": "stage"
+      }
     },
     "production": {
       "channel": "production",
       "environment": "production",
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "MOBILE_ENVIRONMENT": "prod"
+      }
     }
   },
   "submit": {

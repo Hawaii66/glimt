@@ -50,10 +50,14 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "cross-env": "^10.1.0",
     "typescript": "~6.0.3"
   },
   "scripts": {
     "start": "expo start",
+    "start:dev": "cross-env MOBILE_ENVIRONMENT=dev expo start",
+    "start:stage": "cross-env MOBILE_ENVIRONMENT=stage expo start",
+    "start:prod": "cross-env MOBILE_ENVIRONMENT=prod expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
