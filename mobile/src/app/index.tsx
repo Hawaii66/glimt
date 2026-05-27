@@ -1,14 +1,16 @@
 import { StyleSheet, Text, View } from "react-native";
-import { useQuery } from "convex/react";
-import { api } from "convex/_generated/api";
+
+import { useAppColors } from "@/lib/theme";
 
 export default function HomeScreen() {
-  useQuery(api.test.test, { name: "John" });
+  const colors = useAppColors();
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Glimt</Text>
-      <Text style={styles.subtitle}>Scaffolding ready — build the MVP here.</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.title, { color: colors.text }]}>Glimt</Text>
+      <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+        Scaffolding ready — build the MVP here.
+      </Text>
     </View>
   );
 }
@@ -27,7 +29,6 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    opacity: 0.7,
     textAlign: "center",
   },
 });

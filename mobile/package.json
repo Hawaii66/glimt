@@ -16,6 +16,7 @@
     "expo-checkbox": "~56.0.1",
     "expo-constants": "~56.0.15",
     "expo-crypto": "~56.0.3",
+    "expo-dev-client": "~56.0.16",
     "expo-device": "~56.0.4",
     "expo-font": "~56.0.5",
     "expo-glass-effect": "~56.0.4",
@@ -65,7 +66,10 @@
     "update:development": "eas update --channel development --environment development",
     "update:staging": "eas update --channel staging --environment preview",
     "update:production": "eas update --channel production --environment production",
-    "eas:build": "eas build",
+    "eas:build": "cross-env EAS_SKIP_AUTO_FINGERPRINT=1 eas build",
+    "build:ios:development": "cross-env EAS_SKIP_AUTO_FINGERPRINT=1 eas build --profile development --platform ios --clear-cache",
+    "build:ios:staging": "cross-env EAS_SKIP_AUTO_FINGERPRINT=1 eas build --profile staging --platform ios --clear-cache",
+    "build:ios:production": "cross-env EAS_SKIP_AUTO_FINGERPRINT=1 eas build --profile production --platform ios --clear-cache",
     "fingerprint": "npx @expo/fingerprint"
   },
   "private": true

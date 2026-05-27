@@ -5,17 +5,16 @@
   },
   "build": {
     "development": {
+      "developmentClient": true,
       "distribution": "internal",
       "channel": "development",
       "environment": "development",
       "node": "22.13.0",
       "env": {
         "MOBILE_ENVIRONMENT": "dev",
-        "EAS_PROJECT_ID": "b92605ee-1590-47dd-a260-11dc4b24b3bf"
+        "EAS_PROJECT_ID": "b92605ee-1590-47dd-a260-11dc4b24b3bf",
+        "EAS_SKIP_AUTO_FINGERPRINT": "1"
       },
-      "ios": {
-        "simulator": true
-      }
     },
     "staging": {
       "distribution": "internal",
@@ -24,7 +23,8 @@
       "node": "22.13.0",
       "env": {
         "MOBILE_ENVIRONMENT": "stage",
-        "EAS_PROJECT_ID": "b92605ee-1590-47dd-a260-11dc4b24b3bf"
+        "EAS_PROJECT_ID": "b92605ee-1590-47dd-a260-11dc4b24b3bf",
+        "EAS_SKIP_AUTO_FINGERPRINT": "1"
       }
     },
     "production": {
@@ -34,7 +34,8 @@
       "node": "22.13.0",
       "env": {
         "MOBILE_ENVIRONMENT": "prod",
-        "EAS_PROJECT_ID": "b92605ee-1590-47dd-a260-11dc4b24b3bf"
+        "EAS_PROJECT_ID": "b92605ee-1590-47dd-a260-11dc4b24b3bf",
+        "EAS_SKIP_AUTO_FINGERPRINT": "1"
       }
     }
   },

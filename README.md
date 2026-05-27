@@ -73,12 +73,21 @@ Three channels: **development**, **staging**, **production** (see `mobile/eas.js
 
    Add `EAS_PROJECT_ID` to `mobile/.env.local` (or let `eas init` write it into the config).
 
-2. Build per channel:
+2. Build per channel (fingerprint skipped — see `mobile/package.json`):
 
    ```bash
-   eas build --profile development
-   eas build --profile staging
-   eas build --profile production
+   cd mobile
+   npm run build:ios:development
+   npm run build:ios:staging
+   npm run build:ios:production
+   ```
+
+   Or any profile: `npm run eas:build -- --profile development --platform ios --clear-cache`
+
+   One-off without npm scripts (PowerShell):
+
+   ```powershell
+   $env:EAS_SKIP_AUTO_FINGERPRINT="1"; eas build --profile development --platform ios --clear-cache
    ```
 
 3. Publish JS updates:
@@ -90,6 +99,17 @@ Three channels: **development**, **staging**, **production** (see `mobile/eas.js
    ```
 
    Staging builds use the **preview** EAS environment for secrets; the OTA channel is still `staging`.
+
+### Device builds and Convex
+
+`EXPO_PUBLIC_CONVEX_URL` from `mobile/.env.local` is **not** included automatically in EAS builds. Add it to the matching EAS environment (or project secret) before building, for example:
+
+```bash
+cd mobile
+eas env:create --name EXPO_PUBLIC_CONVEX_URL --value "https://YOUR.deployment.convex.cloud" --environment development
+```
+
+Without it, the app shows a configuration screen instead of crashing silently.
 
 ## MVP (not implemented yet)
 

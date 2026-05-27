@@ -92,19 +92,19 @@ function buildPlugins(envIcon: string,bundleIdentifier:string): NonNullable<Expo
     [
       "expo-widgets",
       {
+        groupIdentifier: `group.${bundleIdentifier}`,
         widgets: [
           {
-            bundleIdentifier:bundleIdentifier,
-            groupIdentifier: `group.${bundleIdentifier}`,
             name: "FriendGlimt",
             displayName: "Glimt",
             description: "A random friend's latest moment.",
             supportedFamilies: ["systemSmall", "systemMedium", "systemLarge"],
-            contentMarginsDisabled: true
+            contentMarginsDisabled: true,
           },
         ],
       },
     ],
+    "./plugins/withIosExtensionVersions",
   ];
 }
 
