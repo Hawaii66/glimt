@@ -20,7 +20,9 @@ export default function CapturePage() {
           </Text>
         </Pressable>
       </View>
-      <CaptureScreen />
+      <View style={styles.body}>
+        <CaptureScreen />
+      </View>
     </SafeAreaView>
   );
 }
@@ -33,6 +35,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 8,
     paddingBottom: 16,
+  },
+  body: {
+    flex: 1,
   },
   cancelText: {
     fontSize: 16,
