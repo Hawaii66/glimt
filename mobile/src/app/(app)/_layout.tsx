@@ -33,7 +33,16 @@ export default function AppLayout() {
         headerShown: false,
         contentStyle: { backgroundColor: colors.background },
       }}
-    />
+    >
+      <Stack.Screen
+        name="index"
+        options={{
+          contentStyle: { backgroundColor: "transparent" },
+          statusBarStyle: "light",
+          statusBarBackgroundColor: "transparent",
+        }}
+      />
+    </Stack>
   );
 }
 

@@ -14,6 +14,15 @@ import {
 } from "@expo/ui/swift-ui/modifiers";
 import { createWidget, type WidgetEnvironment } from "expo-widgets";
 
+import {
+  AVATAR_OFFSET,
+  AVATAR_SIZE,
+  PHOTO_BORDER_COLOR,
+  TILE_CORNER_RADIUS,
+  tileRotation,
+  WIDGET_GRADIENT_COLORS,
+} from "./glimt-tile-styles";
+
 export type WidgetGlimtItem = {
   photoUri: string;
   avatarUri: string;
@@ -30,9 +39,8 @@ const FriendGlimt = (
   "use no memo";
   "widget";
 
-  const photoBorderColor = "#FFFFFF";
   const widgetGradient = {
-    colors: ["#FF6B35", "#FFB347", "#FF8C42"],
+    colors: [...WIDGET_GRADIENT_COLORS],
     startPoint: { x: 0, y: 0 },
     endPoint: { x: 1, y: 1 },
   };
@@ -55,29 +63,29 @@ const FriendGlimt = (
       case "systemSmall":
         return {
           outerPadding: 6,
-          cornerRadius: 18,
+          cornerRadius: TILE_CORNER_RADIUS,
           borderWidth: 8,
-          avatarSize: 40,
+          avatarSize: AVATAR_SIZE,
           tileGap: 0,
-          avatarOffset: -10,
+          avatarOffset: AVATAR_OFFSET,
         };
       case "systemMedium":
         return {
           outerPadding: 6,
-          cornerRadius: 18,
+          cornerRadius: TILE_CORNER_RADIUS,
           borderWidth: 8,
-          avatarSize: 40,
+          avatarSize: AVATAR_SIZE,
           tileGap: 30,
-          avatarOffset: -10,
+          avatarOffset: AVATAR_OFFSET,
         };
       case "systemLarge":
         return {
           outerPadding: 6,
-          cornerRadius: 18,
+          cornerRadius: TILE_CORNER_RADIUS,
           borderWidth: 8,
-          avatarSize: 40,
+          avatarSize: AVATAR_SIZE,
           tileGap: -5,
-          avatarOffset: -10,
+          avatarOffset: AVATAR_OFFSET,
         };
       default:
         return {
@@ -121,7 +129,7 @@ const FriendGlimt = (
           modifiers={[
             resizable(),
             cornerRadius(metrics.cornerRadius),
-            rotationEffect(Math.pow(-1, idx + 1) * 2),
+            rotationEffect(parseFloat(tileRotation(idx))),
             scaleEffect(0.95),
           ]}
         >
@@ -129,7 +137,7 @@ const FriendGlimt = (
             modifiers={[
               foregroundStyle({
                 type: "color",
-                color: photoBorderColor,
+                color: PHOTO_BORDER_COLOR,
               }),
             ]}
           />
@@ -149,13 +157,16 @@ const FriendGlimt = (
             modifiers={[
               frame({ width: avatarSize, height: avatarSize }),
               offset({ x: avatarOffset, y: avatarOffset }),
-              rotationEffect(Math.pow(-1, idx + 1)),
+              rotationEffect(parseFloat(tileRotation(idx))),
               scaleEffect(0.95),
               shadow({ radius: 2, color: "#777" }),
             ]}
           >
             <Rectangle
-              modifiers={[foregroundStyle(photoBorderColor), cornerRadius(999)]}
+              modifiers={[
+                foregroundStyle(PHOTO_BORDER_COLOR),
+                cornerRadius(999),
+              ]}
             />
             <Image
               uiImage={avatarUri}
@@ -172,7 +183,7 @@ const FriendGlimt = (
           <Image
             systemName="person.circle.fill"
             size={avatarSize}
-            color={photoBorderColor}
+            color={PHOTO_BORDER_COLOR}
             modifiers={[offset({ x: avatarOffset, y: avatarOffset })]}
           />
         )}

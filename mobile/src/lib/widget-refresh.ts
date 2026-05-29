@@ -1,26 +1,8 @@
 import Constants from "expo-constants";
 import { Directory, File, Paths } from "expo-file-system";
 
+import { MOCK_FRIEND_GLIMTS } from "./glimt-mock-data";
 import { FriendGlimtWidget, WidgetGlimtItem } from "./widget";
-
-const MOCK_GLIMTS = [
-  {
-    photoUrl: "https://picsum.photos/seed/glimt-widget-1/400/400",
-    avatarUrl: "https://i.pravatar.cc/128?u=glimt-friend-1",
-  },
-  {
-    photoUrl: "https://picsum.photos/seed/glimt-widget-2/400/400",
-    avatarUrl: "https://i.pravatar.cc/128?u=glimt-friend-2",
-  },
-  {
-    photoUrl: "https://picsum.photos/seed/glimt-widget-3/400/400",
-    avatarUrl: "https://i.pravatar.cc/128?u=glimt-friend-3",
-  },
-  {
-    photoUrl: "https://picsum.photos/seed/glimt-widget-4/400/400",
-    avatarUrl: "https://i.pravatar.cc/128?u=glimt-friend-4",
-  },
-] as const;
 
 function getAppGroupDirectory(): Directory | null {
   const bundleIdentifier = Constants.expoConfig?.ios?.bundleIdentifier;
@@ -72,7 +54,7 @@ async function cacheImageToAppGroup(
 
 async function buildMockWidgetGlimts(): Promise<WidgetGlimtItem[]> {
   const glimts = await Promise.all(
-    MOCK_GLIMTS.map(async ({ photoUrl, avatarUrl }, index) => {
+    MOCK_FRIEND_GLIMTS.map(async ({ photoUrl, avatarUrl }, index) => {
       const [photoUri, avatarUri] = await Promise.all([
         cacheImageToAppGroup(photoUrl, `photo-${index}.jpg`),
         cacheImageToAppGroup(avatarUrl, `avatar-${index}.jpg`),
