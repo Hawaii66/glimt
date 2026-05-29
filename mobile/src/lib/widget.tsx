@@ -10,6 +10,7 @@ import {
   rotationEffect,
   scaleEffect,
   shadow,
+  widgetAccentedRenderingMode,
 } from "@expo/ui/swift-ui/modifiers";
 import { createWidget, type WidgetEnvironment } from "expo-widgets";
 
@@ -75,7 +76,7 @@ const FriendGlimt = (
           cornerRadius: 18,
           borderWidth: 8,
           avatarSize: 40,
-          tileGap: 10,
+          tileGap: -5,
           avatarOffset: -10,
         };
       default:
@@ -139,6 +140,7 @@ const FriendGlimt = (
               aspectRatio({ contentMode: "fill", ratio: 1 }),
               cornerRadius(metrics.cornerRadius - metrics.borderWidth),
               padding({ all: borderWidth }),
+              widgetAccentedRenderingMode("fullColor"),
             ]}
           />
         </ZStack>
@@ -162,6 +164,7 @@ const FriendGlimt = (
                 aspectRatio({ contentMode: "fill", ratio: 1 }),
                 cornerRadius(999),
                 padding({ all: 1 }),
+                widgetAccentedRenderingMode("fullColor"),
               ]}
             />
           </ZStack>
