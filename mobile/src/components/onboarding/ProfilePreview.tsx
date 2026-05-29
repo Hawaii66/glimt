@@ -14,9 +14,15 @@ type ProfilePreviewProps = {
   profile?: ProfilePreviewData;
   /** Compact layout for sheets and embedded contexts (no flex growth). */
   embedded?: boolean;
+  /** Light text and borders for accent gradient backgrounds. */
+  onGradientBackground?: boolean;
 };
 
-export function ProfilePreview({ profile, embedded = false }: ProfilePreviewProps) {
+export function ProfilePreview({
+  profile,
+  embedded = false,
+  onGradientBackground = false,
+}: ProfilePreviewProps) {
   const colors = useAppColors();
   const storeDisplayName = useOnboardingStore((state) => state.displayName);
   const storeUsername = useOnboardingStore((state) => state.username);
@@ -29,6 +35,15 @@ export function ProfilePreview({ profile, embedded = false }: ProfilePreviewProp
   const showUsername = (username ?? "").trim().length > 0;
   const showName = (displayName ?? "").trim().length > 0;
 
+  const usernameColor = onGradientBackground
+    ? "rgba(255, 255, 255, 0.85)"
+    : colors.textMuted;
+  const displayNameColor = onGradientBackground ? "#FFFFFF" : colors.text;
+  const avatarBackground = onGradientBackground
+    ? "rgba(255, 255, 255, 0.25)"
+    : colors.fill;
+  const avatarBorder = onGradientBackground ? "#FFFFFF" : colors.surfaceBorder;
+
   return (
     <View style={[styles.container, embedded && styles.containerEmbedded]}>
       <View
@@ -36,8 +51,8 @@ export function ProfilePreview({ profile, embedded = false }: ProfilePreviewProp
           styles.avatar,
           embedded && styles.avatarEmbedded,
           {
-            backgroundColor: colors.fill,
-            borderColor: colors.surfaceBorder,
+            backgroundColor: avatarBackground,
+            borderColor: avatarBorder,
           },
         ]}
       >
@@ -46,13 +61,13 @@ export function ProfilePreview({ profile, embedded = false }: ProfilePreviewProp
         ) : null}
       </View>
 
-      <Text style={[styles.username, { color: colors.textMuted }]}>
+      <Text style={[styles.username, { color: usernameColor }]}>
         {showUsername
           ? `@${username!.trim().toLowerCase()}`
           : "@username"}
       </Text>
 
-      <Text style={[styles.displayName, { color: colors.text }]}>
+      <Text style={[styles.displayName, { color: displayNameColor }]}>
         {showName ? displayName!.trim() : "Your name"}
       </Text>
     </View>
