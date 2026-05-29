@@ -1,4 +1,11 @@
-export const WIDGET_GRADIENT_COLORS = ["#FF6B35", "#FFB347", "#FF8C42"] as const;
+import {
+  DEFAULT_ACCENT_THEME_ID,
+  getAccentTheme,
+} from "@/lib/accent-themes";
+
+export const WIDGET_GRADIENT_COLORS = getAccentTheme(
+  DEFAULT_ACCENT_THEME_ID,
+).gradientColors;
 
 export const PHOTO_BORDER_COLOR = "#FFFFFF";
 

@@ -42,6 +42,9 @@ export default function AppLayout() {
           statusBarBackgroundColor: "transparent",
         }}
       />
+      <Stack.Screen name="capture" />
+      <Stack.Screen name="compose" />
+      <Stack.Screen name="settings" />
     </Stack>
   );
 }

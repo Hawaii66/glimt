@@ -6,6 +6,28 @@ export type FriendGlimt = {
   avatarUrl: string;
 };
 
+export type FriendRequest = {
+  id: string;
+  displayName: string;
+  username: string;
+  avatarUrl: string;
+};
+
+export const MOCK_FRIEND_REQUESTS: FriendRequest[] = [
+  {
+    id: "request-1",
+    displayName: "Casey Kim",
+    username: "caseyk",
+    avatarUrl: "https://i.pravatar.cc/128?u=glimt-request-1",
+  },
+  {
+    id: "request-2",
+    displayName: "Morgan Blake",
+    username: "morganb",
+    avatarUrl: "https://i.pravatar.cc/128?u=glimt-request-2",
+  },
+];
+
 export const MOCK_FRIEND_GLIMTS: FriendGlimt[] = [
   {
     id: "friend-1",

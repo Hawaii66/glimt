@@ -12,9 +12,11 @@ export type ProfilePreviewData = {
 
 type ProfilePreviewProps = {
   profile?: ProfilePreviewData;
+  /** Compact layout for sheets and embedded contexts (no flex growth). */
+  embedded?: boolean;
 };
 
-export function ProfilePreview({ profile }: ProfilePreviewProps) {
+export function ProfilePreview({ profile, embedded = false }: ProfilePreviewProps) {
   const colors = useAppColors();
   const storeDisplayName = useOnboardingStore((state) => state.displayName);
   const storeUsername = useOnboardingStore((state) => state.username);
@@ -28,13 +30,14 @@ export function ProfilePreview({ profile }: ProfilePreviewProps) {
   const showName = (displayName ?? "").trim().length > 0;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, embedded && styles.containerEmbedded]}>
       <View
         style={[
           styles.avatar,
+          embedded && styles.avatarEmbedded,
           {
-            backgroundColor: colors.textMuted + "20",
-            borderColor: colors.textMuted + "40",
+            backgroundColor: colors.fill,
+            borderColor: colors.surfaceBorder,
           },
         ]}
       >
@@ -64,6 +67,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     gap: 8,
   },
+  containerEmbedded: {
+    flex: 0,
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+  },
   avatar: {
     width: 96,
     height: 96,
@@ -71,6 +79,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: "hidden",
     marginBottom: 8,
+  },
+  avatarEmbedded: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    marginBottom: 4,
   },
   avatarImage: {
     width: "100%",

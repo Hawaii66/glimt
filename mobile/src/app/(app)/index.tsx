@@ -1,6 +1,7 @@
 import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import { useRouter } from "expo-router";
+import { SymbolView } from "expo-symbols";
 import {
   Pressable,
   StyleSheet,
@@ -13,10 +14,11 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
-import { CaptureSheet } from "@/components/glimt/CaptureSheet";
 import { GlimtTile } from "@/components/glimt/GlimtTile";
+import { getAccentTheme } from "@/lib/accent-themes";
 import { MOCK_FRIEND_GLIMTS } from "@/lib/glimt-mock-data";
-import { WIDGET_GRADIENT_COLORS } from "@/lib/glimt-tile-styles";
+import { APP_CAPTURE, APP_SETTINGS } from "@/lib/routes";
+import { useAccentThemeStore } from "@/stores/accentThemeStore";
 
 const HORIZONTAL_PADDING = 24;
 const NUM_COLUMNS = 2;
@@ -25,7 +27,9 @@ const TILE_VERTICAL_GAP = 24;
 const BOTTOM_BAR_PADDING = 24;
 
 export default function HomeScreen() {
-  const [captureOpen, setCaptureOpen] = useState(false);
+  const router = useRouter();
+  const accentId = useAccentThemeStore((state) => state.accentId);
+  const gradientColors = getAccentTheme(accentId).gradientColors;
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const contentWidth = windowWidth - HORIZONTAL_PADDING * 2;
@@ -35,11 +39,25 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[...WIDGET_GRADIENT_COLORS]}
+        colors={[...gradientColors]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
+
+      <Pressable
+        style={[styles.menuButton, { top: insets.top + 8 }]}
+        onPress={() => router.push(APP_SETTINGS)}
+        accessibilityRole="button"
+        accessibilityLabel="Open settings"
+      >
+        <SymbolView
+          name="line.3.horizontal"
+          size={20}
+          tintColor="#FFFFFF"
+          weight="semibold"
+        />
+      </Pressable>
 
       <FlashList
         data={MOCK_FRIEND_GLIMTS}
@@ -75,16 +93,12 @@ export default function HomeScreen() {
       >
         <Pressable
           style={styles.captureButton}
-          onPress={() => setCaptureOpen(true)}
+          onPress={() => router.push(APP_CAPTURE)}
         >
           <Text style={styles.captureButtonText}>Take a picture</Text>
         </Pressable>
       </SafeAreaView>
 
-      <CaptureSheet
-        isPresented={captureOpen}
-        onDismiss={() => setCaptureOpen(false)}
-      />
     </View>
   );
 }
@@ -95,6 +109,17 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  menuButton: {
+    position: "absolute",
+    right: HORIZONTAL_PADDING,
+    zIndex: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.25)",
   },
   listContent: {
     paddingHorizontal: HORIZONTAL_PADDING,
