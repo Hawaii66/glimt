@@ -1,7 +1,6 @@
 import {
   CameraView,
   useCameraPermissions,
-  type CameraType,
 } from "expo-camera";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
@@ -28,17 +27,18 @@ export function CaptureScreen() {
   const { width: windowWidth } = useWindowDimensions();
   const previewSize = windowWidth - HORIZONTAL_PADDING * 2;
   const setLocalPhotoUri = useCaptureStore((state) => state.setLocalPhotoUri);
+  const setCameraFacing = useCaptureStore((state) => state.setCameraFacing);
+  const facing = useCaptureStore((state) => state.cameraFacing);
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
-  const [facing, setFacing] = useState<CameraType>("back");
   const [cameraReady, setCameraReady] = useState(false);
   const [capturing, setCapturing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isFrontCamera = facing === "front";
 
   useEffect(() => {
     return () => {
       setCameraReady(false);
-      setFacing("back");
     };
   }, []);
 
@@ -54,7 +54,7 @@ export function CaptureScreen() {
   const handleFlipCamera = () => {
     setError(null);
     setCameraReady(false);
-    setFacing((current) => (current === "back" ? "front" : "back"));
+    setCameraFacing(facing === "back" ? "front" : "back");
   };
 
   const handleCapture = useCallback(async () => {
@@ -69,6 +69,7 @@ export function CaptureScreen() {
       const photo = await cameraRef.current?.takePictureAsync({
         quality: 0.8,
         skipProcessing: false,
+        mirror: isFrontCamera,
       });
 
       if (!photo?.uri) {
@@ -76,7 +77,7 @@ export function CaptureScreen() {
       }
 
       setLocalPhotoUri(photo.uri);
-      router.replace(APP_CAPTURE_COMPOSE);
+      router.push(APP_CAPTURE_COMPOSE);
     } catch (captureError) {
       const message =
         captureError instanceof Error
@@ -86,7 +87,7 @@ export function CaptureScreen() {
     } finally {
       setCapturing(false);
     }
-  }, [capturing, router, setLocalPhotoUri]);
+  }, [capturing, isFrontCamera, router, setLocalPhotoUri]);
 
   if (!permission) {
     return (
@@ -134,6 +135,7 @@ export function CaptureScreen() {
             style={styles.preview}
             facing={facing}
             mode="picture"
+            mirror={isFrontCamera}
             active
             ratio={Platform.OS === "android" ? "1:1" : undefined}
             onCameraReady={() => setCameraReady(true)}

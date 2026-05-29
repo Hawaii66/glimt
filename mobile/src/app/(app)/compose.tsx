@@ -1,37 +1,68 @@
 import { Image } from "expo-image";
 import { Redirect, useRouter } from "expo-router";
+import { SymbolView } from "expo-symbols";
+import { useEffect, useRef, useState } from "react";
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 import { APP_HOME } from "@/lib/routes";
 import { useAppColors } from "@/lib/theme";
 import { useCaptureStore } from "@/stores/captureStore";
 
 const CAPTION_MAX_LENGTH = 280;
+const COMPACT_PREVIEW_HEIGHT = 120;
 
 export default function ComposeScreen() {
   const colors = useAppColors();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const scrollRef = useRef<ScrollView>(null);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const localPhotoUri = useCaptureStore((state) => state.localPhotoUri);
   const caption = useCaptureStore((state) => state.caption);
   const setCaption = useCaptureStore((state) => state.setCaption);
+  const setLocalPhotoUri = useCaptureStore((state) => state.setLocalPhotoUri);
   const reset = useCaptureStore((state) => state.reset);
+
+  useEffect(() => {
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const showSubscription = Keyboard.addListener(showEvent, () => {
+      setKeyboardVisible(true);
+    });
+    const hideSubscription = Keyboard.addListener(hideEvent, () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   if (!localPhotoUri) {
     return <Redirect href={APP_HOME} />;
   }
 
-  const handleCancel = () => {
-    reset();
-    router.replace(APP_HOME);
+  const handleBack = () => {
+    setLocalPhotoUri(null);
+    router.back();
   };
 
   const handleSend = () => {
@@ -39,31 +70,41 @@ export default function ComposeScreen() {
     router.replace(APP_HOME);
   };
 
+  const scrollToCaption = () => {
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    });
+  };
+
   return (
     <SafeAreaView
       style={[styles.safeArea, { backgroundColor: colors.background }]}
+      edges={["left", "right"]}
     >
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={0}
       >
-        <View style={styles.header}>
-          <Pressable onPress={handleCancel} hitSlop={8}>
-            <Text style={[styles.cancelText, { color: colors.textMuted }]}>
-              Cancel
-            </Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.previewSection}>
+        <ScrollView
+          ref={scrollRef}
+          style={styles.flex}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingTop: insets.top + 8, gap: keyboardVisible ? 12 : 24 },
+          ]}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={
+            Platform.OS === "ios" ? "interactive" : "on-drag"
+          }
+          showsVerticalScrollIndicator={false}
+        >
           <Image
             source={{ uri: localPhotoUri }}
-            style={styles.preview}
+            style={[styles.preview, keyboardVisible && styles.previewCompact]}
             contentFit="cover"
           />
-        </View>
 
-        <View style={styles.inputSection}>
           <TextInput
             autoCapitalize="sentences"
             autoCorrect
@@ -80,13 +121,38 @@ export default function ComposeScreen() {
             ]}
             value={caption}
             onChangeText={setCaption}
+            onFocus={scrollToCaption}
           />
-        </View>
+        </ScrollView>
 
-        <Pressable style={styles.sendButton} onPress={handleSend}>
-          <Text style={styles.sendButtonText}>Send</Text>
-        </Pressable>
+        <View
+          style={[
+            styles.sendBar,
+            {
+              paddingBottom: keyboardVisible ? 8 : Math.max(insets.bottom, 16),
+            },
+          ]}
+        >
+          <Pressable style={styles.sendButton} onPress={handleSend}>
+            <Text style={styles.sendButtonText}>Send</Text>
+          </Pressable>
+        </View>
       </KeyboardAvoidingView>
+
+      <Pressable
+        onPress={handleBack}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel="Back"
+        style={[styles.backButton, { top: insets.top + 4 }]}
+      >
+        <SymbolView
+          name="chevron.left"
+          size={20}
+          tintColor={colors.textMuted}
+          weight="semibold"
+        />
+      </Pressable>
     </SafeAreaView>
   );
 }
@@ -98,28 +164,31 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  header: {
-    paddingHorizontal: 24,
-    paddingTop: 8,
-    paddingBottom: 16,
+  backButton: {
+    position: "absolute",
+    left: 14,
+    zIndex: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  cancelText: {
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  previewSection: {
+  scrollContent: {
     paddingHorizontal: 24,
+    paddingBottom: 8,
   },
   preview: {
     width: "100%",
     aspectRatio: 1,
     borderRadius: 16,
+    marginTop: 48,
   },
-  inputSection: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 16,
+  previewCompact: {
+    alignSelf: "center",
+    width: COMPACT_PREVIEW_HEIGHT,
+    height: COMPACT_PREVIEW_HEIGHT,
+    aspectRatio: undefined,
   },
   input: {
     borderWidth: 1,
@@ -127,12 +196,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    minHeight: 100,
+    minHeight: 120,
     textAlignVertical: "top",
   },
+  sendBar: {
+    paddingHorizontal: 24,
+    paddingTop: 8,
+  },
   sendButton: {
-    marginHorizontal: 24,
-    marginBottom: 24,
     backgroundColor: "#111111",
     borderRadius: 12,
     minHeight: 52,
