@@ -1,12 +1,12 @@
 import { v } from "convex/values";
 
-import { generateRandomNonce } from "../../lib/random";
+import { GenerateRandomNonce } from "../../lib/random";
 import { internalMutation, mutation } from "../../_generated/server";
 
 export const initSignIn = mutation({
   args: {},
   handler: async (ctx) => {
-    const nonce = generateRandomNonce();
+    const nonce = GenerateRandomNonce();
     const verifierId = await ctx.db.insert("authVerifiers", {
       nonce,
       expirationTime: Date.now() + 1000 * 60 * 5,

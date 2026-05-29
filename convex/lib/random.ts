@@ -1,5 +1,5 @@
 /** 32 cryptographically random bytes, base64url-encoded (OIDC nonce shape). */
-export function generateRandomNonce(): string {
+export function GenerateRandomNonce(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
   let binary = "";
   for (const byte of bytes) {

@@ -10,24 +10,26 @@ import type { GenericActionCtxWithAuthConfig } from "@convex-dev/auth/server";
 import type { JSONWebKeySet } from "jose";
 import { env } from "../../_generated/server";
 import {
-  appleTokenErrorResponseSchema,
-  parseAppleCredentials,
-  parseAppleIdTokenClaims,
-  parseAppleTokenResponse,
+  AppleTokenErrorResponseSchema,
+  ParseAppleCredentials,
+  ParseAppleDecodedIdentityToken,
+  ParseAppleIdTokenClaims,
+  ParseAppleJwks,
+  ParseAppleTokenResponse,
 } from "./appleSchemas";
 
 const PROVIDER_ID = "apple";
 const ISSUER = "https://appleid.apple.com";
 
-async function fetchAppleJwks(): Promise<JSONWebKeySet> {
+async function FetchAppleJwks(): Promise<JSONWebKeySet> {
   const response = await fetch(new URL("/auth/keys", ISSUER));
   if (!response.ok) {
     throw new Error("Failed to fetch Apple JWKS");
   }
-  return (await response.json()) as JSONWebKeySet;
+  return ParseAppleJwks(await response.json());
 }
 
-async function generateAppleSecret() {
+async function GenerateAppleSecret() {
   const algorithm = "ES256";
   const pk8 = env.AUTH_APPLE_PK8;
   const kid = env.AUTH_APPLE_KID;
@@ -53,24 +55,24 @@ async function generateAppleSecret() {
   return appleSecret;
 }
 
-export const decodeAppleIdentityToken = (token: string) => {
-  const decoded = jose.decodeJwt(token);
+function DecodeAppleIdentityToken(token: string): string {
+  const decoded = ParseAppleDecodedIdentityToken(jose.decodeJwt(token));
   return decoded.sub;
-};
+}
 
-async function appleSubjectFromAuthorizationCode(
+async function AppleSubjectFromAuthorizationCode(
   credentials: Partial<Record<string, unknown>>,
   ctx: GenericActionCtxWithAuthConfig<DataModel>,
 ) {
   const { verifierId, authorizationCode, additionalFields } =
-    parseAppleCredentials(credentials);
+    ParseAppleCredentials(credentials);
 
   const expectedNonce: string = await ctx.runMutation(
     internal.auth.providers.apple.consumeVerifier,
     { verifierId: verifierId as Id<"authVerifiers"> },
   );
   const bundleId = env.AUTH_APPLE_BUNDLE_ID;
-  const appleSecret = await generateAppleSecret();
+  const appleSecret = await GenerateAppleSecret();
 
   const formData = new URLSearchParams();
   formData.append("client_id", bundleId);
@@ -89,7 +91,7 @@ async function appleSubjectFromAuthorizationCode(
   const responseBody: unknown = await response.json();
 
   if (!response.ok) {
-    const errorResult = appleTokenErrorResponseSchema.safeParse(responseBody);
+    const errorResult = AppleTokenErrorResponseSchema.safeParse(responseBody);
     const errorMessage = errorResult.success
       ? `${errorResult.data.error}${errorResult.data.error_description ? `: ${errorResult.data.error_description}` : ""}`
       : "Unknown Apple token error";
@@ -97,8 +99,8 @@ async function appleSubjectFromAuthorizationCode(
     throw new Error(`Failed to sign in with Apple: ${errorMessage}`);
   }
 
-  const jwks = await fetchAppleJwks();
-  const tokenResponse = parseAppleTokenResponse(responseBody);
+  const jwks = await FetchAppleJwks();
+  const tokenResponse = ParseAppleTokenResponse(responseBody);
 
   const { payload }: { payload: JWTPayload } = await jwtVerify(
     tokenResponse.id_token,
@@ -109,7 +111,7 @@ async function appleSubjectFromAuthorizationCode(
     },
   );
 
-  const claims = parseAppleIdTokenClaims(payload);
+  const claims = ParseAppleIdTokenClaims(payload);
 
   if (claims.nonce !== expectedNonce) {
     throw new Error("Nonce mismatch");
@@ -135,5 +137,5 @@ async function appleSubjectFromAuthorizationCode(
 
 export const Apple = ConvexCredentials<DataModel>({
   id: PROVIDER_ID,
-  authorize: appleSubjectFromAuthorizationCode,
+  authorize: AppleSubjectFromAuthorizationCode,
 });
