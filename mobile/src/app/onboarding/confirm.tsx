@@ -79,7 +79,7 @@ export default function ConfirmScreen() {
   }
 
   if (!displayName.trim()) {
-    return <Redirect href="/onboarding/name" />;
+    return <Redirect href="/onboarding/setup" />;
   }
 
   if (!username.trim()) {

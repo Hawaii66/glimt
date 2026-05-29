@@ -81,7 +81,7 @@ export default function PhotoScreen() {
   }
 
   if (!displayName.trim()) {
-    return <Redirect href="/onboarding/name" />;
+    return <Redirect href="/onboarding/setup" />;
   }
 
   if (!username.trim()) {

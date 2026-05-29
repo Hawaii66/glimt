@@ -34,7 +34,7 @@ export default function SignInScreen() {
 
     if (user) {
       seedFromUser(user);
-      router.replace("/onboarding/name");
+      router.replace("/onboarding/setup");
     }
   }, [isAuthenticated, user, seedFromUser, reset, router]);
 

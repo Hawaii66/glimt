@@ -24,7 +24,7 @@ export default function AppLayout() {
   }
 
   if (!user?.onboardingComplete) {
-    return <Redirect href="/onboarding/name" />;
+    return <Redirect href="/onboarding/setup" />;
   }
 
   return (

@@ -65,7 +65,7 @@ export default function UsernameScreen() {
   }
 
   if (!displayName.trim()) {
-    return <Redirect href="/onboarding/name" />;
+    return <Redirect href="/onboarding/setup" />;
   }
 
   const canContinue =

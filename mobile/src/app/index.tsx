@@ -25,7 +25,7 @@ export default function Index() {
   }
 
   if (!user?.onboardingComplete) {
-    return <Redirect href="/onboarding/name" />;
+    return <Redirect href="/onboarding/setup" />;
   }
 
   return <Redirect href={APP_HOME} />;
