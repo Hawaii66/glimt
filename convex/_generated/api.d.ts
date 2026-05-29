@@ -11,7 +11,9 @@
 import type * as auth from "../auth.js";
 import type * as auth_providers_apple from "../auth/providers/apple.js";
 import type * as auth_providers_appleProvider from "../auth/providers/appleProvider.js";
+import type * as auth_providers_appleSchemas from "../auth/providers/appleSchemas.js";
 import type * as http from "../http.js";
+import type * as lib_random from "../lib/random.js";
 import type * as lib_requireEnv from "../lib/requireEnv.js";
 import type * as test from "../test.js";
 import type * as users from "../users.js";
@@ -26,7 +28,9 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   "auth/providers/apple": typeof auth_providers_apple;
   "auth/providers/appleProvider": typeof auth_providers_appleProvider;
+  "auth/providers/appleSchemas": typeof auth_providers_appleSchemas;
   http: typeof http;
+  "lib/random": typeof lib_random;
   "lib/requireEnv": typeof lib_requireEnv;
   test: typeof test;
   users: typeof users;

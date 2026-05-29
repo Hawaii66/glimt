@@ -35,6 +35,6 @@
     "@auth/core": "^0.37.0",
     "@convex-dev/auth": "^0.0.92",
     "jose": "^6.2.3",
-    "oauth4webapi": "^3.8.6"
+    "zod": "^4.4.3"
   }
 }

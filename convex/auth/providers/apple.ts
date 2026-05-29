@@ -1,13 +1,12 @@
 import { v } from "convex/values";
-import * as oauth from "oauth4webapi";
 
+import { generateRandomNonce } from "../../lib/random";
 import { internalMutation, mutation } from "../../_generated/server";
 
 export const initSignIn = mutation({
   args: {},
   handler: async (ctx) => {
-    console.log("Init nonce");
-    const nonce = oauth.generateRandomNonce();
+    const nonce = generateRandomNonce();
     const verifierId = await ctx.db.insert("authVerifiers", {
       nonce,
       expirationTime: Date.now() + 1000 * 60 * 5,

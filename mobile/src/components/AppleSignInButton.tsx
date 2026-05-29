@@ -32,42 +32,29 @@ export function AppleSignInButton({ onError }: AppleSignInButtonProps) {
   }
 
   const handleSignIn = async () => {
-    console.log("Handle signin");
     setLoading(true);
     try {
       const available = await AppleAuthentication.isAvailableAsync();
-      console.log("Available", available);
       if (!available) {
         throw new Error("Sign in with Apple is not available on this device.");
       }
 
-      console.log("Init signin");
       const { verifierId, nonce } = await initSignIn();
-      console.log("Credentials", verifierId, nonce);
-      const credentials = await AppleAuthentication.signInAsync({
+      const credential = await AppleAuthentication.signInAsync({
         nonce,
         requestedScopes: [
           AppleAuthentication.AppleAuthenticationScope.EMAIL,
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
         ],
       });
-      console.log(credentials);
-      if (!credentials.authorizationCode) {
-        throw new Error("Apple did not return an authorization code.");
-      }
-
-      const name =
-        credentials.fullName?.givenName && credentials.fullName?.familyName
-          ? `${credentials.fullName.givenName} ${credentials.fullName.familyName}`
-          : undefined;
+      const name = `${credential.fullName?.givenName ?? "Missing"} ${credential.fullName?.familyName ?? "Name"}`;
 
       await signIn("apple", {
         verifierId,
-        authorizationCode: credentials.authorizationCode,
-        additionalFields: { name },
+        authorizationCode: credential.authorizationCode!,
+        ...(name ? { additionalFields: { name } } : {}),
       });
     } catch (error) {
-      console.log("Auth error", error);
       const code =
         typeof error === "object" &&
         error !== null &&

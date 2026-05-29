@@ -9,21 +9,15 @@ import type { DataModel, Id } from "../../_generated/dataModel";
 import type { GenericActionCtxWithAuthConfig } from "@convex-dev/auth/server";
 import type { JSONWebKeySet } from "jose";
 import { env } from "../../_generated/server";
+import {
+  appleTokenErrorResponseSchema,
+  parseAppleCredentials,
+  parseAppleIdTokenClaims,
+  parseAppleTokenResponse,
+} from "./appleSchemas";
 
 const PROVIDER_ID = "apple";
 const ISSUER = "https://appleid.apple.com";
-
-type AppleCredentials = {
-  verifierId: Id<"authVerifiers">;
-  authorizationCode: string;
-  additionalFields?: {
-    name?: string;
-  };
-};
-
-type AppleTokenResponse = {
-  id_token?: string;
-};
 
 async function fetchAppleJwks(): Promise<JSONWebKeySet> {
   const response = await fetch(new URL("/auth/keys", ISSUER));
@@ -69,15 +63,11 @@ async function appleSubjectFromAuthorizationCode(
   ctx: GenericActionCtxWithAuthConfig<DataModel>,
 ) {
   const { verifierId, authorizationCode, additionalFields } =
-    credentials as AppleCredentials;
-
-  if (!verifierId || !authorizationCode) {
-    throw new Error("Missing verifierId or authorizationCode");
-  }
+    parseAppleCredentials(credentials);
 
   const expectedNonce: string = await ctx.runMutation(
     internal.auth.providers.apple.consumeVerifier,
-    { verifierId },
+    { verifierId: verifierId as Id<"authVerifiers"> },
   );
   const bundleId = env.AUTH_APPLE_BUNDLE_ID;
   const appleSecret = await generateAppleSecret();
@@ -96,54 +86,51 @@ async function appleSubjectFromAuthorizationCode(
     body: formData.toString(),
   });
 
-  if (response.status != 200) {
-    const text = await response.json();
-    console.log("Apple sign in failed", text);
-    throw new Error("Failed to sing in with apple");
+  const responseBody: unknown = await response.json();
+
+  if (!response.ok) {
+    const errorResult = appleTokenErrorResponseSchema.safeParse(responseBody);
+    const errorMessage = errorResult.success
+      ? `${errorResult.data.error}${errorResult.data.error_description ? `: ${errorResult.data.error_description}` : ""}`
+      : "Unknown Apple token error";
+    console.error("Apple sign in failed", responseBody);
+    throw new Error(`Failed to sign in with Apple: ${errorMessage}`);
   }
 
-  try {
-    const jwks = await fetchAppleJwks();
-    const tokenResponse = await response.json();
+  const jwks = await fetchAppleJwks();
+  const tokenResponse = parseAppleTokenResponse(responseBody);
 
-    const { payload: claims }: { payload: JWTPayload } = await jwtVerify(
-      tokenResponse.id_token,
-      createLocalJWKSet(jwks),
-      {
-        issuer: ISSUER,
-        audience: env.AUTH_APPLE_BUNDLE_ID,
-      },
-    );
+  const { payload }: { payload: JWTPayload } = await jwtVerify(
+    tokenResponse.id_token,
+    createLocalJWKSet(jwks),
+    {
+      issuer: ISSUER,
+      audience: env.AUTH_APPLE_BUNDLE_ID,
+    },
+  );
 
-    if (typeof claims.sub !== "string") {
-      throw new Error("Apple token missing subject");
-    }
+  const claims = parseAppleIdTokenClaims(payload);
 
-    const hashedNonce = expectedNonce;
-    if (claims.nonce !== hashedNonce) {
-      throw new Error("Nonce mismatch");
-    }
-
-    const accountResult = await createAccount(ctx, {
-      provider: PROVIDER_ID,
-      account: { id: claims.sub },
-      profile: {
-        ...(additionalFields?.name ? { name: additionalFields.name } : {}),
-        ...(typeof claims.email === "string"
-          ? {
-              email: claims.email,
-              emailVerificationTime: Date.now(),
-            }
-          : {}),
-      },
-      shouldLinkViaEmail: typeof claims.email === "string",
-    });
-
-    return { userId: accountResult.user._id };
-  } catch (e) {
-    console.log(e);
-    throw e;
+  if (claims.nonce !== expectedNonce) {
+    throw new Error("Nonce mismatch");
   }
+
+  const accountResult = await createAccount(ctx, {
+    provider: PROVIDER_ID,
+    account: { id: claims.sub },
+    profile: {
+      ...(additionalFields?.name ? { name: additionalFields.name } : {}),
+      ...(claims.email
+        ? {
+            email: claims.email,
+            emailVerificationTime: Date.now(),
+          }
+        : {}),
+    },
+    shouldLinkViaEmail: Boolean(claims.email),
+  });
+
+  return { userId: accountResult.user._id };
 }
 
 export const Apple = ConvexCredentials<DataModel>({
