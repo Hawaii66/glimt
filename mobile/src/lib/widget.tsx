@@ -1,20 +1,15 @@
-import {
-  HStack,
-  Image,
-  Rectangle,
-  VStack,
-  ZStack,
-} from "@expo/ui/swift-ui";
+import { HStack, Image, Rectangle, VStack, ZStack } from "@expo/ui/swift-ui";
 import {
   aspectRatio,
-  border,
-  clipShape,
-  containerRelativeFrame,
+  cornerRadius,
   foregroundStyle,
   frame,
   offset,
   padding,
   resizable,
+  rotationEffect,
+  scaleEffect,
+  shadow,
 } from "@expo/ui/swift-ui/modifiers";
 import { createWidget, type WidgetEnvironment } from "expo-widgets";
 
@@ -58,34 +53,37 @@ const FriendGlimt = (
     switch (family) {
       case "systemSmall":
         return {
-          outerPadding: 10,
-          cornerRadius: 14,
-          borderWidth: 2.5,
-          avatarSize: 28,
+          outerPadding: 6,
+          cornerRadius: 18,
+          borderWidth: 8,
+          avatarSize: 40,
           tileGap: 0,
+          avatarOffset: -10,
         };
       case "systemMedium":
         return {
-          outerPadding: 8,
-          cornerRadius: 12,
-          borderWidth: 2,
-          avatarSize: 22,
-          tileGap: 6,
+          outerPadding: 6,
+          cornerRadius: 18,
+          borderWidth: 8,
+          avatarSize: 40,
+          tileGap: 30,
+          avatarOffset: -10,
         };
       case "systemLarge":
         return {
           outerPadding: 6,
-          cornerRadius: 10,
-          borderWidth: 2,
-          avatarSize: 18,
-          tileGap: 5,
+          cornerRadius: 18,
+          borderWidth: 8,
+          avatarSize: 40,
+          tileGap: 10,
+          avatarOffset: -10,
         };
       default:
         return {
-          outerPadding: 10,
-          cornerRadius: 14,
-          borderWidth: 2.5,
-          avatarSize: 28,
+          outerPadding: 0,
+          cornerRadius: 0,
+          borderWidth: 0,
+          avatarSize: 0,
           tileGap: 0,
         };
     }
@@ -112,37 +110,61 @@ const FriendGlimt = (
     avatarUri: string,
     metrics: ReturnType<typeof tileMetricsForFamily>,
     tileModifiers: import("@expo/ui/swift-ui/modifiers").ViewModifier[] = [],
+    idx: number,
   ) {
-    const { cornerRadius, borderWidth, avatarSize } = metrics;
-    const avatarOffset = avatarSize / 2;
+    const { borderWidth, avatarSize, avatarOffset } = metrics;
 
     return (
-      <ZStack
-        alignment="bottomTrailing"
-        modifiers={[
-          padding({ trailing: avatarOffset, bottom: avatarOffset }),
-          ...tileModifiers,
-        ]}
-      >
-        <Image
-          uiImage={photoUri}
+      <ZStack alignment="bottomTrailing" modifiers={tileModifiers}>
+        <ZStack
           modifiers={[
             resizable(),
-            aspectRatio({ contentMode: "fill", ratio: 1 }),
-            clipShape("roundedRectangle", cornerRadius),
-            border({ color: photoBorderColor, width: borderWidth }),
+            cornerRadius(metrics.cornerRadius),
+            rotationEffect(Math.pow(-1, idx + 1) * 2),
+            scaleEffect(0.95),
           ]}
-        />
-        {avatarUri ? (
-          <Image
-            uiImage={avatarUri}
+        >
+          <Rectangle
             modifiers={[
-              frame({ width: avatarSize, height: avatarSize }),
-              clipShape("circle"),
-              border({ color: photoBorderColor, width: 1.5 }),
-              offset({ x: avatarOffset, y: avatarOffset }),
+              foregroundStyle({
+                type: "color",
+                color: photoBorderColor,
+              }),
             ]}
           />
+          <Image
+            uiImage={photoUri}
+            modifiers={[
+              resizable(),
+              aspectRatio({ contentMode: "fill", ratio: 1 }),
+              cornerRadius(metrics.cornerRadius - metrics.borderWidth),
+              padding({ all: borderWidth }),
+            ]}
+          />
+        </ZStack>
+        {avatarUri ? (
+          <ZStack
+            modifiers={[
+              frame({ width: avatarSize, height: avatarSize }),
+              offset({ x: avatarOffset, y: avatarOffset }),
+              rotationEffect(Math.pow(-1, idx + 1)),
+              scaleEffect(0.95),
+              shadow({ radius: 2, color: "#777" }),
+            ]}
+          >
+            <Rectangle
+              modifiers={[foregroundStyle(photoBorderColor), cornerRadius(999)]}
+            />
+            <Image
+              uiImage={avatarUri}
+              modifiers={[
+                resizable(),
+                aspectRatio({ contentMode: "fill", ratio: 1 }),
+                cornerRadius(999),
+                padding({ all: 1 }),
+              ]}
+            />
+          </ZStack>
         ) : (
           <Image
             systemName="person.circle.fill"
@@ -161,16 +183,12 @@ const FriendGlimt = (
     columns: number,
   ) {
     return (
-      <HStack spacing={metrics.tileGap}>
-        {items.map((item) =>
-          renderGlimtImageTile(item.photoUri, item.avatarUri, metrics, [
-            containerRelativeFrame({
-              axes: "horizontal",
-              count: columns,
-              span: 1,
-              spacing: metrics.tileGap,
-            }),
-          ]),
+      <HStack
+        spacing={metrics.tileGap}
+        modifiers={[padding({ all: metrics.outerPadding })]}
+      >
+        {items.map((item, idx) =>
+          renderGlimtImageTile(item.photoUri, item.avatarUri, metrics, [], idx),
         )}
       </HStack>
     );
@@ -178,14 +196,13 @@ const FriendGlimt = (
 
   const widgetFamily = environment.widgetFamily;
   const metrics = tileMetricsForFamily(widgetFamily);
-  const visibleGlimts = props.glimts.slice(0, glimtCountForFamily(widgetFamily));
+  const visibleGlimts = props.glimts.slice(
+    0,
+    glimtCountForFamily(widgetFamily),
+  );
 
   if (visibleGlimts.length === 0) {
-    return (
-      <ZStack>
-        {renderWidgetBackground()}
-      </ZStack>
-    );
+    return <ZStack>{renderWidgetBackground()}</ZStack>;
   }
 
   if (widgetFamily === "systemSmall") {
@@ -194,7 +211,7 @@ const FriendGlimt = (
       <ZStack>
         {renderWidgetBackground()}
         <VStack modifiers={[padding({ all: metrics.outerPadding })]}>
-          {renderGlimtImageTile(item.photoUri, item.avatarUri, metrics)}
+          {renderGlimtImageTile(item.photoUri, item.avatarUri, metrics, [], 0)}
         </VStack>
       </ZStack>
     );
