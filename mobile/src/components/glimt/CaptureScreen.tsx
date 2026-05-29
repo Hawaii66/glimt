@@ -1,7 +1,4 @@
-import {
-  CameraView,
-  useCameraPermissions,
-} from "expo-camera";
+import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -31,6 +28,7 @@ export function CaptureScreen() {
   const facing = useCaptureStore((state) => state.cameraFacing);
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
+  const lastPreviewTapRef = useRef(0);
   const [cameraReady, setCameraReady] = useState(false);
   const [capturing, setCapturing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +53,16 @@ export function CaptureScreen() {
     setError(null);
     setCameraReady(false);
     setCameraFacing(facing === "back" ? "front" : "back");
+  };
+
+  const handlePreviewPress = () => {
+    const now = Date.now();
+    if (now - lastPreviewTapRef.current <= 300) {
+      handleFlipCamera();
+      lastPreviewTapRef.current = 0;
+      return;
+    }
+    lastPreviewTapRef.current = now;
   };
 
   const handleCapture = useCallback(async () => {
@@ -146,6 +154,12 @@ export function CaptureScreen() {
           />
           <View style={styles.previewOverlay} pointerEvents="box-none">
             <Pressable
+              style={styles.previewTapTarget}
+              onPress={handlePreviewPress}
+              accessibilityRole="button"
+              accessibilityLabel="Double tap to flip camera"
+            />
+            <Pressable
               style={styles.flipButton}
               onPress={handleFlipCamera}
               accessibilityRole="button"
@@ -161,9 +175,7 @@ export function CaptureScreen() {
           </View>
         </View>
 
-        {error ? (
-          <Text style={styles.errorText}>{error}</Text>
-        ) : null}
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <Pressable
           style={[
@@ -223,6 +235,9 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   previewOverlay: {
+    ...StyleSheet.absoluteFill,
+  },
+  previewTapTarget: {
     ...StyleSheet.absoluteFill,
   },
   flipButton: {

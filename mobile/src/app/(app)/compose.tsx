@@ -22,7 +22,10 @@ import { APP_HOME } from "@/lib/routes";
 import { useAppColors } from "@/lib/theme";
 import { useCaptureStore } from "@/stores/captureStore";
 
-const CAPTION_MAX_LENGTH = 280;
+const CAPTION_MAX_LENGTH = 30;
+const INPUT_LINE_HEIGHT = 22;
+const INPUT_VERTICAL_PADDING = 12;
+const INPUT_HEIGHT = INPUT_LINE_HEIGHT * 2 + INPUT_VERTICAL_PADDING * 2;
 const COMPACT_PREVIEW_HEIGHT = 120;
 
 export default function ComposeScreen() {
@@ -105,24 +108,31 @@ export default function ComposeScreen() {
             contentFit="cover"
           />
 
-          <TextInput
-            autoCapitalize="sentences"
-            autoCorrect
-            multiline
-            placeholder="Add a caption..."
-            placeholderTextColor={colors.textMuted}
-            maxLength={CAPTION_MAX_LENGTH}
-            style={[
-              styles.input,
-              {
-                color: colors.text,
-                borderColor: colors.textMuted,
-              },
-            ]}
-            value={caption}
-            onChangeText={setCaption}
-            onFocus={scrollToCaption}
-          />
+          <View style={styles.captionSection}>
+            <TextInput
+              autoCapitalize="sentences"
+              autoCorrect
+              multiline
+              numberOfLines={2}
+              placeholder="Add a caption..."
+              placeholderTextColor={colors.textMuted}
+              maxLength={CAPTION_MAX_LENGTH}
+              style={[
+                styles.input,
+                {
+                  color: colors.text,
+                  backgroundColor: colors.fill,
+                  borderColor: colors.surfaceBorder,
+                },
+              ]}
+              value={caption}
+              onChangeText={setCaption}
+              onFocus={scrollToCaption}
+            />
+            <Text style={[styles.charCount, { color: colors.textMuted }]}>
+              {caption.length}/{CAPTION_MAX_LENGTH}
+            </Text>
+          </View>
         </ScrollView>
 
         <View
@@ -190,14 +200,22 @@ const styles = StyleSheet.create({
     height: COMPACT_PREVIEW_HEIGHT,
     aspectRatio: undefined,
   },
+  captionSection: {
+    gap: 6,
+  },
   input: {
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: INPUT_VERTICAL_PADDING,
     fontSize: 16,
-    minHeight: 120,
+    lineHeight: INPUT_LINE_HEIGHT,
+    height: INPUT_HEIGHT,
     textAlignVertical: "top",
+  },
+  charCount: {
+    alignSelf: "flex-end",
+    fontSize: 13,
   },
   sendBar: {
     paddingHorizontal: 24,
