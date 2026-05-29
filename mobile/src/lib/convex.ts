@@ -1,6 +1,18 @@
+import Constants from "expo-constants";
 import { ConvexReactClient } from "convex/react";
 
-export const convexUrl = process.env.EXPO_PUBLIC_CONVEX_URL ?? "";
+import { getMobileEnvironment, resolveConvexUrl } from "@/lib/environment";
+
+function getConvexUrl(): string {
+  const fromExtra = Constants.expoConfig?.extra?.convexUrl;
+  if (typeof fromExtra === "string" && fromExtra.length > 0) {
+    return fromExtra;
+  }
+
+  return resolveConvexUrl(getMobileEnvironment()) ?? "";
+}
+
+export const convexUrl = getConvexUrl();
 
 export const convex = convexUrl
   ? new ConvexReactClient(convexUrl, { unsavedChangesWarning: false })

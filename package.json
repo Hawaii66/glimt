@@ -5,15 +5,36 @@
     "mobile"
   ],
   "scripts": {
-    "convex:dev": "convex dev",
-    "start": "npm run start -w mobile",
+    "glimt:dev": "bash ./glimt.sh dev expo",
+    "glimt:stage": "bash ./glimt.sh stage expo",
+    "glimt:prod": "bash ./glimt.sh prod expo",
+    "convex:dev": "bash ./glimt.sh dev convex dev",
+    "convex:stage": "bash ./glimt.sh stage convex dev",
+    "convex:prod": "bash ./glimt.sh prod convex dev",
+    "convex:deploy:stage": "bash ./glimt.sh stage convex deploy",
+    "convex:deploy:prod": "bash ./glimt.sh prod convex deploy",
+    "start": "npm run start:dev -w mobile",
     "android": "npm run android -w mobile",
     "ios": "npm run ios -w mobile",
     "web": "npm run web -w mobile",
     "lint": "npm run lint -w mobile",
-    "eas:build": "npm run eas:build -w mobile"
+    "eas:build:dev": "bash ./glimt.sh dev build ios",
+    "eas:build:stage": "bash ./glimt.sh stage build ios",
+    "eas:build:prod": "bash ./glimt.sh prod build ios",
+    "eas:build:dev:android": "bash ./glimt.sh dev build android",
+    "eas:build:stage:android": "bash ./glimt.sh stage build android",
+    "eas:build:prod:android": "bash ./glimt.sh prod build android"
   },
   "devDependencies": {
-    "convex": "^1.39.1"
+    "@types/node": "^25.9.1",
+    "convex": "^1.39.1",
+    "dotenv": "^17.4.2",
+    "dotenv-cli": "^11.0.0"
+  },
+  "dependencies": {
+    "@auth/core": "^0.37.0",
+    "@convex-dev/auth": "^0.0.92",
+    "jose": "^6.2.3",
+    "oauth4webapi": "^3.8.6"
   }
 }

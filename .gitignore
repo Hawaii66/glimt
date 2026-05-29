@@ -1,7 +1,7 @@
 # dependencies
 node_modules/
 
-# Convex local backend (anonymous / offline dev)
+# Convex local CLI cache
 .convex/
 
 # local env files

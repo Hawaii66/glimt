@@ -10,6 +10,34 @@
  *   bundleIdentifier: string;
  * }} EnvInfo */
 
+/** @param {MobileEnvironment} env */
+function convexUrlEnvVarName(env) {
+  switch (env) {
+    case "dev":
+      return "EXPO_PUBLIC_CONVEX_URL_DEV";
+    case "stage":
+      return "EXPO_PUBLIC_CONVEX_URL_STAGE";
+    case "prod":
+      return "EXPO_PUBLIC_CONVEX_URL_PROD";
+  }
+}
+
+/** @param {MobileEnvironment} env @returns {string | undefined} */
+function resolveConvexUrl(env) {
+  const envVar = convexUrlEnvVarName(env);
+  const fromEnv = process.env[envVar];
+  if (fromEnv) {
+    return fromEnv;
+  }
+
+  // Back-compat: single URL when only running dev.
+  if (env === "dev" && process.env.EXPO_PUBLIC_CONVEX_URL) {
+    return process.env.EXPO_PUBLIC_CONVEX_URL;
+  }
+
+  return undefined;
+}
+
 /** @param {string | undefined} value @returns {MobileEnvironment} */
 function parseMobileEnvironment(value) {
   if (!value) {
@@ -22,7 +50,9 @@ function parseMobileEnvironment(value) {
     return value;
   }
 
-  throw new Error(`Unknown MOBILE_ENVIRONMENT: ${value}. Expected dev, stage, or prod.`);
+  throw new Error(
+    `Unknown MOBILE_ENVIRONMENT: ${value}. Expected dev, stage, or prod.`,
+  );
 }
 
 /** @param {MobileEnvironment} env @returns {EnvInfo} */
@@ -33,10 +63,10 @@ function envToInfo(env) {
         name: "Glimt Dev",
         icon: "./assets/images/icon-dev.png",
         iconAndroid: "./assets/images/icon-android-dev.png",
-        version: "0.0.5",
-        runtimeVersion: "0.0.5",
+        version: "0.0.6",
+        runtimeVersion: "0.0.6",
         scheme: "glimt-dev",
-        bundleIdentifier: "app.glimt.mobile.dev",
+        bundleIdentifier: "com.hawaiidev.glimt.dev",
       };
     case "stage":
       return {
@@ -46,7 +76,7 @@ function envToInfo(env) {
         version: "0.0.1",
         runtimeVersion: "0.0.1",
         scheme: "glimt-stage",
-        bundleIdentifier: "app.glimt.mobile.stage",
+        bundleIdentifier: "com.hawaiidev.glimt.stage",
       };
     case "prod":
       return {
@@ -56,7 +86,7 @@ function envToInfo(env) {
         version: "0.0.1",
         runtimeVersion: "0.0.1",
         scheme: "glimt",
-        bundleIdentifier: "app.glimt.mobile",
+        bundleIdentifier: "com.hawaiidev.glimt",
       };
   }
 }
@@ -64,4 +94,6 @@ function envToInfo(env) {
 module.exports = {
   parseMobileEnvironment,
   envToInfo,
+  convexUrlEnvVarName,
+  resolveConvexUrl,
 };

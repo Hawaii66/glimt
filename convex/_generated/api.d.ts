@@ -8,7 +8,13 @@
  * @module
  */
 
+import type * as auth from "../auth.js";
+import type * as auth_providers_apple from "../auth/providers/apple.js";
+import type * as auth_providers_appleProvider from "../auth/providers/appleProvider.js";
+import type * as http from "../http.js";
+import type * as lib_requireEnv from "../lib/requireEnv.js";
 import type * as test from "../test.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -17,7 +23,13 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  auth: typeof auth;
+  "auth/providers/apple": typeof auth_providers_apple;
+  "auth/providers/appleProvider": typeof auth_providers_appleProvider;
+  http: typeof http;
+  "lib/requireEnv": typeof lib_requireEnv;
   test: typeof test;
+  users: typeof users;
 }>;
 
 /**

@@ -3,11 +3,12 @@
   "main": "expo-router/entry",
   "version": "0.0.1",
   "dependencies": {
+    "@convex-dev/auth": "^0.0.92",
     "@expo/ui": "~56.0.13",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@shopify/flash-list": "2.0.2",
     "convex": "^1.39.1",
-    "expo": "~56.0.4",
+    "expo": "~56.0.5",
     "expo-apple-authentication": "~56.0.4",
     "expo-application": "~56.0.3",
     "expo-background-task": "~56.0.14",
@@ -55,10 +56,10 @@
     "typescript": "~6.0.3"
   },
   "scripts": {
-    "start": "expo start",
-    "start:dev": "cross-env MOBILE_ENVIRONMENT=dev expo start",
-    "start:stage": "cross-env MOBILE_ENVIRONMENT=stage expo start",
-    "start:prod": "cross-env MOBILE_ENVIRONMENT=prod expo start",
+    "start": "npm run start:dev",
+    "start:dev": "dotenv -e ../.env.dev.local -- cross-env MOBILE_ENVIRONMENT=dev expo start",
+    "start:stage": "dotenv -e ../.env.stage.local -- cross-env MOBILE_ENVIRONMENT=stage expo start",
+    "start:prod": "dotenv -e ../.env.prod.local -- cross-env MOBILE_ENVIRONMENT=prod expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",

@@ -1,6 +1,6 @@
 import type { ConfigContext, ExpoConfig } from "expo/config";
 
-const { envToInfo, parseMobileEnvironment } = require("./environment.js") as {
+const { envToInfo, parseMobileEnvironment, resolveConvexUrl } = require("./environment.js") as {
   envToInfo: (env: "dev" | "stage" | "prod") => {
     name: string;
     icon: string;
@@ -11,6 +11,7 @@ const { envToInfo, parseMobileEnvironment } = require("./environment.js") as {
     bundleIdentifier: string;
   };
   parseMobileEnvironment: (value: string | undefined) => "dev" | "stage" | "prod";
+  resolveConvexUrl: (env: "dev" | "stage" | "prod") => string | undefined;
 };
 
 const DEFAULT_EAS_PROJECT_ID = "b92605ee-1590-47dd-a260-11dc4b24b3bf";
@@ -19,6 +20,7 @@ const easProjectId = process.env.EAS_PROJECT_ID ?? DEFAULT_EAS_PROJECT_ID;
 function buildPlugins(envIcon: string,bundleIdentifier:string): NonNullable<ExpoConfig["plugins"]> {
   return [
     "expo-router",
+    "expo-apple-authentication",
     [
       "expo-splash-screen",
       {
@@ -114,6 +116,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     process.env.MOBILE_ENVIRONMENT ?? "dev",
   );
   const envInfo = envToInfo(mobileEnvironment);
+  const convexUrl = resolveConvexUrl(mobileEnvironment) ?? "";
 
   return {
     ...config,
@@ -157,6 +160,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     extra: {
       ...config.extra,
       mobileEnvironment,
+      convexUrl,
       eas: {
         ...(typeof config.extra?.eas === "object" ? config.extra.eas : {}),
         projectId: easProjectId,

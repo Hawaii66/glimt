@@ -7,7 +7,12 @@ import {
 } from "../../environment";
 
 export type { MobileEnvironment, EnvInfo } from "../../environment";
-export { envToInfo, parseMobileEnvironment } from "../../environment";
+export {
+  convexUrlEnvVarName,
+  envToInfo,
+  parseMobileEnvironment,
+  resolveConvexUrl,
+} from "../../environment";
 
 export function getMobileEnvironment(): MobileEnvironment {
   const fromExtra = Constants.expoConfig?.extra?.mobileEnvironment;
