@@ -15,9 +15,10 @@ import { api } from "convex/_generated/api";
 
 type AppleSignInButtonProps = {
   onError?: (message: string) => void;
+  onSuccess?: () => void;
 };
 
-export function AppleSignInButton({ onError }: AppleSignInButtonProps) {
+export function AppleSignInButton({ onError, onSuccess }: AppleSignInButtonProps) {
   const colors = useAppColors();
   const { signIn } = useAuthActions();
   const initSignIn = useMutation(api.auth.providers.apple.initSignIn);
@@ -47,13 +48,16 @@ export function AppleSignInButton({ onError }: AppleSignInButtonProps) {
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
         ],
       });
-      const name = `${credential.fullName?.givenName ?? "Missing"} ${credential.fullName?.familyName ?? "Name"}`;
+      const givenName = credential.fullName?.givenName?.trim();
+      const familyName = credential.fullName?.familyName?.trim();
+      const name = [givenName, familyName].filter(Boolean).join(" ");
 
       await signIn("apple", {
         verifierId,
         authorizationCode: credential.authorizationCode!,
         ...(name ? { additionalFields: { name } } : {}),
       });
+      onSuccess?.();
     } catch (error) {
       const code =
         typeof error === "object" &&

@@ -1,18 +1,20 @@
-import { Text, VStack } from "@expo/ui/swift-ui";
 import { createWidget, type WidgetEnvironment } from "expo-widgets";
 
-type FriendGlimtProps = {
-  count: number;
-};
+import { FriendGlimtContent } from "./widget/FriendGlimtContent";
+import type { FriendGlimtProps } from "./widget/types";
 
-const FriendGlimt = (props: FriendGlimtProps, environment: WidgetEnvironment) => {
+const FriendGlimt = (
+  props: FriendGlimtProps,
+  environment: WidgetEnvironment,
+) => {
   "widget";
   return (
-    <VStack>
-      <Text>Count: {props.count}</Text>
-      <Text>Family: {environment.widgetFamily}</Text>
-    </VStack>
+    <FriendGlimtContent
+      glimts={props.glimts}
+      widgetFamily={environment.widgetFamily}
+    />
   );
 };
 
-export default createWidget("FriendGlimt", FriendGlimt);
+export const FriendGlimtWidget = createWidget("FriendGlimt", FriendGlimt);
+export { FriendGlimtProps, WidgetGlimtItem } from "./widget/types";

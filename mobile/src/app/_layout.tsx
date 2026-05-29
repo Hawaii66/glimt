@@ -4,25 +4,14 @@ import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 import { authStorage } from "@/lib/auth-storage";
 import { convex } from "@/lib/convex";
 import { useAppColors } from "@/lib/theme";
+import { refreshFriendGlimtWidget } from "@/lib/widget-refresh";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
-
-function refreshFriendGlimtWidget() {
-  if (Platform.OS !== "ios") return;
-
-  void import("@/lib/widget")
-    .then((module) => {
-      module.default.updateSnapshot({ count: 5 });
-    })
-    .catch((error) => {
-      console.warn("[FriendGlimt] widget update failed:", error);
-    });
-}
 
 export default function RootLayout() {
   const colors = useAppColors();
@@ -37,7 +26,8 @@ export default function RootLayout() {
       <View style={styles.missingConfig}>
         <Text style={styles.missingTitle}>Convex not configured</Text>
         <Text style={styles.missingBody}>
-          Set EXPO_PUBLIC_CONVEX_URL_DEV (or _STAGE / _PROD) in .env.*.local or EAS.
+          Set EXPO_PUBLIC_CONVEX_URL_DEV (or _STAGE / _PROD) in .env.*.local or
+          EAS.
         </Text>
       </View>
     );

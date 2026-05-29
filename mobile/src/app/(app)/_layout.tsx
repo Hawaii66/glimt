@@ -1,13 +1,12 @@
 import { useConvexAuth } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
-import { Redirect } from "expo-router";
+import { Redirect, Stack } from "expo-router";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 
 import { useAppColors } from "@/lib/theme";
-import { APP_HOME } from "@/lib/routes";
 import { api } from "convex/_generated/api";
 
-export default function Index() {
+export default function AppLayout() {
   const colors = useAppColors();
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
   const user = useQuery(api.users.current);
@@ -28,7 +27,14 @@ export default function Index() {
     return <Redirect href="/onboarding/name" />;
   }
 
-  return <Redirect href={APP_HOME} />;
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: colors.background },
+      }}
+    />
+  );
 }
 
 const styles = StyleSheet.create({
