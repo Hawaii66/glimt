@@ -94,7 +94,6 @@ async function buildMockWidgetGlimts(): Promise<WidgetGlimtItem[]> {
 
 export async function refreshFriendGlimtWidget(): Promise<void> {
   const glimts = await buildMockWidgetGlimts();
-  console.log("WIDGET", glimts);
 
   if (glimts.length === 0) {
     console.warn("[FriendGlimt] no widget images cached; skipping update");
