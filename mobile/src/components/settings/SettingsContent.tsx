@@ -1,10 +1,11 @@
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Pressable,
   ScrollView,
@@ -20,64 +21,131 @@ import {
   getAccentTheme,
   type AccentThemeId,
 } from "@/lib/accent-themes";
-import {
-  MOCK_FRIEND_GLIMTS,
-  MOCK_FRIEND_REQUESTS,
-  type FriendRequest,
-} from "@/lib/glimt-mock-data";
 import { appFriendJourney } from "@/lib/routes";
 import { useAppColors } from "@/lib/theme";
 import { useAccentThemeStore } from "@/stores/accentThemeStore";
 import { useOnboardingStore } from "@/stores/onboardingStore";
 import { api } from "convex/_generated/api";
+import type { Id } from "convex/_generated/dataModel";
 
 type SettingsContentProps = {
   scrollMaxHeight?: number;
 };
+
+function FriendAvatar({ avatarUrl }: { avatarUrl: string }) {
+  const colors = useAppColors();
+
+  if (avatarUrl) {
+    return (
+      <Image
+        source={{ uri: avatarUrl }}
+        style={styles.friendAvatar}
+        contentFit="cover"
+      />
+    );
+  }
+
+  return (
+    <View
+      style={[
+        styles.friendAvatar,
+        styles.friendAvatarPlaceholder,
+        { backgroundColor: colors.fill },
+      ]}
+    />
+  );
+}
 
 export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
   const colors = useAppColors();
   const router = useRouter();
   const { signOut } = useAuthActions();
   const user = useQuery(api.users.current);
+  const friends = useQuery(api.friends.listFriends);
+  const incomingRequests = useQuery(api.friends.listIncomingRequests);
+  const sendFriendRequest = useMutation(api.friends.sendRequest);
+  const acceptFriendRequest = useMutation(api.friends.acceptRequest);
+  const declineFriendRequest = useMutation(api.friends.declineRequest);
   const accentId = useAccentThemeStore((state) => state.accentId);
   const setAccentId = useAccentThemeStore((state) => state.setAccentId);
   const gradientColors = getAccentTheme(accentId).gradientColors;
   const resetOnboarding = useOnboardingStore((state) => state.reset);
   const [friendUsername, setFriendUsername] = useState("@");
   const [signingOut, setSigningOut] = useState(false);
-  const [friendRequests, setFriendRequests] = useState(MOCK_FRIEND_REQUESTS);
+  const [addingFriend, setAddingFriend] = useState(false);
+  const [respondingRequestId, setRespondingRequestId] =
+    useState<Id<"friendRequests"> | null>(null);
 
   const handleFriendUsernameChange = (text: string) => {
     const withoutAt = text.replace(/^@+/, "");
     setFriendUsername(`@${withoutAt}`);
   };
 
-  const handleAddFriend = () => {
+  const handleAddFriend = async () => {
     const normalized = friendUsername.trim().replace(/^@/, "").toLowerCase();
-    if (!normalized) {
+    if (!normalized || addingFriend) {
       return;
     }
-    Alert.alert(
-      "Coming soon",
-      `Friend requests for @${normalized} will be available in a future update.`,
-    );
-    setFriendUsername("@");
+
+    setAddingFriend(true);
+    try {
+      await sendFriendRequest({ username: normalized });
+      setFriendUsername("@");
+      Alert.alert(
+        "Request sent",
+        `Your friend request to @${normalized} was sent.`,
+      );
+    } catch (addError) {
+      const message =
+        addError instanceof Error
+          ? addError.message
+          : "Could not send friend request.";
+      Alert.alert("Could not add friend", message);
+    } finally {
+      setAddingFriend(false);
+    }
   };
 
-  const dismissRequest = (requestId: string) => {
-    setFriendRequests((current) =>
-      current.filter((request) => request.id !== requestId),
-    );
+  const handleAcceptRequest = async (request: {
+    requestId: Id<"friendRequests">;
+    displayName: string;
+  }) => {
+    if (respondingRequestId) {
+      return;
+    }
+
+    setRespondingRequestId(request.requestId);
+    try {
+      await acceptFriendRequest({ requestId: request.requestId });
+      Alert.alert("Friend added", `${request.displayName} is now on your list.`);
+    } catch (acceptError) {
+      const message =
+        acceptError instanceof Error
+          ? acceptError.message
+          : "Could not accept friend request.";
+      Alert.alert("Could not accept", message);
+    } finally {
+      setRespondingRequestId(null);
+    }
   };
 
-  const handleAcceptRequest = (request: FriendRequest) => {
-    dismissRequest(request.id);
-    Alert.alert("Friend added", `${request.displayName} is now on your list.`);
-  };
+  const handleDeclineRequest = async (requestId: Id<"friendRequests">) => {
+    if (respondingRequestId) {
+      return;
+    }
 
-  const handleDeclineRequest = (request: FriendRequest) => {
-    dismissRequest(request.id);
+    setRespondingRequestId(requestId);
+    try {
+      await declineFriendRequest({ requestId });
+    } catch (declineError) {
+      const message =
+        declineError instanceof Error
+          ? declineError.message
+          : "Could not decline friend request.";
+      Alert.alert("Could not decline", message);
+    } finally {
+      setRespondingRequestId(null);
+    }
   };
 
   const handleSignOut = async () => {
@@ -194,19 +262,34 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
             onSubmitEditing={handleAddFriend}
           />
           <Pressable
-            style={[styles.addFriendButton, { backgroundColor: colors.text }]}
+            style={[
+              styles.addFriendButton,
+              { backgroundColor: colors.text, opacity: addingFriend ? 0.6 : 1 },
+            ]}
             onPress={handleAddFriend}
+            disabled={addingFriend}
           >
-            <Text
-              style={[styles.addFriendButtonText, { color: colors.background }]}
-            >
-              Add
-            </Text>
+            {addingFriend ? (
+              <ActivityIndicator color={colors.background} />
+            ) : (
+              <Text
+                style={[
+                  styles.addFriendButtonText,
+                  { color: colors.background },
+                ]}
+              >
+                Add
+              </Text>
+            )}
           </Pressable>
         </View>
       </View>
 
-      {friendRequests.length > 0 ? (
+      {incomingRequests === undefined ? (
+        <View style={styles.sectionLoading}>
+          <ActivityIndicator color={colors.textMuted} />
+        </View>
+      ) : incomingRequests.length > 0 ? (
         <View style={styles.section}>
           <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
             Friend requests
@@ -220,65 +303,79 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
               },
             ]}
           >
-            {friendRequests.map((request, index) => (
-              <View
-                key={request.id}
-                style={[
-                  styles.requestRow,
-                  index < friendRequests.length - 1 && {
-                    borderBottomWidth: StyleSheet.hairlineWidth,
-                    borderBottomColor: colors.surfaceBorder,
-                  },
-                ]}
-              >
-                <Image
-                  source={{ uri: request.avatarUrl }}
-                  style={styles.friendAvatar}
-                  contentFit="cover"
-                />
-                <View style={styles.friendText}>
-                  <Text style={[styles.friendName, { color: colors.text }]}>
-                    {request.displayName}
-                  </Text>
-                  <Text
-                    style={[styles.friendUsername, { color: colors.textMuted }]}
-                  >
-                    @{request.username}
-                  </Text>
-                </View>
-                <View style={styles.requestActions}>
-                  <Pressable
-                    style={[
-                      styles.declineButton,
-                      { borderColor: colors.surfaceBorder },
-                    ]}
-                    onPress={() => handleDeclineRequest(request)}
-                  >
-                    <Text
-                      style={[styles.declineButtonText, { color: colors.textMuted }]}
-                    >
-                      Decline
+            {incomingRequests.map((request, index) => {
+              const isResponding =
+                respondingRequestId === request.requestId;
+              return (
+                <View
+                  key={request.requestId}
+                  style={[
+                    styles.requestRow,
+                    index < incomingRequests.length - 1 && {
+                      borderBottomWidth: StyleSheet.hairlineWidth,
+                      borderBottomColor: colors.surfaceBorder,
+                    },
+                  ]}
+                >
+                  <FriendAvatar avatarUrl={request.avatarUrl} />
+                  <View style={styles.friendText}>
+                    <Text style={[styles.friendName, { color: colors.text }]}>
+                      {request.displayName}
                     </Text>
-                  </Pressable>
-                  <Pressable
-                    style={[
-                      styles.acceptButton,
-                      { backgroundColor: colors.text },
-                    ]}
-                    onPress={() => handleAcceptRequest(request)}
-                  >
                     <Text
                       style={[
-                        styles.acceptButtonText,
-                        { color: colors.background },
+                        styles.friendUsername,
+                        { color: colors.textMuted },
                       ]}
                     >
-                      Accept
+                      @{request.username}
                     </Text>
-                  </Pressable>
+                  </View>
+                  <View style={styles.requestActions}>
+                    <Pressable
+                      style={[
+                        styles.declineButton,
+                        {
+                          borderColor: colors.surfaceBorder,
+                          opacity: isResponding ? 0.6 : 1,
+                        },
+                      ]}
+                      onPress={() => handleDeclineRequest(request.requestId)}
+                      disabled={respondingRequestId !== null}
+                    >
+                      <Text
+                        style={[
+                          styles.declineButtonText,
+                          { color: colors.textMuted },
+                        ]}
+                      >
+                        Decline
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={[
+                        styles.acceptButton,
+                        {
+                          backgroundColor: colors.text,
+                          opacity: isResponding ? 0.6 : 1,
+                        },
+                      ]}
+                      onPress={() => handleAcceptRequest(request)}
+                      disabled={respondingRequestId !== null}
+                    >
+                      <Text
+                        style={[
+                          styles.acceptButtonText,
+                          { color: colors.background },
+                        ]}
+                      >
+                        Accept
+                      </Text>
+                    </Pressable>
+                  </View>
                 </View>
-              </View>
-            ))}
+              );
+            })}
           </View>
         </View>
       ) : null}
@@ -287,51 +384,59 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
         <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
           Friends
         </Text>
-        <View
-          style={[
-            styles.card,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.surfaceBorder,
-            },
-          ]}
-        >
-          {MOCK_FRIEND_GLIMTS.map((friend, index) => (
-            <Pressable
-              key={friend.id}
-              onPress={() => router.push(appFriendJourney(friend.id))}
-              style={({ pressed }) => [
-                styles.friendRow,
-                index < MOCK_FRIEND_GLIMTS.length - 1 && {
-                  borderBottomWidth: StyleSheet.hairlineWidth,
-                  borderBottomColor: colors.surfaceBorder,
-                },
-                pressed && styles.friendRowPressed,
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={`Open journey with ${friend.displayName}`}
-            >
-              <Image
-                source={{ uri: friend.avatarUrl }}
-                style={styles.friendAvatar}
-                contentFit="cover"
-              />
-              <View style={styles.friendText}>
-                <Text style={[styles.friendName, { color: colors.text }]}>
-                  {friend.displayName}
-                </Text>
+        {friends === undefined ? (
+          <View style={styles.sectionLoading}>
+            <ActivityIndicator color={colors.textMuted} />
+          </View>
+        ) : friends.length === 0 ? (
+          <Text style={[styles.emptyFriendsText, { color: colors.textMuted }]}>
+            No friends yet. Add someone by username above.
+          </Text>
+        ) : (
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.surfaceBorder,
+              },
+            ]}
+          >
+            {friends.map((friend, index) => (
+              <Pressable
+                key={friend.id}
+                onPress={() => router.push(appFriendJourney(friend.id))}
+                style={({ pressed }) => [
+                  styles.friendRow,
+                  index < friends.length - 1 && {
+                    borderBottomWidth: StyleSheet.hairlineWidth,
+                    borderBottomColor: colors.surfaceBorder,
+                  },
+                  pressed && styles.friendRowPressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={`Open journey with ${friend.displayName}`}
+              >
+                <FriendAvatar avatarUrl={friend.avatarUrl} />
+                <View style={styles.friendText}>
+                  <Text style={[styles.friendName, { color: colors.text }]}>
+                    {friend.displayName}
+                  </Text>
+                  <Text
+                    style={[styles.friendUsername, { color: colors.textMuted }]}
+                  >
+                    @{friend.username}
+                  </Text>
+                </View>
                 <Text
-                  style={[styles.friendUsername, { color: colors.textMuted }]}
+                  style={[styles.friendChevron, { color: colors.textMuted }]}
                 >
-                  @{friend.username}
+                  ›
                 </Text>
-              </View>
-              <Text style={[styles.friendChevron, { color: colors.textMuted }]}>
-                ›
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+              </Pressable>
+            ))}
+          </View>
+        )}
       </View>
 
       <Pressable
@@ -372,6 +477,14 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: 12,
+  },
+  sectionLoading: {
+    alignItems: "center",
+    paddingVertical: 16,
+  },
+  emptyFriendsText: {
+    fontSize: 15,
+    lineHeight: 22,
   },
   sectionLabel: {
     fontSize: 13,
@@ -451,6 +564,10 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
+  },
+  friendAvatarPlaceholder: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(128, 128, 128, 0.35)",
   },
   friendText: {
     flex: 1,

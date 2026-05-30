@@ -19,7 +19,6 @@ import { ProfilePreview } from "@/components/onboarding/ProfilePreview";
 import { getAccentTheme } from "@/lib/accent-themes";
 import { getFriendById } from "@/lib/glimt-mock-data";
 import { getMockJourneysWithUnlocks } from "@/lib/journey-lock";
-import { useMockUnlockStore } from "@/stores/mockUnlockStore";
 import { useAppColors } from "@/lib/theme";
 import { useMockUnlockStore } from "@/stores/mockUnlockStore";
 
