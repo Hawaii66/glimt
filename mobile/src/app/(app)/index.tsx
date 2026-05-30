@@ -2,6 +2,7 @@ import { FlashList } from "@shopify/flash-list";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
+import { useQuery } from "convex/react";
 import {
   Pressable,
   StyleSheet,
@@ -17,8 +18,9 @@ import {
 import { GlimtTile } from "@/components/glimt/GlimtTile";
 import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
 import { getAccentTheme } from "@/lib/accent-themes";
-import { MOCK_FRIEND_GLIMTS } from "@/lib/glimt-mock-data";
+import { getMockPhotoUrlForFriend } from "@/lib/glimt-mock-data";
 import { APP_CAPTURE, APP_SETTINGS, appFriendJourney } from "@/lib/routes";
+import { api } from "convex/_generated/api";
 
 const HORIZONTAL_PADDING = 24;
 const NUM_COLUMNS = 2;
@@ -28,6 +30,7 @@ const BOTTOM_BAR_PADDING = 24;
 
 export default function HomeScreen() {
   const router = useRouter();
+  const friends = useQuery(api.friends.listFriends);
   const { accentTheme } = useCurrentUserAccentTheme();
   const gradientColors = getAccentTheme(accentTheme).gradientColors;
   const insets = useSafeAreaInsets();
@@ -60,7 +63,7 @@ export default function HomeScreen() {
       </Pressable>
 
       <FlashList
-        data={MOCK_FRIEND_GLIMTS}
+        data={friends ?? []}
         numColumns={NUM_COLUMNS}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
@@ -69,6 +72,16 @@ export default function HomeScreen() {
             <Text style={styles.title}>Glimt</Text>
             <Text style={styles.tagline}>Small everyday moments</Text>
           </View>
+        }
+        ListEmptyComponent={
+          friends !== undefined ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>No friends yet</Text>
+              <Text style={styles.emptyBody}>
+                Add friends in settings to start sharing glimts together.
+              </Text>
+            </View>
+          ) : null
         }
         renderItem={({ item, index }) => (
           <Pressable
@@ -81,7 +94,7 @@ export default function HomeScreen() {
             accessibilityLabel={`Open journey with ${item.displayName}`}
           >
             <GlimtTile
-              photoUrl={item.photoUrl}
+              photoUrl={getMockPhotoUrlForFriend(item.id)}
               avatarUrl={item.avatarUrl}
               index={index}
               size={tileSize}
@@ -153,6 +166,23 @@ const styles = StyleSheet.create({
   },
   listItemLeft: {
     marginRight: TILE_HORIZONTAL_GAP,
+  },
+  emptyState: {
+    paddingTop: 48,
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  emptyTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  emptyBody: {
+    color: "rgba(255, 255, 255, 0.85)",
+    fontSize: 15,
+    textAlign: "center",
+    lineHeight: 22,
   },
   bottomBar: {
     position: "absolute",

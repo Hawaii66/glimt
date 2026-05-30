@@ -11,6 +11,7 @@ type UserProfile = {
   displayName: string;
   username: string;
   avatarUrl: string;
+  accentTheme?: string;
 };
 
 type FriendRequestWithProfile = UserProfile & {
@@ -35,6 +36,7 @@ async function getUserProfile(
     displayName: user.name ?? "",
     username: user.username ?? "",
     avatarUrl,
+    accentTheme: user.accentTheme,
   };
 }
 
@@ -110,6 +112,19 @@ async function collectRequestsWithProfiles(
     (profile): profile is FriendRequestWithProfile => profile !== null,
   );
 }
+
+export const getFriend = query({
+  args: { friendUserId: v.id("users") },
+  handler: async (ctx, { friendUserId }): Promise<UserProfile | null> => {
+    const userId = await requireAuthUserId(ctx);
+
+    if (!(await areFriends(ctx, userId, friendUserId))) {
+      return null;
+    }
+
+    return getUserProfile(ctx, friendUserId);
+  },
+});
 
 export const listFriends = query({
   args: {},

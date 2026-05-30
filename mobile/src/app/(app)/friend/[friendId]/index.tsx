@@ -16,8 +16,11 @@ import {
 
 import { DailyJourneyRow } from "@/components/journey/DailyJourneyRow";
 import { ProfilePreview } from "@/components/onboarding/ProfilePreview";
-import { getAccentTheme } from "@/lib/accent-themes";
-import { getFriendById } from "@/lib/glimt-mock-data";
+import { useFriendProfile } from "@/hooks/useFriendProfile";
+import {
+  DEFAULT_ACCENT_THEME_ID,
+  getAccentTheme,
+} from "@/lib/accent-themes";
 import { getMockJourneysWithUnlocks } from "@/lib/journey-lock";
 import { useAppColors } from "@/lib/theme";
 import { useMockUnlockStore } from "@/stores/mockUnlockStore";
@@ -32,10 +35,10 @@ export default function FriendJourneyScreen() {
   const { width: windowWidth } = useWindowDimensions();
   const { friendId } = useLocalSearchParams<{ friendId: string }>();
 
-  const friend = friendId ? getFriendById(friendId) : undefined;
-  const gradientColors = friend
-    ? getAccentTheme(friend.accentId).gradientColors
-    : undefined;
+  const { friend, isLoading } = useFriendProfile(friendId);
+  const gradientColors = getAccentTheme(
+    friend?.accentId ?? DEFAULT_ACCENT_THEME_ID,
+  ).gradientColors;
   const unlockVersion = useMockUnlockStore((s) => s.unlockedDates);
   const journeys = friendId ? getMockJourneysWithUnlocks(friendId) : [];
   void unlockVersion;
@@ -43,7 +46,7 @@ export default function FriendJourneyScreen() {
   const contentWidth = windowWidth - HORIZONTAL_PADDING * 2;
   const tileSize = (contentWidth - PREVIEW_TILE_GAP - 32) / 2;
 
-  if (!friend) {
+  if (!isLoading && !friend) {
     return (
       <SafeAreaView
         style={[styles.safeArea, { backgroundColor: colors.background }]}
@@ -77,14 +80,12 @@ export default function FriendJourneyScreen() {
 
   return (
     <View style={styles.container}>
-      {gradientColors ? (
-        <LinearGradient
-          colors={[...gradientColors]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-      ) : null}
+      <LinearGradient
+        colors={[...gradientColors]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
 
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         <View style={styles.header}>
@@ -108,9 +109,9 @@ export default function FriendJourneyScreen() {
           embedded
           onGradientBackground
           profile={{
-            displayName: friend.displayName,
-            username: friend.username,
-            avatarUri: friend.avatarUrl,
+            displayName: friend?.displayName ?? "",
+            username: friend?.username ?? "",
+            avatarUri: friend?.avatarUrl ?? null,
           }}
         />
 
@@ -147,9 +148,9 @@ export default function FriendJourneyScreen() {
             <DailyJourneyRow
               key={journey.date}
               friendId={friendId!}
-              friendAccentId={friend.accentId}
-              friendAvatarUrl={friend.avatarUrl}
-              friendDisplayName={friend.displayName}
+              friendAccentId={friend?.accentId ?? DEFAULT_ACCENT_THEME_ID}
+              friendAvatarUrl={friend?.avatarUrl ?? ""}
+              friendDisplayName={friend?.displayName ?? ""}
               date={journey.date}
               yours={journey.yours}
               theirs={journey.theirs}
