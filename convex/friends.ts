@@ -64,24 +64,52 @@ export const listIncomingRequests = query({
       )
       .collect();
 
-    const profiles = await Promise.all(
-      requests.map(async (request) => {
-        const profile = await getUserProfile(ctx, request.fromUserId);
-        if (!profile) {
-          return null;
-        }
-        return {
-          requestId: request._id,
-          ...profile,
-        };
-      }),
-    );
-
-    return profiles.filter(
-      (profile): profile is FriendRequestWithProfile => profile !== null,
-    );
+    return collectRequestsWithProfiles(ctx, requests, "fromUserId");
   },
 });
+
+export const listOutgoingRequests = query({
+  args: {},
+  handler: async (ctx): Promise<FriendRequestWithProfile[]> => {
+    const userId = await requireAuthUserId(ctx);
+
+    const requests = await ctx.db
+      .query("friendRequests")
+      .withIndex("by_from_and_status", (q) =>
+        q.eq("fromUserId", userId).eq("status", "pending"),
+      )
+      .collect();
+
+    return collectRequestsWithProfiles(ctx, requests, "toUserId");
+  },
+});
+
+async function collectRequestsWithProfiles(
+  ctx: QueryCtx,
+  requests: Array<{
+    _id: Id<"friendRequests">;
+    fromUserId: Id<"users">;
+    toUserId: Id<"users">;
+  }>,
+  profileUserIdKey: "fromUserId" | "toUserId",
+): Promise<FriendRequestWithProfile[]> {
+  const profiles = await Promise.all(
+    requests.map(async (request) => {
+      const profile = await getUserProfile(ctx, request[profileUserIdKey]);
+      if (!profile) {
+        return null;
+      }
+      return {
+        requestId: request._id,
+        ...profile,
+      };
+    }),
+  );
+
+  return profiles.filter(
+    (profile): profile is FriendRequestWithProfile => profile !== null,
+  );
+}
 
 export const listFriends = query({
   args: {},
