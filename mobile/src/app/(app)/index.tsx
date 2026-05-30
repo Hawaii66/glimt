@@ -17,7 +17,7 @@ import {
 import { GlimtTile } from "@/components/glimt/GlimtTile";
 import { getAccentTheme } from "@/lib/accent-themes";
 import { MOCK_FRIEND_GLIMTS } from "@/lib/glimt-mock-data";
-import { APP_CAPTURE, APP_SETTINGS } from "@/lib/routes";
+import { APP_CAPTURE, APP_SETTINGS, appFriendJourney } from "@/lib/routes";
 import { useAccentThemeStore } from "@/stores/accentThemeStore";
 
 const HORIZONTAL_PADDING = 24;
@@ -68,11 +68,14 @@ export default function HomeScreen() {
           { paddingTop: insets.top + 8 },
         ]}
         renderItem={({ item, index }) => (
-          <View
+          <Pressable
             style={[
               styles.listItem,
               index % NUM_COLUMNS === 0 && styles.listItemLeft,
             ]}
+            onPress={() => router.push(appFriendJourney(item.id))}
+            accessibilityRole="button"
+            accessibilityLabel={`Open journey with ${item.displayName}`}
           >
             <GlimtTile
               photoUrl={item.photoUrl}
@@ -80,7 +83,7 @@ export default function HomeScreen() {
               index={index}
               size={tileSize}
             />
-          </View>
+          </Pressable>
         )}
       />
 

@@ -25,6 +25,7 @@ import {
   MOCK_FRIEND_REQUESTS,
   type FriendRequest,
 } from "@/lib/glimt-mock-data";
+import { appFriendJourney } from "@/lib/routes";
 import { useAppColors } from "@/lib/theme";
 import { useAccentThemeStore } from "@/stores/accentThemeStore";
 import { useOnboardingStore } from "@/stores/onboardingStore";
@@ -296,15 +297,19 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
           ]}
         >
           {MOCK_FRIEND_GLIMTS.map((friend, index) => (
-            <View
+            <Pressable
               key={friend.id}
-              style={[
+              onPress={() => router.push(appFriendJourney(friend.id))}
+              style={({ pressed }) => [
                 styles.friendRow,
                 index < MOCK_FRIEND_GLIMTS.length - 1 && {
                   borderBottomWidth: StyleSheet.hairlineWidth,
                   borderBottomColor: colors.surfaceBorder,
                 },
+                pressed && styles.friendRowPressed,
               ]}
+              accessibilityRole="button"
+              accessibilityLabel={`Open journey with ${friend.displayName}`}
             >
               <Image
                 source={{ uri: friend.avatarUrl }}
@@ -321,7 +326,10 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
                   @{friend.username}
                 </Text>
               </View>
-            </View>
+              <Text style={[styles.friendChevron, { color: colors.textMuted }]}>
+                ›
+              </Text>
+            </Pressable>
           ))}
         </View>
       </View>
@@ -436,6 +444,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
+  friendRowPressed: {
+    opacity: 0.7,
+  },
   friendAvatar: {
     width: 44,
     height: 44,
@@ -452,6 +463,11 @@ const styles = StyleSheet.create({
   },
   friendUsername: {
     fontSize: 14,
+  },
+  friendChevron: {
+    fontSize: 22,
+    lineHeight: 22,
+    fontWeight: "500",
   },
   requestActions: {
     flexDirection: "row",

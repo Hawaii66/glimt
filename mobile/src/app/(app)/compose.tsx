@@ -19,6 +19,7 @@ import {
 } from "react-native-safe-area-context";
 
 import { APP_HOME } from "@/lib/routes";
+import { MOCK_FRIEND_GLIMTS } from "@/lib/glimt-mock-data";
 import { useAppColors } from "@/lib/theme";
 import { useCaptureStore } from "@/stores/captureStore";
 
@@ -38,7 +39,12 @@ export default function ComposeScreen() {
   const caption = useCaptureStore((state) => state.caption);
   const setCaption = useCaptureStore((state) => state.setCaption);
   const setLocalPhotoUri = useCaptureStore((state) => state.setLocalPhotoUri);
+  const selectedFriendId = useCaptureStore((state) => state.selectedFriendId);
+  const setSelectedFriendId = useCaptureStore((state) => state.setSelectedFriendId);
   const reset = useCaptureStore((state) => state.reset);
+  const selectedFriend = MOCK_FRIEND_GLIMTS.find(
+    (friend) => friend.id === selectedFriendId,
+  );
 
   useEffect(() => {
     const showEvent =
@@ -71,6 +77,14 @@ export default function ComposeScreen() {
   const handleSend = () => {
     reset();
     router.replace(APP_HOME);
+  };
+
+  const handleAllPress = () => {
+    setSelectedFriendId(null);
+  };
+
+  const handleFriendPress = (friendId: string) => {
+    setSelectedFriendId(selectedFriendId === friendId ? null : friendId);
   };
 
   const scrollToCaption = () => {
@@ -143,8 +157,122 @@ export default function ComposeScreen() {
             },
           ]}
         >
+          <View style={styles.sendToOneSection}>
+            <Text style={[styles.sendToOneLabel, { color: colors.textMuted }]}>
+              Send to
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.friendPickerContent}
+              keyboardShouldPersistTaps="handled"
+            >
+              <Pressable
+                style={styles.friendOption}
+                onPress={handleAllPress}
+                accessibilityRole="button"
+                accessibilityState={{ selected: selectedFriendId === null }}
+                accessibilityLabel="Send to all friends"
+              >
+                <View
+                  style={[
+                    styles.friendAvatarRing,
+                    {
+                      borderColor:
+                        selectedFriendId === null
+                          ? colors.text
+                          : colors.surfaceBorder,
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.allBubble,
+                      { backgroundColor: colors.fill },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.allBubbleText,
+                        {
+                          color:
+                            selectedFriendId === null
+                              ? colors.text
+                              : colors.textMuted,
+                        },
+                      ]}
+                    >
+                      All
+                    </Text>
+                  </View>
+                </View>
+                <Text
+                  style={[
+                    styles.friendOptionName,
+                    {
+                      color:
+                        selectedFriendId === null
+                          ? colors.text
+                          : colors.textMuted,
+                    },
+                  ]}
+                  numberOfLines={1}
+                >
+                  All
+                </Text>
+              </Pressable>
+
+              {MOCK_FRIEND_GLIMTS.map((friend) => {
+                const isSelected = friend.id === selectedFriendId;
+
+                return (
+                  <Pressable
+                    key={friend.id}
+                    style={styles.friendOption}
+                    onPress={() => handleFriendPress(friend.id)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isSelected }}
+                    accessibilityLabel={`Send to ${friend.displayName}`}
+                  >
+                    <View
+                      style={[
+                        styles.friendAvatarRing,
+                        {
+                          borderColor: isSelected
+                            ? colors.text
+                            : colors.surfaceBorder,
+                        },
+                      ]}
+                    >
+                      <Image
+                        source={{ uri: friend.avatarUrl }}
+                        style={styles.friendAvatar}
+                        contentFit="cover"
+                      />
+                    </View>
+                    <Text
+                      style={[
+                        styles.friendOptionName,
+                        {
+                          color: isSelected ? colors.text : colors.textMuted,
+                        },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {friend.displayName.split(" ")[0]}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+
           <Pressable style={styles.sendButton} onPress={handleSend}>
-            <Text style={styles.sendButtonText}>Send</Text>
+            <Text style={styles.sendButtonText}>
+              {selectedFriend
+                ? `Send to ${selectedFriend.displayName.split(" ")[0]}`
+                : "Send"}
+            </Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -220,6 +348,50 @@ const styles = StyleSheet.create({
   sendBar: {
     paddingHorizontal: 24,
     paddingTop: 8,
+    gap: 10,
+  },
+  sendToOneSection: {
+    gap: 10,
+  },
+  sendToOneLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  friendPickerContent: {
+    gap: 12,
+    paddingRight: 4,
+  },
+  friendOption: {
+    width: 64,
+    alignItems: "center",
+    gap: 6,
+  },
+  friendAvatarRing: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 2,
+    padding: 2,
+  },
+  friendAvatar: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 24,
+  },
+  allBubble: {
+    flex: 1,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  allBubbleText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  friendOptionName: {
+    fontSize: 12,
+    fontWeight: "500",
+    textAlign: "center",
   },
   sendButton: {
     backgroundColor: "#111111",

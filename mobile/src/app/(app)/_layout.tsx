@@ -45,6 +45,14 @@ export default function AppLayout() {
       <Stack.Screen name="capture" />
       <Stack.Screen name="compose" />
       <Stack.Screen name="settings" />
+      <Stack.Screen
+        name="friend/[friendId]"
+        options={{
+          contentStyle: { backgroundColor: "transparent" },
+          statusBarStyle: "light",
+          statusBarBackgroundColor: "transparent",
+        }}
+      />
     </Stack>
   );
 }

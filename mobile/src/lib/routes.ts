@@ -4,3 +4,7 @@ export const APP_HOME = "/(app)/" as Href;
 export const APP_CAPTURE = "/(app)/capture" as Href;
 export const APP_CAPTURE_COMPOSE = "/(app)/compose" as Href;
 export const APP_SETTINGS = "/(app)/settings" as Href;
+
+export function appFriendJourney(friendId: string): Href {
+  return `/(app)/friend/${friendId}` as Href;
+}
