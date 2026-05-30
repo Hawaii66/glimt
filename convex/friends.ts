@@ -4,6 +4,7 @@ import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { requireAuthUserId, validateUsername } from "./lib/auth";
 import { createFriendGroup, findGroupForUsers } from "./lib/friendGroups";
+import { prepareTodayMeetLockForGroup, todayIsoDate } from "./lib/meetLock";
 import { userError } from "./lib/userError";
 
 type UserProfile = {
@@ -210,13 +211,18 @@ export const listFriends = query({
       ),
     );
 
-    return profiles.filter((profile): profile is UserProfile => profile !== null);
+    return profiles.filter(
+      (profile): profile is UserProfile => profile !== null,
+    );
   },
 });
 
 export const getGroupForFriend = query({
   args: { friendUserId: v.id("users") },
-  handler: async (ctx, { friendUserId }): Promise<Id<"friendGroups"> | null> => {
+  handler: async (
+    ctx,
+    { friendUserId },
+  ): Promise<Id<"friendGroups"> | null> => {
     const userId = await requireAuthUserId(ctx);
 
     if (!(await areFriends(ctx, userId, friendUserId))) {
@@ -326,6 +332,7 @@ export const acceptRequest = mutation({
       respondedAt: now,
     });
 
+    const today = todayIsoDate(now);
     if (!(await areFriends(ctx, request.fromUserId, request.toUserId))) {
       await ctx.db.insert("friendships", {
         userId: request.fromUserId,
@@ -337,7 +344,11 @@ export const acceptRequest = mutation({
         friendUserId: request.fromUserId,
         createdAt: now,
       });
-      await createFriendGroup(ctx, [request.fromUserId, request.toUserId]);
+      const groupId = await createFriendGroup(ctx, [
+        request.fromUserId,
+        request.toUserId,
+      ]);
+      await prepareTodayMeetLockForGroup(ctx, groupId, today, now);
     }
   },
 });
