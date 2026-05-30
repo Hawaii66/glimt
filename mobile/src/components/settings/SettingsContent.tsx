@@ -26,6 +26,7 @@ import { getConvexErrorMessage } from "@/lib/convexError";
 import { appFriendJourney } from "@/lib/routes";
 import { useAppColors } from "@/lib/theme";
 import { useOnboardingStore } from "@/stores/onboardingStore";
+import { useSettingsFocusStore } from "@/stores/settingsFocusStore";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 
@@ -69,6 +70,8 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
   const { accentTheme, setAccentTheme } = useCurrentUserAccentTheme();
   const gradientColors = getAccentTheme(accentTheme).gradientColors;
   const resetOnboarding = useOnboardingStore((state) => state.reset);
+  const settingsFocus = useSettingsFocusStore((state) => state.focus);
+  const clearSettingsFocus = useSettingsFocusStore((state) => state.clearFocus);
   const [friendUsername, setFriendUsername] = useState("@");
   const [signingOut, setSigningOut] = useState(false);
   const [addingFriend, setAddingFriend] = useState(false);
@@ -77,6 +80,7 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
   const addFriendSectionY = useRef(0);
+  const friendRequestsSectionY = useRef(0);
 
   useEffect(() => {
     const showEvent =
@@ -105,6 +109,50 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
       });
     });
   };
+
+  const scrollToFriendRequests = () => {
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({
+        y: Math.max(0, friendRequestsSectionY.current - 16),
+        animated: true,
+      });
+    });
+  };
+
+  useEffect(() => {
+    if (settingsFocus !== "friend-requests") {
+      return;
+    }
+
+    if (incomingRequests === undefined) {
+      return;
+    }
+
+    if (incomingRequests.length === 0) {
+      clearSettingsFocus();
+      return;
+    }
+
+    const attemptScroll = () => {
+      if (friendRequestsSectionY.current > 0) {
+        scrollToFriendRequests();
+        clearSettingsFocus();
+        return true;
+      }
+      return false;
+    };
+
+    if (attemptScroll()) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      attemptScroll();
+      clearSettingsFocus();
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [settingsFocus, incomingRequests, clearSettingsFocus]);
 
   const handleFriendUsernameChange = (text: string) => {
     const withoutAt = text.replace(/^@+/, "");
@@ -305,7 +353,12 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
             <ActivityIndicator color={colors.textMuted} />
           </View>
         ) : incomingRequests.length > 0 ? (
-          <View style={styles.section}>
+          <View
+            style={styles.section}
+            onLayout={(event) => {
+              friendRequestsSectionY.current = event.nativeEvent.layout.y;
+            }}
+          >
             <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
               Friend requests
             </Text>
