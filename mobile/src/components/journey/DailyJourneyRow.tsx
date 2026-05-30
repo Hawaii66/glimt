@@ -2,7 +2,6 @@ import {
   MeetDayInfoButton,
   MeetDayInfoModal,
 } from "@/components/journey/MeetDayInfoModal";
-import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link } from "expo-router";
 import { SymbolView } from "expo-symbols";
@@ -13,7 +12,6 @@ import { JourneyGlimtImage } from "@/components/journey/JourneyGlimtImage";
 import { UserAvatar } from "@/components/UserAvatar";
 import { getAccentTheme, type AccentThemeId } from "@/lib/accent-themes";
 import { formatJourneyDate } from "@/lib/format-journey-date";
-import type { JourneyDay, JourneyGlimt } from "@/lib/journey-types";
 import {
   PHOTO_BORDER_COLOR,
   TILE_BORDER_WIDTH,
@@ -25,7 +23,12 @@ import {
   sortGlimtsChronological,
 } from "@/lib/journey-chat";
 import { resolveJourneyLockState } from "@/lib/journey-lock";
-import { MEET_DAY_LABEL, MEET_DAY_LOCKED_MESSAGE } from "@/lib/meet-day";
+import type { JourneyDay, JourneyGlimt } from "@/lib/journey-types";
+import {
+  MEET_DAY_LABEL,
+  MEET_DAY_LOCKED_MESSAGE,
+  TODAY_AND_MEET_LOCKED_MESSAGE,
+} from "@/lib/meet-day";
 import { appFriendTogetherDayUnlock } from "@/lib/routes";
 import { useAppColors } from "@/lib/theme";
 
@@ -416,8 +419,21 @@ function JourneyRowContent({
   zoomPhotoUrl?: string;
   onZoomImageLoad: (size: ImageSize) => void;
 }) {
-  const lockVariant: LockVariant = meetLocked ? "meet" : "calendar";
+  const lockVariant: LockVariant = calendarLocked
+    ? "calendar"
+    : meetLocked
+      ? "meet"
+      : "calendar";
+  const showTodayBadge = calendarLocked && !meetLocked;
+  const lockedMessage = calendarLocked
+    ? meetLocked
+      ? TODAY_AND_MEET_LOCKED_MESSAGE
+      : "Today's glimts stay sealed until the day is done."
+    : meetLocked
+      ? MEET_DAY_LOCKED_MESSAGE
+      : null;
   const [infoVisible, setInfoVisible] = useState(false);
+
   const dateHeader = (
     <View style={styles.dateHeader}>
       <View style={styles.dateHeaderLeft}>
@@ -439,27 +455,43 @@ function JourneyRowContent({
           ) : null}
         </View>
       </View>
-      {calendarLocked ? (
-        <View style={[styles.lockedBadge, { backgroundColor: colors.fill }]}>
-          <SymbolView name="lock.fill" size={11} tintColor={colors.textMuted} />
-          <Text style={[styles.lockedBadgeText, { color: colors.textMuted }]}>
-            Opens tomorrow
-          </Text>
-        </View>
-      ) : null}
-      {meetLocked ? (
-        <View style={styles.meetLockedHeaderRight}>
-          <View style={[styles.lockedBadge, { backgroundColor: colors.fill }]}>
-            <SymbolView
-              name="lock.fill"
-              size={11}
-              tintColor={colors.textMuted}
-            />
-            <Text style={[styles.lockedBadgeText, { color: colors.textMuted }]}>
-              {MEET_DAY_LABEL}
-            </Text>
-          </View>
-          <MeetDayInfoButton onPress={() => setInfoVisible(true)} />
+      {showTodayBadge || meetLocked ? (
+        <View style={styles.lockBadges}>
+          {showTodayBadge ? (
+            <View
+              style={[styles.lockedBadge, { backgroundColor: colors.fill }]}
+            >
+              <SymbolView
+                name="lock.fill"
+                size={11}
+                tintColor={colors.textMuted}
+              />
+              <Text
+                style={[styles.lockedBadgeText, { color: colors.textMuted }]}
+              >
+                Opens tomorrow
+              </Text>
+            </View>
+          ) : null}
+          {meetLocked ? (
+            <View style={styles.meetLockedHeaderRight}>
+              <View
+                style={[styles.lockedBadge, { backgroundColor: colors.fill }]}
+              >
+                <SymbolView
+                  name="lock.fill"
+                  size={11}
+                  tintColor={colors.textMuted}
+                />
+                <Text
+                  style={[styles.lockedBadgeText, { color: colors.textMuted }]}
+                >
+                  {MEET_DAY_LABEL}
+                </Text>
+              </View>
+              <MeetDayInfoButton onPress={() => setInfoVisible(true)} />
+            </View>
+          ) : null}
         </View>
       ) : null}
     </View>
@@ -504,17 +536,10 @@ function JourneyRowContent({
         ) : null}
       </View>
 
-      {calendarLocked ? (
+      {lockedMessage ? (
         <View style={styles.lockedMessage}>
           <Text style={[styles.lockedBody, { color: colors.textMuted }]}>
-            Today&apos;s glimts stay sealed until the day is done.
-          </Text>
-        </View>
-      ) : null}
-      {meetLocked ? (
-        <View style={styles.lockedMessage}>
-          <Text style={[styles.lockedBody, { color: colors.textMuted }]}>
-            {MEET_DAY_LOCKED_MESSAGE}
+            {lockedMessage}
           </Text>
         </View>
       ) : null}
@@ -557,8 +582,13 @@ export function DailyJourneyRow({
     meetLock,
     unlockedAt,
   };
-  const { calendarLocked, meetLocked, rowLocked, canNavigateToDay } =
-    resolveJourneyLockState(journey);
+  const {
+    calendarLocked,
+    meetLocked,
+    rowLocked,
+    canNavigateToDay,
+    showUnlockButton,
+  } = resolveJourneyLockState(journey);
   const accentColor = getAccentTheme(friendAccentId).gradientColors[0];
   const [pressed, setPressed] = useState(false);
   const [zoomImageSize, setZoomImageSize] = useState<ImageSize | null>(null);
@@ -589,7 +619,7 @@ export function DailyJourneyRow({
       calendarLocked={calendarLocked}
       meetLocked={meetLocked}
       rowLocked={rowLocked}
-      showUnlockButton={meetLocked}
+      showUnlockButton={showUnlockButton}
       colors={colors}
       accentColor={accentColor}
       zoomPhotoUrl={zoomPhotoUrl}
@@ -662,6 +692,15 @@ const styles = StyleSheet.create({
   },
   friendName: {
     fontSize: 13,
+  },
+  lockBadges: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
+    gap: 6,
+    flexShrink: 1,
+    maxWidth: "52%",
   },
   meetLockedHeaderRight: {
     flexDirection: "row",
