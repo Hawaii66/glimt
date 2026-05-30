@@ -17,12 +17,9 @@ import {
 import { DailyJourneyRow } from "@/components/journey/DailyJourneyRow";
 import { ProfilePreview } from "@/components/onboarding/ProfilePreview";
 import { getAccentTheme } from "@/lib/accent-themes";
-import {
-  getFriendById,
-  getMockJourneysForFriend,
-} from "@/lib/glimt-mock-data";
-import { useAccentThemeStore } from "@/stores/accentThemeStore";
+import { getFriendById, getMockJourneysForFriend } from "@/lib/glimt-mock-data";
 import { useAppColors } from "@/lib/theme";
+import { useAccentThemeStore } from "@/stores/accentThemeStore";
 
 const HORIZONTAL_PADDING = 24;
 const PREVIEW_TILE_GAP = 12;
@@ -143,6 +140,9 @@ export default function FriendJourneyScreen() {
           journeys.map((journey) => (
             <DailyJourneyRow
               key={journey.date}
+              friendId={friendId!}
+              friendAvatarUrl={friend.avatarUrl}
+              friendDisplayName={friend.displayName}
               date={journey.date}
               yours={journey.yours}
               theirs={journey.theirs}

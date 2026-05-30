@@ -8,3 +8,7 @@ export const APP_SETTINGS = "/(app)/settings" as Href;
 export function appFriendJourney(friendId: string): Href {
   return `/(app)/friend/${friendId}` as Href;
 }
+
+export function appFriendJourneyDay(friendId: string, date: string): Href {
+  return `/(app)/friend/${friendId}/day/${date}` as Href;
+}

@@ -46,11 +46,17 @@ export default function AppLayout() {
       <Stack.Screen name="compose" />
       <Stack.Screen name="settings" />
       <Stack.Screen
-        name="friend/[friendId]"
+        name="friend/[friendId]/index"
         options={{
           contentStyle: { backgroundColor: "transparent" },
           statusBarStyle: "light",
           statusBarBackgroundColor: "transparent",
+        }}
+      />
+      <Stack.Screen
+        name="friend/[friendId]/day/[date]"
+        options={{
+          headerShown: false,
         }}
       />
     </Stack>

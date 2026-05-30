@@ -1,8 +1,11 @@
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
+import { Link } from "expo-router";
 import { SymbolView } from "expo-symbols";
+import { useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
+import { JourneyGlimtImage } from "@/components/journey/JourneyGlimtImage";
 import { getAccentTheme } from "@/lib/accent-themes";
 import { formatJourneyDate, isJourneyLocked } from "@/lib/format-journey-date";
 import type { DailyJourneyGlimt } from "@/lib/glimt-mock-data";
@@ -11,23 +14,29 @@ import {
   TILE_BORDER_WIDTH,
   TILE_CORNER_RADIUS,
 } from "@/lib/glimt-tile-styles";
+import { getFirstGlimt } from "@/lib/journey-chat";
 import { useAppColors } from "@/lib/theme";
 import { useAccentThemeStore } from "@/stores/accentThemeStore";
 
 type DailyJourneyRowProps = {
+  friendId: string;
+  friendAvatarUrl: string;
+  friendDisplayName: string;
   date: string;
   yours?: DailyJourneyGlimt[];
   theirs?: DailyJourneyGlimt[];
   tileSize: number;
-  onPress?: () => void;
 };
 
 const INWARD_TILT = 1;
 const LOCKED_CONNECTOR_SIZE = 36;
 const STACK_OFFSET = 8;
 const COUNT_INSET = 2;
+const AVATAR_CHIP_SIZE = 28;
 
 const BACK_ROTATION_OFFSETS = [-3, -1.5, -4, -2] as const;
+
+type ImageSize = { width: number; height: number };
 
 function stackRotation(
   baseTilt: number,
@@ -154,18 +163,18 @@ function GlimtPhotoTile({
   tilt,
   stackIndex = 0,
   showCount,
+  enableZoom = false,
+  onImageLoad,
 }: {
   glimt: DailyJourneyGlimt;
   tileSize: number;
   tilt: `${number}deg`;
   stackIndex?: number;
   showCount?: number;
+  enableZoom?: boolean;
+  onImageLoad?: (size: ImageSize) => void;
 }) {
-  const innerRadius = TILE_CORNER_RADIUS - TILE_BORDER_WIDTH;
-  const compactBorderWidth = Math.max(4, TILE_BORDER_WIDTH - 2);
-  const photoSize = tileSize - compactBorderWidth * 2;
-
-  return (
+  const tile = (
     <View
       style={[
         styles.previewTileWrapper,
@@ -177,47 +186,22 @@ function GlimtPhotoTile({
         },
       ]}
     >
-      <View
-        style={[
-          styles.previewTile,
-          {
-            width: tileSize,
-            height: tileSize,
-            borderRadius: TILE_CORNER_RADIUS,
-            padding: compactBorderWidth,
-            backgroundColor: PHOTO_BORDER_COLOR,
-          },
-        ]}
-      >
-        <View
-          style={[
-            styles.tileContent,
-            {
-              width: photoSize,
-              height: photoSize,
-              borderRadius: innerRadius,
-            },
-          ]}
-        >
-          <Image
-            source={{ uri: glimt.photoUrl }}
-            style={[
-              styles.previewPhoto,
-              {
-                width: photoSize,
-                height: photoSize,
-                borderRadius: innerRadius,
-              },
-            ]}
-            contentFit="cover"
-          />
-          {showCount !== undefined ? (
-            <GlimtCountLabel count={showCount} />
-          ) : null}
-        </View>
+      <View style={[styles.tileContent, { width: tileSize, height: tileSize }]}>
+        <JourneyGlimtImage
+          photoUrl={glimt.photoUrl}
+          size={tileSize}
+          onLoad={onImageLoad}
+        />
+        {showCount !== undefined ? <GlimtCountLabel count={showCount} /> : null}
       </View>
     </View>
   );
+
+  if (enableZoom) {
+    return <Link.AppleZoom>{tile}</Link.AppleZoom>;
+  }
+
+  return tile;
 }
 
 function EmptyGlimtTile({
@@ -286,17 +270,20 @@ function JourneyGlimtStack({
   tileSize,
   baseTilt,
   locked = false,
+  onTopImageLoad,
 }: {
   glimts?: DailyJourneyGlimt[];
   tileSize: number;
   baseTilt: number;
   locked?: boolean;
+  onTopImageLoad?: (size: ImageSize) => void;
 }) {
   const colors = useAppColors();
   const count = glimts?.length ?? 0;
   const stackHeight =
     count > 1 ? tileSize + (count - 1) * STACK_OFFSET : tileSize;
   const horizontalNudge = baseTilt > 0 ? 1 : -1;
+  const topGlimt = getFirstGlimt(glimts);
 
   if (locked) {
     return (
@@ -324,33 +311,38 @@ function JourneyGlimtStack({
     );
   }
 
-  const latestCaption = glimts![count - 1]?.caption;
+  const latestCaption = topGlimt?.caption;
   const captionText = latestCaption ?? "No caption";
 
   return (
     <View style={styles.previewColumn}>
       <View style={[styles.stack, { width: tileSize, height: stackHeight }]}>
-        {glimts!.map((glimt, index) => (
-          <View
-            key={`${glimt.photoUrl}-${index}`}
-            style={[
-              styles.stackLayer,
-              {
-                top: index * STACK_OFFSET,
-                left: index * horizontalNudge * 3,
-                zIndex: index,
-              },
-            ]}
-          >
-            <GlimtPhotoTile
-              glimt={glimt}
-              tileSize={tileSize}
-              tilt={stackRotation(baseTilt, index, count)}
-              stackIndex={index}
-              showCount={index === count - 1 ? count : undefined}
-            />
-          </View>
-        ))}
+        {glimts!.map((glimt, index) => {
+          const isTop = index === count - 1;
+          return (
+            <View
+              key={`${glimt.photoUrl}-${index}`}
+              style={[
+                styles.stackLayer,
+                {
+                  top: index * STACK_OFFSET,
+                  left: index * horizontalNudge * 3,
+                  zIndex: index,
+                },
+              ]}
+            >
+              <GlimtPhotoTile
+                glimt={glimt}
+                tileSize={tileSize}
+                tilt={stackRotation(baseTilt, index, count)}
+                stackIndex={index}
+                showCount={isTop ? count : undefined}
+                enableZoom={isTop}
+                onImageLoad={isTop ? onTopImageLoad : undefined}
+              />
+            </View>
+          );
+        })}
       </View>
       <Text style={[styles.caption, { color: colors.text }]} numberOfLines={2}>
         {captionText}
@@ -359,49 +351,76 @@ function JourneyGlimtStack({
   );
 }
 
-export function DailyJourneyRow({
+function JourneyRowContent({
+  friendAvatarUrl,
+  friendDisplayName,
   date,
   yours,
   theirs,
   tileSize,
-  onPress,
-}: DailyJourneyRowProps) {
-  const colors = useAppColors();
-  const locked = isJourneyLocked(date, yours, theirs);
-  const accentId = useAccentThemeStore((state) => state.accentId);
-  const accentColor = getAccentTheme(accentId).gradientColors[0];
+  locked,
+  colors,
+  accentColor,
+  onYoursImageLoad,
+  onTheirsImageLoad,
+}: {
+  friendAvatarUrl: string;
+  friendDisplayName: string;
+  date: string;
+  yours?: DailyJourneyGlimt[];
+  theirs?: DailyJourneyGlimt[];
+  tileSize: number;
+  locked: boolean;
+  colors: ReturnType<typeof useAppColors>;
+  accentColor: string;
+  onYoursImageLoad: (size: ImageSize) => void;
+  onTheirsImageLoad: (size: ImageSize) => void;
+}) {
+  const dateHeader = (
+    <View style={styles.dateHeader}>
+      <View style={styles.dateHeaderLeft}>
+        {!locked ? (
+          <Link.AppleZoom>
+            <View style={styles.avatarChip}>
+              <Image
+                source={{ uri: friendAvatarUrl }}
+                style={styles.avatarChipImage}
+              />
+            </View>
+          </Link.AppleZoom>
+        ) : (
+          <View style={styles.avatarChip}>
+            <Image
+              source={{ uri: friendAvatarUrl }}
+              style={styles.avatarChipImage}
+            />
+          </View>
+        )}
+        <View style={styles.dateHeaderText}>
+          <Text style={[styles.dateLabel, { color: colors.text }]}>
+            {formatJourneyDate(date)}
+          </Text>
+          {!locked ? (
+            <Text style={[styles.friendName, { color: colors.textMuted }]}>
+              {friendDisplayName}
+            </Text>
+          ) : null}
+        </View>
+      </View>
+      {locked ? (
+        <View style={[styles.lockedBadge, { backgroundColor: colors.fill }]}>
+          <SymbolView name="lock.fill" size={11} tintColor={colors.textMuted} />
+          <Text style={[styles.lockedBadgeText, { color: colors.textMuted }]}>
+            Opens tomorrow
+          </Text>
+        </View>
+      ) : null}
+    </View>
+  );
 
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={!onPress || locked}
-      style={({ pressed }) => [
-        styles.row,
-        locked && styles.rowLocked,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.surfaceBorder,
-          opacity: pressed && onPress && !locked ? 0.92 : 1,
-        },
-      ]}
-    >
-      <View style={styles.dateHeader}>
-        <Text style={[styles.dateLabel, { color: colors.text }]}>
-          {formatJourneyDate(date)}
-        </Text>
-        {locked ? (
-          <View style={[styles.lockedBadge, { backgroundColor: colors.fill }]}>
-            <SymbolView
-              name="lock.fill"
-              size={11}
-              tintColor={colors.textMuted}
-            />
-            <Text style={[styles.lockedBadgeText, { color: colors.textMuted }]}>
-              Opens tomorrow
-            </Text>
-          </View>
-        ) : null}
-      </View>
+    <>
+      {dateHeader}
 
       <View style={[styles.tilesArea, { minHeight: tileSize }]}>
         <View style={styles.previewRow}>
@@ -410,12 +429,14 @@ export function DailyJourneyRow({
             tileSize={tileSize}
             baseTilt={INWARD_TILT}
             locked={locked}
+            onTopImageLoad={onYoursImageLoad}
           />
           <JourneyGlimtStack
             glimts={theirs}
             tileSize={tileSize}
             baseTilt={-INWARD_TILT}
             locked={locked}
+            onTopImageLoad={onTheirsImageLoad}
           />
         </View>
 
@@ -431,7 +452,86 @@ export function DailyJourneyRow({
           </Text>
         </View>
       ) : null}
-    </Pressable>
+    </>
+  );
+}
+
+export function DailyJourneyRow({
+  friendId,
+  friendAvatarUrl,
+  friendDisplayName,
+  date,
+  yours,
+  theirs,
+  tileSize,
+}: DailyJourneyRowProps) {
+  const colors = useAppColors();
+  const locked = isJourneyLocked(date, yours, theirs);
+  const accentId = useAccentThemeStore((state) => state.accentId);
+  const accentColor = getAccentTheme(accentId).gradientColors[0];
+  const [pressed, setPressed] = useState(false);
+  const [yoursImageSize, setYoursImageSize] = useState<ImageSize | null>(null);
+  const [theirsImageSize, setTheirsImageSize] = useState<ImageSize | null>(
+    null,
+  );
+
+  const rowStyle = StyleSheet.flatten([
+    styles.row,
+    locked && styles.rowLocked,
+    {
+      backgroundColor: colors.surface,
+      borderColor: colors.surfaceBorder,
+      opacity: pressed && !locked ? 0.92 : 1,
+    },
+  ]);
+
+  const content = (
+    <JourneyRowContent
+      friendAvatarUrl={friendAvatarUrl}
+      friendDisplayName={friendDisplayName}
+      date={date}
+      yours={yours}
+      theirs={theirs}
+      tileSize={tileSize}
+      locked={locked}
+      colors={colors}
+      accentColor={accentColor}
+      onYoursImageLoad={setYoursImageSize}
+      onTheirsImageLoad={setTheirsImageSize}
+    />
+  );
+
+  if (locked) {
+    return (
+      <Pressable disabled style={rowStyle}>
+        {content}
+      </Pressable>
+    );
+  }
+
+  return (
+    <Link
+      href={{
+        pathname: "/(app)/friend/[friendId]/day/[date]",
+        params: {
+          friendId,
+          date,
+          yoursWidth: yoursImageSize?.width?.toString(),
+          yoursHeight: yoursImageSize?.height?.toString(),
+          theirsWidth: theirsImageSize?.width?.toString(),
+          theirsHeight: theirsImageSize?.height?.toString(),
+        },
+      }}
+      asChild
+    >
+      <Pressable
+        style={rowStyle}
+        onPressIn={() => setPressed(true)}
+        onPressOut={() => setPressed(false)}
+      >
+        {content}
+      </Pressable>
+    </Link>
   );
 }
 
@@ -451,9 +551,32 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 12,
   },
+  dateHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+  },
+  dateHeaderText: {
+    flex: 1,
+    gap: 2,
+  },
+  avatarChip: {
+    width: AVATAR_CHIP_SIZE,
+    height: AVATAR_CHIP_SIZE,
+    borderRadius: AVATAR_CHIP_SIZE / 2,
+    overflow: "hidden",
+  },
+  avatarChipImage: {
+    width: "100%",
+    height: "100%",
+  },
   dateLabel: {
     fontSize: 17,
     fontWeight: "700",
+  },
+  friendName: {
+    fontSize: 13,
   },
   lockedBadge: {
     flexDirection: "row",
@@ -516,9 +639,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   tileContent: {
-    overflow: "hidden",
-  },
-  previewPhoto: {
+    position: "relative",
     overflow: "hidden",
   },
   emptyTile: {
