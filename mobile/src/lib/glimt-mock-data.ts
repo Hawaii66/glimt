@@ -1,4 +1,9 @@
 import type { AccentThemeId } from "@/lib/accent-themes";
+import type { JourneyDay, JourneyGlimt } from "@/lib/journey-types";
+
+export type { JourneyDay, JourneyGlimt };
+export type DailyJourneyGlimt = JourneyGlimt;
+export type DailyJourney = JourneyDay;
 
 export type FriendGlimt = {
   id: string;
@@ -14,20 +19,6 @@ export type FriendRequest = {
   displayName: string;
   username: string;
   avatarUrl: string;
-};
-
-export type DailyJourneyGlimt = {
-  photoUrl: string;
-  caption?: string;
-  sentAt: string;
-};
-
-export type DailyJourney = {
-  date: string;
-  yours?: DailyJourneyGlimt[];
-  theirs?: DailyJourneyGlimt[];
-  meetLock?: boolean;
-  unlockedAt?: number;
 };
 
 export const MOCK_FRIEND_REQUESTS: FriendRequest[] = [

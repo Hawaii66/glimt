@@ -1,6 +1,7 @@
+import { useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import {
   SafeAreaView,
@@ -9,10 +10,12 @@ import {
 
 import { JourneyDayChat } from "@/components/journey/JourneyDayChat";
 import { useFriendProfile } from "@/hooks/useFriendProfile";
-import { getJourneyByDate } from "@/lib/journey-chat";
+import { toJourneyDay } from "@/lib/journal-adapters";
 import { resolveJourneyLockState } from "@/lib/journey-lock";
 import { useAppColors } from "@/lib/theme";
 import { useMockUnlockStore } from "@/stores/mockUnlockStore";
+import { api } from "convex/_generated/api";
+import type { Id } from "convex/_generated/dataModel";
 
 export default function JourneyDayScreen() {
   const router = useRouter();
@@ -27,9 +30,21 @@ export default function JourneyDayScreen() {
     friendId && date ? s.isUnlocked(friendId, date) : false,
   );
 
-  const { friend, isLoading } = useFriendProfile(friendId);
-  const journey =
-    friendId && date ? getJourneyByDate(friendId, date) : undefined;
+  const { friend, isLoading: friendLoading } = useFriendProfile(friendId);
+  const apiDay = useQuery(
+    api.journals.getDayForFriend,
+    friendId && date
+      ? {
+          friendUserId: friendId as Id<"users">,
+          date,
+        }
+      : "skip",
+  );
+
+  const journey = useMemo(
+    () => (apiDay ? toJourneyDay(apiDay) : undefined),
+    [apiDay],
+  );
 
   const blocked =
     journey && friendId && date
@@ -38,10 +53,12 @@ export default function JourneyDayScreen() {
       : true;
 
   useEffect(() => {
-    if (blocked) {
+    if (blocked && apiDay !== undefined) {
       router.back();
     }
-  }, [blocked, router]);
+  }, [blocked, router, apiDay]);
+
+  const isLoading = friendLoading || apiDay === undefined;
 
   if (isLoading || !friend || !journey || !date || blocked) {
     if (isLoading) {

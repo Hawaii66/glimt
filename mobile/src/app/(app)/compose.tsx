@@ -22,6 +22,7 @@ import {
 
 import { UserAvatar } from "@/components/UserAvatar";
 import { getConvexErrorMessage } from "@/lib/convexError";
+import { todayIsoDate } from "@/lib/format-journey-date";
 import { APP_HOME } from "@/lib/routes";
 import { uploadGlimtPhotoToStorage } from "@/lib/uploadGlimtPhoto";
 import { useAppColors } from "@/lib/theme";
@@ -120,6 +121,7 @@ export default function ComposeScreen() {
         friendUserId: selectedFriendId
           ? (selectedFriendId as Id<"users">)
           : undefined,
+        dayDate: todayIsoDate(),
       });
 
       const recipientName = selectedFriend?.displayName.split(" ")[0];
