@@ -4,10 +4,12 @@ import type { QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { requireAuthUserId } from "./lib/auth";
 import {
+  getOrCreateFriendGroupForUsers,
   requireGroupMember,
   validateDayDate,
   validateEmoji,
 } from "./lib/friendGroups";
+import { userError } from "./lib/userError";
 
 type JournalEntry = {
   id: Id<"journalEntries">;
@@ -27,6 +29,14 @@ type JournalDay = {
 
 function dayDateFromTimestamp(timestamp: number) {
   return new Date(timestamp).toISOString().slice(0, 10);
+}
+
+function normalizeCaption(caption: string | undefined) {
+  const trimmedCaption = caption?.trim();
+  if (trimmedCaption && trimmedCaption.length > 30) {
+    throw new Error("Caption must be 30 characters or fewer.");
+  }
+  return trimmedCaption || undefined;
 }
 
 async function enrichEntry(
@@ -174,10 +184,7 @@ export const addEntry = mutation({
     const userId = await requireAuthUserId(ctx);
     await requireGroupMember(ctx, groupId, userId);
 
-    const trimmedCaption = caption?.trim();
-    if (trimmedCaption && trimmedCaption.length > 30) {
-      throw new Error("Caption must be 30 characters or fewer.");
-    }
+    const normalizedCaption = normalizeCaption(caption);
 
     const sentAt = Date.now();
     const normalizedDayDate = dayDate
@@ -188,10 +195,92 @@ export const addEntry = mutation({
       groupId,
       authorUserId: userId,
       photoStorageId,
-      caption: trimmedCaption || undefined,
+      caption: normalizedCaption,
       sentAt,
       dayDate: normalizedDayDate,
     });
+  },
+});
+
+export const generatePhotoUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    await requireAuthUserId(ctx);
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+export const sendGlimt = mutation({
+  args: {
+    photoStorageId: v.id("_storage"),
+    caption: v.optional(v.string()),
+    friendUserId: v.optional(v.id("users")),
+  },
+  handler: async (ctx, { photoStorageId, caption, friendUserId }) => {
+    const userId = await requireAuthUserId(ctx);
+    const normalizedCaption = normalizeCaption(caption);
+
+    let targetFriendIds: Id<"users">[];
+
+    if (friendUserId) {
+      if (friendUserId === userId) {
+        userError("You cannot send a glimt to yourself.");
+      }
+
+      const friendship = await ctx.db
+        .query("friendships")
+        .withIndex("by_user_and_friend", (q) =>
+          q.eq("userId", userId).eq("friendUserId", friendUserId),
+        )
+        .unique();
+
+      if (!friendship) {
+        userError("You can only send glimts to accepted friends.");
+      }
+
+      targetFriendIds = [friendUserId];
+    } else {
+      const friendships = await ctx.db
+        .query("friendships")
+        .withIndex("by_user", (q) => q.eq("userId", userId))
+        .collect();
+
+      targetFriendIds = friendships.map(
+        (friendship) => friendship.friendUserId,
+      );
+
+      if (targetFriendIds.length === 0) {
+        userError("Add a friend first.");
+      }
+    }
+
+    const sentAt = Date.now();
+    const dayDate = dayDateFromTimestamp(sentAt);
+    const entryIds: Id<"journalEntries">[] = [];
+
+    for (const targetFriendId of targetFriendIds) {
+      const groupId = await getOrCreateFriendGroupForUsers(
+        ctx,
+        userId,
+        targetFriendId,
+      );
+
+      const entryId = await ctx.db.insert("journalEntries", {
+        groupId,
+        authorUserId: userId,
+        photoStorageId,
+        caption: normalizedCaption,
+        sentAt,
+        dayDate,
+      });
+
+      entryIds.push(entryId);
+    }
+
+    return {
+      entryIds,
+      recipientCount: targetFriendIds.length,
+    };
   },
 });
 
