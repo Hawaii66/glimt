@@ -16,7 +16,7 @@ export function resolveJourneyLockState(
   showUnlockButton: boolean;
 } {
   const calendarLocked = isCalendarLocked(journey.date, now);
-  const meetLocked = !calendarLocked && isMeetLocked(journey);
+  const meetLocked = isMeetLocked(journey);
   const rowLocked = isRowLocked(journey, journey.date, now);
 
   return {
@@ -24,6 +24,6 @@ export function resolveJourneyLockState(
     meetLocked,
     rowLocked,
     canNavigateToDay: !rowLocked,
-    showUnlockButton: meetLocked,
+    showUnlockButton: meetLocked && !calendarLocked,
   };
 }

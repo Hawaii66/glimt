@@ -4,6 +4,9 @@ export const MEET_DAY_LABEL = "Meet to view";
 export const MEET_DAY_LOCKED_MESSAGE =
   "Glimts stay hidden until you see each other in person.";
 
+export const TODAY_AND_MEET_LOCKED_MESSAGE =
+  "Stays sealed until tomorrow — meet in person to unlock your glimts.";
+
 export const MEET_DAY_INFO_TITLE = "Meet to view";
 
 export const MEET_DAY_INFO_BODY = [
