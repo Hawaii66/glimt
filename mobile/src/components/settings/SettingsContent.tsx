@@ -3,10 +3,13 @@ import { useMutation, useQuery } from "convex/react";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -21,6 +24,7 @@ import {
   getAccentTheme,
   type AccentThemeId,
 } from "@/lib/accent-themes";
+import { getConvexErrorMessage } from "@/lib/convexError";
 import { appFriendJourney } from "@/lib/routes";
 import { useAppColors } from "@/lib/theme";
 import { useAccentThemeStore } from "@/stores/accentThemeStore";
@@ -75,6 +79,37 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
   const [addingFriend, setAddingFriend] = useState(false);
   const [respondingRequestId, setRespondingRequestId] =
     useState<Id<"friendRequests"> | null>(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const scrollRef = useRef<ScrollView>(null);
+  const addFriendSectionY = useRef(0);
+
+  useEffect(() => {
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const showSubscription = Keyboard.addListener(showEvent, (event) => {
+      setKeyboardHeight(event.endCoordinates.height);
+    });
+    const hideSubscription = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
+  const scrollToAddFriend = () => {
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({
+        y: Math.max(0, addFriendSectionY.current - 16),
+        animated: true,
+      });
+    });
+  };
 
   const handleFriendUsernameChange = (text: string) => {
     const withoutAt = text.replace(/^@+/, "");
@@ -96,11 +131,10 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
         `Your friend request to @${normalized} was sent.`,
       );
     } catch (addError) {
-      const message =
-        addError instanceof Error
-          ? addError.message
-          : "Could not send friend request.";
-      Alert.alert("Could not add friend", message);
+      Alert.alert(
+        "Could not add friend",
+        getConvexErrorMessage(addError, "Could not send friend request."),
+      );
     } finally {
       setAddingFriend(false);
     }
@@ -119,11 +153,10 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
       await acceptFriendRequest({ requestId: request.requestId });
       Alert.alert("Friend added", `${request.displayName} is now on your list.`);
     } catch (acceptError) {
-      const message =
-        acceptError instanceof Error
-          ? acceptError.message
-          : "Could not accept friend request.";
-      Alert.alert("Could not accept", message);
+      Alert.alert(
+        "Could not accept",
+        getConvexErrorMessage(acceptError, "Could not accept friend request."),
+      );
     } finally {
       setRespondingRequestId(null);
     }
@@ -138,11 +171,10 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
     try {
       await declineFriendRequest({ requestId });
     } catch (declineError) {
-      const message =
-        declineError instanceof Error
-          ? declineError.message
-          : "Could not decline friend request.";
-      Alert.alert("Could not decline", message);
+      Alert.alert(
+        "Could not decline",
+        getConvexErrorMessage(declineError, "Could not decline friend request."),
+      );
     } finally {
       setRespondingRequestId(null);
     }
@@ -163,12 +195,28 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
   };
 
   return (
-    <ScrollView
-      style={[styles.scroll, scrollMaxHeight != null && { maxHeight: scrollMaxHeight }]}
-      contentContainerStyle={styles.scrollContent}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
+    <KeyboardAvoidingView
+      style={[
+        styles.keyboardAvoid,
+        scrollMaxHeight != null && { maxHeight: scrollMaxHeight },
+      ]}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scroll}
+        contentContainerStyle={[
+          styles.scrollContent,
+          scrollMaxHeight == null && styles.scrollContentGrow,
+          { paddingBottom: 32 + keyboardHeight },
+        ]}
+        automaticallyAdjustKeyboardInsets
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode={
+          Platform.OS === "ios" ? "interactive" : "on-drag"
+        }
+        showsVerticalScrollIndicator={false}
+      >
       <Text style={[styles.pageTitle, { color: colors.text }]}>Settings</Text>
 
       <LinearGradient
@@ -238,7 +286,12 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
         </View>
       </View>
 
-      <View style={styles.section}>
+      <View
+        style={styles.section}
+        onLayout={(event) => {
+          addFriendSectionY.current = event.nativeEvent.layout.y;
+        }}
+      >
         <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
           Add friend
         </Text>
@@ -260,6 +313,7 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
             autoCorrect={false}
             returnKeyType="done"
             onSubmitEditing={handleAddFriend}
+            onFocus={scrollToAddFriend}
           />
           <Pressable
             style={[
@@ -448,20 +502,26 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
           {signingOut ? "Signing out…" : "Sign out"}
         </Text>
       </Pressable>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const THEME_PREVIEW_SIZE = 52;
 
 const styles = StyleSheet.create({
+  keyboardAvoid: {
+    flex: 1,
+  },
   scroll: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingBottom: 32,
     gap: 24,
+  },
+  scrollContentGrow: {
+    flexGrow: 1,
   },
   pageTitle: {
     fontSize: 22,
