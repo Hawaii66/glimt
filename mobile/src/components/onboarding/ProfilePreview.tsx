@@ -1,6 +1,6 @@
-import { Image } from "expo-image";
 import { StyleSheet, Text, View } from "react-native";
 
+import { UserAvatar } from "@/components/UserAvatar";
 import { useOnboardingStore } from "@/stores/onboardingStore";
 import { useAppColors } from "@/lib/theme";
 
@@ -43,23 +43,21 @@ export function ProfilePreview({
     ? "rgba(255, 255, 255, 0.25)"
     : colors.fill;
   const avatarBorder = onGradientBackground ? "#FFFFFF" : colors.surfaceBorder;
+  const avatarInitialsColor = onGradientBackground ? "#FFFFFF" : colors.textMuted;
+  const avatarSize = embedded ? 88 : 96;
 
   return (
     <View style={[styles.container, embedded && styles.containerEmbedded]}>
-      <View
-        style={[
-          styles.avatar,
-          embedded && styles.avatarEmbedded,
-          {
-            backgroundColor: avatarBackground,
-            borderColor: avatarBorder,
-          },
-        ]}
-      >
-        {avatarUri ? (
-          <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
-        ) : null}
-      </View>
+      <UserAvatar
+        imageUri={avatarUri}
+        displayName={displayName?.trim() ?? ""}
+        size={avatarSize}
+        style={{ marginBottom: embedded ? 4 : 8 }}
+        backgroundColor={avatarBackground}
+        borderColor={avatarBorder}
+        borderWidth={1}
+        initialsColor={avatarInitialsColor}
+      />
 
       <Text style={[styles.username, { color: usernameColor }]}>
         {showUsername
@@ -86,24 +84,6 @@ const styles = StyleSheet.create({
     flex: 0,
     paddingHorizontal: 0,
     paddingVertical: 4,
-  },
-  avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 1,
-    overflow: "hidden",
-    marginBottom: 8,
-  },
-  avatarEmbedded: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    marginBottom: 4,
-  },
-  avatarImage: {
-    width: "100%",
-    height: "100%",
   },
   username: {
     fontSize: 15,

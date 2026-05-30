@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
-import { SymbolView } from "expo-symbols";
 import { Platform, StyleSheet, View } from "react-native";
 
+import { UserAvatar } from "@/components/UserAvatar";
 import {
   AVATAR_OFFSET,
   AVATAR_SIZE,
@@ -15,6 +15,7 @@ import {
 type GlimtTileProps = {
   photoUrl: string;
   avatarUrl?: string;
+  displayName: string;
   index: number;
   size?: number;
 };
@@ -22,6 +23,7 @@ type GlimtTileProps = {
 export function GlimtTile({
   photoUrl,
   avatarUrl,
+  displayName,
   index,
   size = 280,
 }: GlimtTileProps) {
@@ -76,19 +78,13 @@ export function GlimtTile({
           },
         ]}
       >
-        {avatarUrl ? (
-          <Image
-            source={{ uri: avatarUrl }}
-            style={styles.avatarImage}
-            contentFit="cover"
-          />
-        ) : (
-          <SymbolView
-            name="person.circle.fill"
-            size={AVATAR_SIZE}
-            tintColor={PHOTO_BORDER_COLOR}
-          />
-        )}
+        <UserAvatar
+          imageUri={avatarUrl}
+          displayName={displayName}
+          size={AVATAR_SIZE - 2}
+          backgroundColor="#F5F0EB"
+          initialsColor="#6B6560"
+        />
       </View>
     </View>
   );
@@ -122,10 +118,5 @@ const styles = StyleSheet.create({
       },
       default: {},
     }),
-  },
-  avatarImage: {
-    width: "100%",
-    height: "100%",
-    borderRadius: AVATAR_SIZE / 2,
   },
 });

@@ -1,5 +1,4 @@
 import { useQuery } from "convex/react";
-import { Image } from "expo-image";
 import { Link } from "expo-router";
 import {
   ScrollView,
@@ -11,6 +10,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { JourneyGlimtImage } from "@/components/journey/JourneyGlimtImage";
+import { UserAvatar } from "@/components/UserAvatar";
 import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
 import { getAccentTheme, type AccentThemeId } from "@/lib/accent-themes";
 import { formatGlimtSentTime } from "@/lib/format-glimt-time";
@@ -56,12 +56,13 @@ function ChatHeader({
   return (
     <View style={styles.chatHeader}>
       <View style={styles.chatHeaderAvatarWrap}>
-        <Image
-          source={{ uri: friendAvatarUrl }}
-          style={[
-            styles.chatHeaderAvatar,
-            { borderColor: colors.surfaceBorder },
-          ]}
+        <UserAvatar
+          imageUri={friendAvatarUrl || null}
+          displayName={friendDisplayName}
+          size={56}
+          backgroundColor={colors.fill}
+          borderColor={colors.surfaceBorder}
+          borderWidth={1}
         />
       </View>
       <Text style={[styles.chatHeaderName, { color: colors.text }]}>
@@ -78,7 +79,9 @@ function ChatMessageBubble({
   message,
   isZoomTarget,
   friendAvatarUrl,
+  friendDisplayName,
   currentUserAvatarUrl,
+  currentUserDisplayName,
   bubbleMaxWidth,
   yoursBubbleColor,
   theirsBubbleColor,
@@ -86,7 +89,9 @@ function ChatMessageBubble({
   message: JourneyChatMessage;
   isZoomTarget: boolean;
   friendAvatarUrl: string;
+  friendDisplayName: string;
   currentUserAvatarUrl?: string | null;
+  currentUserDisplayName: string;
   bubbleMaxWidth: number;
   yoursBubbleColor: string;
   theirsBubbleColor: string;
@@ -108,7 +113,12 @@ function ChatMessageBubble({
       ]}
     >
       {!isYours ? (
-        <Image source={{ uri: friendAvatarUrl }} style={styles.messageAvatar} />
+        <UserAvatar
+          imageUri={friendAvatarUrl || null}
+          displayName={friendDisplayName}
+          size={AVATAR_SIZE}
+          backgroundColor={colors.fill}
+        />
       ) : null}
 
       <View
@@ -147,13 +157,13 @@ function ChatMessageBubble({
         </Text>
       </View>
 
-      {isYours && currentUserAvatarUrl ? (
-        <Image
-          source={{ uri: currentUserAvatarUrl }}
-          style={styles.messageAvatar}
+      {isYours ? (
+        <UserAvatar
+          imageUri={currentUserAvatarUrl}
+          displayName={currentUserDisplayName}
+          size={AVATAR_SIZE}
+          backgroundColor={colors.fill}
         />
-      ) : isYours ? (
-        <View style={styles.messageAvatarPlaceholder} />
       ) : null}
     </View>
   );
@@ -176,7 +186,9 @@ export function JourneyDayChat({
   const bubbleMaxWidth = windowWidth * BUBBLE_MAX_WIDTH_RATIO;
   const user = useQuery(api.users.current);
   const storeAvatarUri = useOnboardingStore((state) => state.localAvatarUri);
+  const storeDisplayName = useOnboardingStore((state) => state.displayName);
   const currentUserAvatarUrl = user?.avatarUrl ?? storeAvatarUri;
+  const currentUserDisplayName = user?.name ?? storeDisplayName ?? "";
 
   const messages = buildJourneyChatMessages({ date, yours, theirs });
   const firstMessage = getFirstChatMessage({ date, yours, theirs });
@@ -210,7 +222,9 @@ export function JourneyDayChat({
             message={message}
             isZoomTarget={message.id === firstMessage?.id}
             friendAvatarUrl={friendAvatarUrl}
+            friendDisplayName={friendDisplayName}
             currentUserAvatarUrl={currentUserAvatarUrl}
+            currentUserDisplayName={currentUserDisplayName}
             bubbleMaxWidth={bubbleMaxWidth}
             yoursBubbleColor={yoursBubbleColor}
             theirsBubbleColor={theirsBubbleColor}
@@ -238,12 +252,6 @@ const styles = StyleSheet.create({
   chatHeaderAvatarWrap: {
     marginBottom: 4,
   },
-  chatHeaderAvatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 1,
-  },
   chatHeaderName: {
     fontSize: 17,
     fontWeight: "700",
@@ -262,15 +270,6 @@ const styles = StyleSheet.create({
   },
   messageRowTheirs: {
     justifyContent: "flex-start",
-  },
-  messageAvatar: {
-    width: AVATAR_SIZE,
-    height: AVATAR_SIZE,
-    borderRadius: AVATAR_SIZE / 2,
-  },
-  messageAvatarPlaceholder: {
-    width: AVATAR_SIZE,
-    height: AVATAR_SIZE,
   },
   messageColumn: {
     gap: 4,

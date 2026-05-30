@@ -1,6 +1,5 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useMutation, useQuery } from "convex/react";
-import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
@@ -19,6 +18,7 @@ import {
 } from "react-native";
 
 import { ProfilePreview } from "@/components/onboarding/ProfilePreview";
+import { UserAvatar } from "@/components/UserAvatar";
 import { AccentThemePicker } from "@/components/settings/AccentThemePicker";
 import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
 import { getAccentTheme } from "@/lib/accent-themes";
@@ -33,26 +33,24 @@ type SettingsContentProps = {
   scrollMaxHeight?: number;
 };
 
-function FriendAvatar({ avatarUrl }: { avatarUrl: string }) {
+function FriendAvatar({
+  avatarUrl,
+  displayName,
+}: {
+  avatarUrl: string;
+  displayName: string;
+}) {
   const colors = useAppColors();
 
-  if (avatarUrl) {
-    return (
-      <Image
-        source={{ uri: avatarUrl }}
-        style={styles.friendAvatar}
-        contentFit="cover"
-      />
-    );
-  }
-
   return (
-    <View
-      style={[
-        styles.friendAvatar,
-        styles.friendAvatarPlaceholder,
-        { backgroundColor: colors.fill },
-      ]}
+    <UserAvatar
+      imageUri={avatarUrl || null}
+      displayName={displayName}
+      size={44}
+      style={[styles.friendAvatar, styles.friendAvatarPlaceholder]}
+      backgroundColor={colors.fill}
+      borderColor="rgba(128, 128, 128, 0.35)"
+      borderWidth={StyleSheet.hairlineWidth}
     />
   );
 }
@@ -333,7 +331,10 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
                       },
                     ]}
                   >
-                    <FriendAvatar avatarUrl={request.avatarUrl} />
+                    <FriendAvatar
+                      avatarUrl={request.avatarUrl}
+                      displayName={request.displayName}
+                    />
                     <View style={styles.friendText}>
                       <Text style={[styles.friendName, { color: colors.text }]}>
                         {request.displayName}
@@ -421,7 +422,10 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
                     },
                   ]}
                 >
-                  <FriendAvatar avatarUrl={request.avatarUrl} />
+                  <FriendAvatar
+                    avatarUrl={request.avatarUrl}
+                    displayName={request.displayName}
+                  />
                   <View style={styles.friendText}>
                     <Text style={[styles.friendName, { color: colors.text }]}>
                       {request.displayName}
@@ -487,7 +491,10 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
                   accessibilityRole="button"
                   accessibilityLabel={`Open journey with ${friend.displayName}`}
                 >
-                  <FriendAvatar avatarUrl={friend.avatarUrl} />
+                  <FriendAvatar
+                    avatarUrl={friend.avatarUrl}
+                    displayName={friend.displayName}
+                  />
                   <View style={styles.friendText}>
                     <Text style={[styles.friendName, { color: colors.text }]}>
                       {friend.displayName}
