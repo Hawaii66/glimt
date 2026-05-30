@@ -1,17 +1,34 @@
 import { useConvexAuth } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
 import { Redirect, Stack } from "expo-router";
+import { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 
 import { FriendRequestNotification } from "@/components/FriendRequestNotification";
 import { Toast } from "@/components/Toast";
+import {
+  resolveAccentThemeId,
+  type AccentThemeId,
+} from "@/lib/accent-themes";
 import { useAppColors } from "@/lib/theme";
+import { refreshFriendGlimtWidget } from "@/lib/widget-refresh";
 import { api } from "convex/_generated/api";
 
 export default function AppLayout() {
   const colors = useAppColors();
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
   const user = useQuery(api.users.current);
+  const accentTheme = resolveAccentThemeId(
+    user?.accentTheme as AccentThemeId | undefined,
+  );
+
+  useEffect(() => {
+    if (!isAuthenticated || user === undefined || !user.onboardingComplete) {
+      return;
+    }
+
+    void refreshFriendGlimtWidget(accentTheme);
+  }, [accentTheme, isAuthenticated, user]);
 
   if (authLoading || (isAuthenticated && user === undefined)) {
     return (

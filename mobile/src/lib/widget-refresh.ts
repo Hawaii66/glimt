@@ -1,6 +1,11 @@
 import Constants from "expo-constants";
 import { Directory, File, Paths } from "expo-file-system";
 
+import {
+  getAccentTheme,
+  resolveAccentThemeId,
+  type AccentThemeId,
+} from "./accent-themes";
 import { MOCK_FRIEND_GLIMTS } from "./glimt-mock-data";
 import {
   AVATAR_OFFSET,
@@ -9,7 +14,6 @@ import {
   TILE_BORDER_WIDTH,
   TILE_CORNER_RADIUS,
   TILE_SCALE,
-  WIDGET_GRADIENT_COLORS,
 } from "./glimt-tile-styles";
 import {
   FriendGlimtWidget,
@@ -17,9 +21,13 @@ import {
   type WidgetTileStyle,
 } from "./widget";
 
-function getWidgetTileStyle(): WidgetTileStyle {
+function getWidgetTileStyle(accentThemeId?: AccentThemeId): WidgetTileStyle {
+  const gradientColors = getAccentTheme(
+    resolveAccentThemeId(accentThemeId),
+  ).gradientColors;
+
   return {
-    gradientColors: [...WIDGET_GRADIENT_COLORS] as [string, string, string],
+    gradientColors: [...gradientColors] as [string, string, string],
     photoBorderColor: PHOTO_BORDER_COLOR,
     tileCornerRadius: TILE_CORNER_RADIUS,
     tileBorderWidth: TILE_BORDER_WIDTH,
@@ -99,7 +107,9 @@ async function buildMockWidgetGlimts(): Promise<WidgetGlimtItem[]> {
   return glimts.filter((item): item is WidgetGlimtItem => item !== null);
 }
 
-export async function refreshFriendGlimtWidget(): Promise<void> {
+export async function refreshFriendGlimtWidget(
+  accentThemeId?: AccentThemeId,
+): Promise<void> {
   const glimts = await buildMockWidgetGlimts();
 
   if (glimts.length === 0) {
@@ -109,7 +119,7 @@ export async function refreshFriendGlimtWidget(): Promise<void> {
 
   FriendGlimtWidget.updateSnapshot({
     glimts,
-    style: getWidgetTileStyle(),
+    style: getWidgetTileStyle(accentThemeId),
   });
   FriendGlimtWidget.reload();
 }

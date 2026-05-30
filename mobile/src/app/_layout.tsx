@@ -9,7 +9,6 @@ import { StyleSheet, Text, View } from "react-native";
 import { authStorage } from "@/lib/auth-storage";
 import { convex } from "@/lib/convex";
 import { useAppColors } from "@/lib/theme";
-import { refreshFriendGlimtWidget } from "@/lib/widget-refresh";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -18,7 +17,6 @@ export default function RootLayout() {
 
   useEffect(() => {
     void SplashScreen.hideAsync();
-    refreshFriendGlimtWidget();
   }, []);
 
   if (!convex) {
