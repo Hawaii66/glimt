@@ -31,6 +31,10 @@ const BOTTOM_BAR_PADDING = 24;
 export default function HomeScreen() {
   const router = useRouter();
   const friends = useQuery(api.friends.listFriends);
+  const todayMeetLocks = useQuery(api.journals.getTodayMeetLocksForFriends);
+  const meetLockedByFriendId = new Map(
+    (todayMeetLocks ?? []).map((row) => [row.friendUserId, row.meetLocked]),
+  );
   const { accentTheme } = useCurrentUserAccentTheme();
   const gradientColors = getAccentTheme(accentTheme).gradientColors;
   const insets = useSafeAreaInsets();
@@ -99,6 +103,7 @@ export default function HomeScreen() {
               displayName={item.displayName}
               index={index}
               size={tileSize}
+              showMeetDayBadge={meetLockedByFriendId.get(item.id) === true}
             />
           </Pressable>
         )}

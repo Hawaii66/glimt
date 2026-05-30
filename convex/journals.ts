@@ -4,6 +4,7 @@ import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { requireAuthUserId } from "./lib/auth";
 import {
+  findGroupForUsers,
   getOrCreateFriendGroupForUsers,
   listGroupMemberIds,
   requireGroupMember,
@@ -11,11 +12,11 @@ import {
   validateEmoji,
 } from "./lib/friendGroups";
 import {
-  ensureJournalDayForFirstEntryOfDay,
   isDayComplete,
   isDayEnded,
-  rollMeetLockForDayIfEligible,
+  prepareTodayMeetLocksForUser,
   syncMeetLocksForGroup as syncMeetLocksForGroupInternal,
+  todayIsoDate,
 } from "./lib/meetLock";
 import { userError } from "./lib/userError";
 
@@ -117,29 +118,71 @@ async function buildJournalDay(
   };
 }
 
-async function maybeRollMeetLockAfterEntry(
-  ctx: MutationCtx,
-  groupId: Id<"friendGroups">,
-  dayDate: string,
-) {
-  await ensureJournalDayForFirstEntryOfDay(ctx, groupId, dayDate);
+export const prepareTodayMeetLocksOnAppOpen = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await requireAuthUserId(ctx);
+    const results = await prepareTodayMeetLocksForUser(ctx, userId);
+    return { today: todayIsoDate(), results };
+  },
+});
 
-  const memberUserIds = await listGroupMemberIds(ctx, groupId);
-  const entries = await ctx.db
-    .query("journalEntries")
-    .withIndex("by_group_and_day", (q) =>
-      q.eq("groupId", groupId).eq("dayDate", dayDate),
-    )
-    .collect();
+export const getTodayMeetLocksForFriends = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await requireAuthUserId(ctx);
+    const today = todayIsoDate();
 
-  await rollMeetLockForDayIfEligible(
-    ctx,
-    groupId,
-    dayDate,
-    entries,
-    memberUserIds,
-  );
-}
+    const friendships = await ctx.db
+      .query("friendships")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+
+    const results: Array<{
+      friendUserId: Id<"users">;
+      groupId: Id<"friendGroups"> | null;
+      date: string;
+      meetLocked: boolean;
+      rolled: boolean;
+    }> = [];
+
+    for (const friendship of friendships) {
+      const groupId = await findGroupForUsers(
+        ctx,
+        userId,
+        friendship.friendUserId,
+      );
+
+      if (!groupId) {
+        results.push({
+          friendUserId: friendship.friendUserId,
+          groupId: null,
+          date: today,
+          meetLocked: false,
+          rolled: false,
+        });
+        continue;
+      }
+
+      const day = await ctx.db
+        .query("journalDays")
+        .withIndex("by_group_and_date", (q) =>
+          q.eq("groupId", groupId).eq("date", today),
+        )
+        .unique();
+
+      results.push({
+        friendUserId: friendship.friendUserId,
+        groupId,
+        date: today,
+        meetLocked: day?.meetLocked ?? false,
+        rolled: day?.meetLocked !== undefined,
+      });
+    }
+
+    return results;
+  },
+});
 
 export const listDays = query({
   args: { groupId: v.id("friendGroups") },
@@ -242,7 +285,7 @@ export const addEntry = mutation({
       ? validateDayDate(dayDate)
       : dayDateFromTimestamp(sentAt);
 
-    const entryId = await ctx.db.insert("journalEntries", {
+    return await ctx.db.insert("journalEntries", {
       groupId,
       authorUserId: userId,
       photoStorageId,
@@ -250,10 +293,6 @@ export const addEntry = mutation({
       sentAt,
       dayDate: normalizedDayDate,
     });
-
-    await maybeRollMeetLockAfterEntry(ctx, groupId, normalizedDayDate);
-
-    return entryId;
   },
 });
 
@@ -328,8 +367,6 @@ export const sendGlimt = mutation({
         sentAt,
         dayDate,
       });
-
-      await maybeRollMeetLockAfterEntry(ctx, groupId, dayDate);
 
       entryIds.push(entryId);
     }
