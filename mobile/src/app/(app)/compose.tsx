@@ -20,6 +20,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
+import { UserAvatar } from "@/components/UserAvatar";
 import { getConvexErrorMessage } from "@/lib/convexError";
 import { APP_HOME } from "@/lib/routes";
 import { uploadGlimtPhotoToStorage } from "@/lib/uploadGlimtPhoto";
@@ -318,10 +319,11 @@ export default function ComposeScreen() {
                           },
                         ]}
                       >
-                        <Image
-                          source={{ uri: friend.avatarUrl }}
-                          style={styles.friendAvatar}
-                          contentFit="cover"
+                        <UserAvatar
+                          imageUri={friend.avatarUrl}
+                          displayName={friend.displayName}
+                          size={48}
+                          backgroundColor={colors.fill}
                         />
                       </View>
                       <Text
@@ -468,11 +470,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     padding: 2,
     position: "relative",
-  },
-  friendAvatar: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 24,
   },
   allBubble: {
     flex: 1,
