@@ -18,13 +18,23 @@ export function getFirstChatMessage(
   return messages[0];
 }
 
-export function getFirstGlimt(
+/** Earliest glimt on a side — top of the journey row stack. */
+export function getEarliestGlimt(
   glimts?: DailyJourneyGlimt[],
 ): DailyJourneyGlimt | undefined {
   if (!glimts?.length) {
     return undefined;
   }
-  return glimts[glimts.length - 1];
+  return sortGlimtsChronological(glimts)[0];
+}
+
+/** Oldest-first ordering by send time. */
+export function sortGlimtsChronological(
+  glimts: DailyJourneyGlimt[],
+): DailyJourneyGlimt[] {
+  return [...glimts].sort(
+    (a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime(),
+  );
 }
 
 export function getJourneyByDate(

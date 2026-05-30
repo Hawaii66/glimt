@@ -1,7 +1,13 @@
 import { useQuery } from "convex/react";
 import { Image } from "expo-image";
 import { Link } from "expo-router";
-import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { JourneyGlimtImage } from "@/components/journey/JourneyGlimtImage";
@@ -11,6 +17,7 @@ import { formatJourneyDate } from "@/lib/format-journey-date";
 import type { DailyJourneyGlimt } from "@/lib/glimt-mock-data";
 import {
   buildJourneyChatMessages,
+  getFirstChatMessage,
   type JourneyChatMessage,
 } from "@/lib/journey-chat";
 import { useAppColors } from "@/lib/theme";
@@ -98,10 +105,7 @@ function ChatMessageBubble({
       ]}
     >
       {!isYours ? (
-        <Image
-          source={{ uri: friendAvatarUrl }}
-          style={styles.messageAvatar}
-        />
+        <Image source={{ uri: friendAvatarUrl }} style={styles.messageAvatar} />
       ) : null}
 
       <View
@@ -175,7 +179,7 @@ export function JourneyDayChat({
   const currentUserAvatarUrl = user?.avatarUrl ?? storeAvatarUri;
 
   const messages = buildJourneyChatMessages({ date, yours, theirs });
-  const firstMessage = messages[0];
+  const firstMessage = getFirstChatMessage({ date, yours, theirs });
   const dateLabel = formatJourneyDate(date);
 
   return (

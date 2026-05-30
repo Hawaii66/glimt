@@ -14,7 +14,7 @@ import {
   TILE_BORDER_WIDTH,
   TILE_CORNER_RADIUS,
 } from "@/lib/glimt-tile-styles";
-import { getFirstGlimt, getFirstChatMessage } from "@/lib/journey-chat";
+import { getEarliestGlimt, getFirstChatMessage, sortGlimtsChronological } from "@/lib/journey-chat";
 import { useAppColors } from "@/lib/theme";
 import { useAccentThemeStore } from "@/stores/accentThemeStore";
 
@@ -281,11 +281,12 @@ function JourneyGlimtStack({
   onZoomImageLoad?: (size: ImageSize) => void;
 }) {
   const colors = useAppColors();
-  const count = glimts?.length ?? 0;
+  const sortedGlimts = glimts?.length ? sortGlimtsChronological(glimts) : [];
+  const count = sortedGlimts.length;
   const stackHeight =
     count > 1 ? tileSize + (count - 1) * STACK_OFFSET : tileSize;
   const horizontalNudge = baseTilt > 0 ? 1 : -1;
-  const topGlimt = getFirstGlimt(glimts);
+  const topGlimt = getEarliestGlimt(glimts);
 
   if (locked) {
     return (
@@ -313,32 +314,33 @@ function JourneyGlimtStack({
     );
   }
 
-  const latestCaption = topGlimt?.caption;
-  const captionText = latestCaption ?? "No caption";
+  const previewCaption = topGlimt?.caption;
+  const captionText = previewCaption ?? "No caption";
 
   return (
     <View style={styles.previewColumn}>
       <View style={[styles.stack, { width: tileSize, height: stackHeight }]}>
-        {glimts!.map((glimt, index) => {
-          const isTop = index === count - 1;
-          const isZoomSource = zoomPhotoUrl === glimt.photoUrl;
+        {sortedGlimts.map((glimt, index) => {
+          const isTop = index === 0;
+          const stackLayer = count - 1 - index;
+          const isZoomSource = isTop && zoomPhotoUrl === glimt.photoUrl;
           return (
             <View
               key={`${glimt.photoUrl}-${index}`}
               style={StyleSheet.flatten([
                 styles.stackLayer,
                 {
-                  top: index * STACK_OFFSET,
-                  left: index * horizontalNudge * 3,
-                  zIndex: index,
+                  top: stackLayer * STACK_OFFSET,
+                  left: stackLayer * horizontalNudge * 3,
+                  zIndex: stackLayer,
                 },
               ])}
             >
               <GlimtPhotoTile
                 glimt={glimt}
                 tileSize={tileSize}
-                tilt={stackRotation(baseTilt, index, count)}
-                stackIndex={index}
+                tilt={stackRotation(baseTilt, stackLayer, count)}
+                stackIndex={stackLayer}
                 showCount={isTop ? count : undefined}
                 enableZoom={isZoomSource}
                 onImageLoad={isZoomSource ? onZoomImageLoad : undefined}
