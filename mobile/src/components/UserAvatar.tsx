@@ -65,7 +65,7 @@ export function UserAvatar({
   return (
     <View style={[containerStyle, style]}>
       <Text
-        style={[styles.initials, { fontSize, color: textColor, lineHeight: fontSize }]}
+        style={[styles.initials, { fontSize, color: textColor }]}
         numberOfLines={1}
         accessibilityLabel={`${displayName} initials`}
       >
