@@ -2,6 +2,8 @@ import { authTables as defaultAuthTables } from "@convex-dev/auth/server";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+import { accentThemeValidator } from "./lib/accentTheme";
+
 const authTables = {
   ...defaultAuthTables,
   users: defineTable({
@@ -15,6 +17,7 @@ const authTables = {
     username: v.optional(v.string()),
     avatarStorageId: v.optional(v.id("_storage")),
     onboardingComplete: v.optional(v.boolean()),
+    accentTheme: v.optional(accentThemeValidator),
   })
     .index("email", ["email"])
     .index("username", ["username"]),
