@@ -176,7 +176,7 @@ function GlimtPhotoTile({
 }) {
   const tile = (
     <View
-      style={[
+      style={StyleSheet.flatten([
         styles.previewTileWrapper,
         tileShadowStyle(stackIndex),
         {
@@ -184,7 +184,7 @@ function GlimtPhotoTile({
           height: tileSize,
           transform: [{ rotate: tilt }],
         },
-      ]}
+      ])}
     >
       <View style={[styles.tileContent, { width: tileSize, height: tileSize }]}>
         <JourneyGlimtImage
@@ -322,14 +322,14 @@ function JourneyGlimtStack({
           return (
             <View
               key={`${glimt.photoUrl}-${index}`}
-              style={[
+              style={StyleSheet.flatten([
                 styles.stackLayer,
                 {
                   top: index * STACK_OFFSET,
                   left: index * horizontalNudge * 3,
                   zIndex: index,
                 },
-              ]}
+              ])}
             >
               <GlimtPhotoTile
                 glimt={glimt}
