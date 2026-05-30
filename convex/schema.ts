@@ -43,6 +43,7 @@ export default defineSchema({
     respondedAt: v.optional(v.number()),
   })
     .index("by_to_and_status", ["toUserId", "status"])
+    .index("by_from_and_status", ["fromUserId", "status"])
     .index("by_from_and_to", ["fromUserId", "toUserId"]),
   friendships: defineTable({
     userId: v.id("users"),

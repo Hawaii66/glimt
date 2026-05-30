@@ -68,6 +68,7 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
   const user = useQuery(api.users.current);
   const friends = useQuery(api.friends.listFriends);
   const incomingRequests = useQuery(api.friends.listIncomingRequests);
+  const outgoingRequests = useQuery(api.friends.listOutgoingRequests);
   const sendFriendRequest = useMutation(api.friends.sendRequest);
   const acceptFriendRequest = useMutation(api.friends.acceptRequest);
   const declineFriendRequest = useMutation(api.friends.declineRequest);
@@ -394,6 +395,53 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
         </View>
       ) : null}
 
+      {outgoingRequests !== undefined && outgoingRequests.length > 0 ? (
+        <View style={styles.section}>
+          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+            Pending approval
+          </Text>
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.surfaceBorder,
+              },
+            ]}
+          >
+            {outgoingRequests.map((request, index) => (
+              <View
+                key={request.requestId}
+                style={[
+                  styles.friendRow,
+                  index < outgoingRequests.length - 1 && {
+                    borderBottomWidth: StyleSheet.hairlineWidth,
+                    borderBottomColor: colors.surfaceBorder,
+                  },
+                ]}
+              >
+                <FriendAvatar avatarUrl={request.avatarUrl} />
+                <View style={styles.friendText}>
+                  <Text style={[styles.friendName, { color: colors.text }]}>
+                    {request.displayName}
+                  </Text>
+                  <Text
+                    style={[styles.friendUsername, { color: colors.textMuted }]}
+                  >
+                    @{request.username}
+                  </Text>
+                </View>
+                <Text
+                  style={[styles.pendingLabel, { color: colors.textMuted }]}
+                >
+                  Pending
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      ) : null}
+
       <View style={styles.section}>
         <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
           Friends
@@ -404,7 +452,9 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
           </View>
         ) : friends.length === 0 ? (
           <Text style={[styles.emptyFriendsText, { color: colors.textMuted }]}>
-            No friends yet. Add someone by username above.
+            {outgoingRequests && outgoingRequests.length > 0
+              ? "No friends yet. Waiting on pending requests above."
+              : "No friends yet. Add someone by username above."}
           </Text>
         ) : (
           <View
@@ -604,6 +654,11 @@ const styles = StyleSheet.create({
   acceptButtonText: {
     fontSize: 13,
     fontWeight: "600",
+  },
+  pendingLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    flexShrink: 0,
   },
   signOutButton: {
     alignItems: "center",
