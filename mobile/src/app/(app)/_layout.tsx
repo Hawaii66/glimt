@@ -3,6 +3,7 @@ import { useQuery } from "convex/react";
 import { Redirect, Stack } from "expo-router";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 
+import { FriendRequestNotification } from "@/components/FriendRequestNotification";
 import { Toast } from "@/components/Toast";
 import { useAppColors } from "@/lib/theme";
 import { api } from "convex/_generated/api";
@@ -65,6 +66,7 @@ export default function AppLayout() {
         />
       </Stack>
       <Toast />
+      <FriendRequestNotification />
     </View>
   );
 }
