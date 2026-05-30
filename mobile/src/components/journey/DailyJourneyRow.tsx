@@ -10,6 +10,7 @@ import { useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { JourneyGlimtImage } from "@/components/journey/JourneyGlimtImage";
+import { UserAvatar } from "@/components/UserAvatar";
 import { getAccentTheme, type AccentThemeId } from "@/lib/accent-themes";
 import { formatJourneyDate } from "@/lib/format-journey-date";
 import type { DailyJourney, DailyJourneyGlimt } from "@/lib/glimt-mock-data";
@@ -421,12 +422,13 @@ function JourneyRowContent({
   const dateHeader = (
     <View style={styles.dateHeader}>
       <View style={styles.dateHeaderLeft}>
-        <View style={styles.avatarChip}>
-          <Image
-            source={{ uri: friendAvatarUrl }}
-            style={styles.avatarChipImage}
-          />
-        </View>
+        <UserAvatar
+          imageUri={friendAvatarUrl || null}
+          displayName={friendDisplayName}
+          size={AVATAR_CHIP_SIZE}
+          style={styles.avatarChip}
+          backgroundColor={colors.fill}
+        />
         <View style={styles.dateHeaderText}>
           <Text style={[styles.dateLabel, { color: colors.text }]}>
             {formatJourneyDate(date)}
@@ -657,16 +659,7 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
-  avatarChip: {
-    width: AVATAR_CHIP_SIZE,
-    height: AVATAR_CHIP_SIZE,
-    borderRadius: AVATAR_CHIP_SIZE / 2,
-    overflow: "hidden",
-  },
-  avatarChipImage: {
-    width: "100%",
-    height: "100%",
-  },
+  avatarChip: {},
   dateLabel: {
     fontSize: 17,
     fontWeight: "700",

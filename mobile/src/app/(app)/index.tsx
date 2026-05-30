@@ -96,6 +96,7 @@ export default function HomeScreen() {
             <GlimtTile
               photoUrl={getMockPhotoUrlForFriend(item.id)}
               avatarUrl={item.avatarUrl}
+              displayName={item.displayName}
               index={index}
               size={tileSize}
             />
