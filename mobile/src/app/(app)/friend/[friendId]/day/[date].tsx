@@ -8,7 +8,7 @@ import {
 } from "react-native-safe-area-context";
 
 import { JourneyDayChat } from "@/components/journey/JourneyDayChat";
-import { getFriendById } from "@/lib/glimt-mock-data";
+import { useFriendProfile } from "@/hooks/useFriendProfile";
 import { getJourneyByDate } from "@/lib/journey-chat";
 import { resolveJourneyLockState } from "@/lib/journey-lock";
 import { useAppColors } from "@/lib/theme";
@@ -27,7 +27,7 @@ export default function JourneyDayScreen() {
     friendId && date ? s.isUnlocked(friendId, date) : false,
   );
 
-  const friend = friendId ? getFriendById(friendId) : undefined;
+  const { friend, isLoading } = useFriendProfile(friendId);
   const journey =
     friendId && date ? getJourneyByDate(friendId, date) : undefined;
 
@@ -43,7 +43,7 @@ export default function JourneyDayScreen() {
     }
   }, [blocked, router]);
 
-  if (!friend || !journey || !date || blocked) {
+  if (isLoading || !friend || !journey || !date || blocked) {
     return (
       <SafeAreaView
         style={[styles.safeArea, { backgroundColor: colors.background }]}

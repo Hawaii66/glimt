@@ -16,8 +16,8 @@ import {
 
 import { DailyJourneyRow } from "@/components/journey/DailyJourneyRow";
 import { ProfilePreview } from "@/components/onboarding/ProfilePreview";
+import { useFriendProfile } from "@/hooks/useFriendProfile";
 import { getAccentTheme } from "@/lib/accent-themes";
-import { getFriendById } from "@/lib/glimt-mock-data";
 import { getMockJourneysWithUnlocks } from "@/lib/journey-lock";
 import { useAppColors } from "@/lib/theme";
 import { useMockUnlockStore } from "@/stores/mockUnlockStore";
@@ -32,7 +32,7 @@ export default function FriendJourneyScreen() {
   const { width: windowWidth } = useWindowDimensions();
   const { friendId } = useLocalSearchParams<{ friendId: string }>();
 
-  const friend = friendId ? getFriendById(friendId) : undefined;
+  const { friend, isLoading } = useFriendProfile(friendId);
   const gradientColors = friend
     ? getAccentTheme(friend.accentId).gradientColors
     : undefined;
@@ -42,6 +42,20 @@ export default function FriendJourneyScreen() {
 
   const contentWidth = windowWidth - HORIZONTAL_PADDING * 2;
   const tileSize = (contentWidth - PREVIEW_TILE_GAP - 32) / 2;
+
+  if (isLoading) {
+    return (
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: colors.background }]}
+      >
+        <View style={styles.notFoundContent}>
+          <Text style={[styles.notFoundBody, { color: colors.textMuted }]}>
+            Loading…
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (!friend) {
     return (

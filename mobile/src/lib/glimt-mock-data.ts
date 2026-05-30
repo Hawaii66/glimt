@@ -522,10 +522,23 @@ const MOCK_JOURNEYS_BY_FRIEND: Record<string, DailyJourney[]> = {
   ],
 };
 
-export function getFriendById(friendId: string): FriendGlimt | undefined {
-  return MOCK_FRIEND_GLIMTS.find((friend) => friend.id === friendId);
+const MOCK_TEMPLATE_IDS = ["friend-1", "friend-2", "friend-3", "friend-4"] as const;
+
+function getMockTemplateKey(friendId: string): (typeof MOCK_TEMPLATE_IDS)[number] {
+  let hash = 0;
+  for (let i = 0; i < friendId.length; i++) {
+    hash = (hash + friendId.charCodeAt(i)) % MOCK_TEMPLATE_IDS.length;
+  }
+  return MOCK_TEMPLATE_IDS[hash]!;
+}
+
+export function getMockPhotoUrlForFriend(friendId: string): string {
+  const template = MOCK_FRIEND_GLIMTS.find(
+    (friend) => friend.id === getMockTemplateKey(friendId),
+  );
+  return template?.photoUrl ?? `https://picsum.photos/seed/${friendId}/400/400`;
 }
 
 export function getMockJourneysForFriend(friendId: string): DailyJourney[] {
-  return MOCK_JOURNEYS_BY_FRIEND[friendId] ?? [];
+  return MOCK_JOURNEYS_BY_FRIEND[getMockTemplateKey(friendId)] ?? [];
 }

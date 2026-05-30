@@ -13,8 +13,8 @@ import {
   MeetDayInfoModal,
 } from "@/components/journey/MeetDayInfoModal";
 import { UnlockQrCode } from "@/components/journey/UnlockQrCode";
+import { useFriendProfile } from "@/hooks/useFriendProfile";
 import { formatJourneyDate } from "@/lib/format-journey-date";
-import { getFriendById } from "@/lib/glimt-mock-data";
 import { MEET_DAY_UNLOCK_SCREEN_TITLE } from "@/lib/meet-day";
 import {
   recordMockUnlockScan,
@@ -38,7 +38,7 @@ export function TogetherDayUnlockScreen({
   const colors = useAppColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const friend = getFriendById(friendId);
+  const { friend } = useFriendProfile(friendId);
   const unlockDay = useMockUnlockStore((s) => s.unlockDay);
 
   const [mode, setMode] = useState<Mode>("choose");
