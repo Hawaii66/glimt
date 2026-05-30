@@ -1,4 +1,5 @@
 import type { JourneyDay, JourneyGlimt } from "@/lib/journey-types";
+
 export type JourneyChatSender = "yours" | "theirs";
 
 export type JourneyChatMessage = {

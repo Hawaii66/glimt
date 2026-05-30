@@ -28,7 +28,6 @@ import { resolveJourneyLockState } from "@/lib/journey-lock";
 import { MEET_DAY_LABEL, MEET_DAY_LOCKED_MESSAGE } from "@/lib/meet-day";
 import { appFriendTogetherDayUnlock } from "@/lib/routes";
 import { useAppColors } from "@/lib/theme";
-import { useMockUnlockStore } from "@/stores/mockUnlockStore";
 
 type DailyJourneyRowProps = {
   friendId: string;
@@ -551,9 +550,6 @@ export function DailyJourneyRow({
   tileSize,
 }: DailyJourneyRowProps) {
   const colors = useAppColors();
-  const runtimeUnlocked = useMockUnlockStore((s) =>
-    s.isUnlocked(friendId, date),
-  );
   const journey: JourneyDay = {
     date,
     yours,
@@ -562,7 +558,7 @@ export function DailyJourneyRow({
     unlockedAt,
   };
   const { calendarLocked, meetLocked, rowLocked, canNavigateToDay } =
-    resolveJourneyLockState(journey, friendId, runtimeUnlocked);
+    resolveJourneyLockState(journey);
   const accentColor = getAccentTheme(friendAccentId).gradientColors[0];
   const [pressed, setPressed] = useState(false);
   const [zoomImageSize, setZoomImageSize] = useState<ImageSize | null>(null);

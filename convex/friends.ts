@@ -3,7 +3,7 @@ import type { Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { requireAuthUserId, validateUsername } from "./lib/auth";
-import { createFriendGroup } from "./lib/friendGroups";
+import { createFriendGroup, findGroupForUsers } from "./lib/friendGroups";
 import { userError } from "./lib/userError";
 
 type UserProfile = {
@@ -211,6 +211,19 @@ export const listFriends = query({
     );
 
     return profiles.filter((profile): profile is UserProfile => profile !== null);
+  },
+});
+
+export const getGroupForFriend = query({
+  args: { friendUserId: v.id("users") },
+  handler: async (ctx, { friendUserId }): Promise<Id<"friendGroups"> | null> => {
+    const userId = await requireAuthUserId(ctx);
+
+    if (!(await areFriends(ctx, userId, friendUserId))) {
+      return null;
+    }
+
+    return await findGroupForUsers(ctx, userId, friendUserId);
   },
 });
 

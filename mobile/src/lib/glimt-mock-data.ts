@@ -133,7 +133,6 @@ const MOCK_JOURNEYS_BY_FRIEND: Record<string, DailyJourney[]> = {
     },
     {
       date: isoDateDaysAgo(1),
-      meetLock: true,
       yours: [
         glimt(
           isoDateDaysAgo(1),
@@ -250,7 +249,6 @@ const MOCK_JOURNEYS_BY_FRIEND: Record<string, DailyJourney[]> = {
     },
     {
       date: isoDateDaysAgo(2),
-      meetLock: true,
       yours: [
         glimt(
           isoDateDaysAgo(2),

@@ -6,6 +6,7 @@ import { ActivityIndicator, StyleSheet, View } from "react-native";
 
 import { FriendRequestNotification } from "@/components/FriendRequestNotification";
 import { Toast } from "@/components/Toast";
+import { usePrepareTodayMeetLocks } from "@/hooks/usePrepareTodayMeetLocks";
 import {
   resolveAccentThemeId,
   type AccentThemeId,
@@ -45,6 +46,13 @@ export default function AppLayout() {
   if (!user?.onboardingComplete) {
     return <Redirect href="/onboarding/setup" />;
   }
+
+  return <AppShell />;
+}
+
+function AppShell() {
+  const colors = useAppColors();
+  usePrepareTodayMeetLocks(true);
 
   return (
     <View style={styles.appRoot}>

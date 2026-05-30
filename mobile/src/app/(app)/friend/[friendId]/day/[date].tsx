@@ -13,7 +13,6 @@ import { useFriendProfile } from "@/hooks/useFriendProfile";
 import { toJourneyDay } from "@/lib/journal-adapters";
 import { resolveJourneyLockState } from "@/lib/journey-lock";
 import { useAppColors } from "@/lib/theme";
-import { useMockUnlockStore } from "@/stores/mockUnlockStore";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 
@@ -25,10 +24,6 @@ export default function JourneyDayScreen() {
     friendId: string;
     date: string;
   }>();
-
-  const runtimeUnlocked = useMockUnlockStore((s) =>
-    friendId && date ? s.isUnlocked(friendId, date) : false,
-  );
 
   const { friend, isLoading: friendLoading } = useFriendProfile(friendId);
   const apiDay = useQuery(
@@ -48,8 +43,7 @@ export default function JourneyDayScreen() {
 
   const blocked =
     journey && friendId && date
-      ? !resolveJourneyLockState(journey, friendId, runtimeUnlocked)
-          .canNavigateToDay
+      ? !resolveJourneyLockState(journey).canNavigateToDay
       : true;
 
   useEffect(() => {

@@ -11,3 +11,9 @@ export type JourneyDay = {
   meetLock?: boolean;
   unlockedAt?: number;
 };
+
+/** @deprecated Use JourneyGlimt */
+export type DailyJourneyGlimt = JourneyGlimt;
+
+/** @deprecated Use JourneyDay */
+export type DailyJourney = JourneyDay;

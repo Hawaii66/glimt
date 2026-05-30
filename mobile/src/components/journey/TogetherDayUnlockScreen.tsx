@@ -1,4 +1,5 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
+import { useMutation } from "convex/react";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -7,22 +8,18 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import { api } from "convex/_generated/api";
 
 import {
   MeetDayInfoButton,
   MeetDayInfoModal,
 } from "@/components/journey/MeetDayInfoModal";
 import { UnlockQrCode } from "@/components/journey/UnlockQrCode";
+import { useFriendGroupId } from "@/hooks/useFriendGroupId";
 import { useFriendProfile } from "@/hooks/useFriendProfile";
 import { formatJourneyDate } from "@/lib/format-journey-date";
 import { MEET_DAY_UNLOCK_SCREEN_TITLE } from "@/lib/meet-day";
-import {
-  recordMockUnlockScan,
-  refreshMockUnlockSession,
-  startMockUnlockSession,
-} from "@/lib/mock-unlock-session";
 import { useAppColors } from "@/lib/theme";
-import { useMockUnlockStore } from "@/stores/mockUnlockStore";
 
 type Mode = "choose" | "show" | "scan" | "success";
 
@@ -39,11 +36,15 @@ export function TogetherDayUnlockScreen({
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { friend } = useFriendProfile(friendId);
-  const unlockDay = useMockUnlockStore((s) => s.unlockDay);
+  const { groupId } = useFriendGroupId(friendId);
+  const startSession = useMutation(api.meetUnlock.startMeetUnlockSession);
+  const refreshSession = useMutation(api.meetUnlock.refreshMeetUnlockSession);
+  const completeUnlock = useMutation(api.meetUnlock.completeMeetUnlock);
 
   const [mode, setMode] = useState<Mode>("choose");
   const [infoVisible, setInfoVisible] = useState(false);
   const [qrToken, setQrToken] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const scannedRef = useRef(false);
@@ -52,29 +53,47 @@ export function TogetherDayUnlockScreen({
   const formattedDate = formatJourneyDate(date);
 
   const finishUnlock = useCallback(() => {
-    unlockDay(friendId, date);
     setMode("success");
     setTimeout(() => router.back(), 1200);
-  }, [date, friendId, router, unlockDay]);
+  }, [router]);
 
   useEffect(() => {
-    if (mode !== "show" || !qrToken) {
+    if (mode !== "show" || !sessionId) {
       return;
     }
-    const interval = setInterval(() => {
-      const refreshed = refreshMockUnlockSession();
-      if (refreshed) {
-        setQrToken(refreshed.token);
-      }
-    }, 12_000);
-    return () => clearInterval(interval);
-  }, [mode, qrToken]);
 
-  const handleShowCode = () => {
+    const interval = setInterval(() => {
+      void refreshSession({ sessionId })
+        .then((result) => {
+          setQrToken(result.token);
+        })
+        .catch(() => {
+          setError("Unlock session expired. Show a new code.");
+          setMode("choose");
+          setQrToken(null);
+          setSessionId(null);
+        });
+    }, 12_000);
+
+    return () => clearInterval(interval);
+  }, [mode, refreshSession, sessionId]);
+
+  const handleShowCode = async () => {
+    if (!groupId) {
+      setError("Could not find your shared journey.");
+      return;
+    }
+
     setError(null);
-    const session = startMockUnlockSession(friendId, date);
-    setQrToken(session.token);
-    setMode("show");
+
+    try {
+      const session = await startSession({ groupId, date });
+      setQrToken(session.token);
+      setSessionId(session.sessionId);
+      setMode("show");
+    } catch {
+      setError("Could not start unlock session. Try again.");
+    }
   };
 
   const handleScanCode = async () => {
@@ -95,15 +114,24 @@ export function TogetherDayUnlockScreen({
       if (scannedRef.current) {
         return;
       }
-      const result = recordMockUnlockScan(data);
-      if (!result || result.friendId !== friendId || result.isoDate !== date) {
-        setError("That code didn't work. Ask your friend to show a fresh code.");
-        return;
-      }
+
       scannedRef.current = true;
-      finishUnlock();
+
+      void completeUnlock({ token: data })
+        .then((result) => {
+          if (result.date !== date) {
+            setError("That code didn't work. Ask your friend to show a fresh code.");
+            scannedRef.current = false;
+            return;
+          }
+          finishUnlock();
+        })
+        .catch(() => {
+          setError("That code didn't work. Ask your friend to show a fresh code.");
+          scannedRef.current = false;
+        });
     },
-    [date, finishUnlock, friendId],
+    [completeUnlock, date, finishUnlock],
   );
 
   if (!friend) {
@@ -150,7 +178,7 @@ export function TogetherDayUnlockScreen({
           </Text>
           <Pressable
             style={[styles.primaryButton, { backgroundColor: colors.text }]}
-            onPress={handleShowCode}
+            onPress={() => void handleShowCode()}
             accessibilityRole="button"
             accessibilityLabel="Show my code"
           >
@@ -167,7 +195,7 @@ export function TogetherDayUnlockScreen({
                 backgroundColor: colors.fill,
               },
             ]}
-            onPress={handleScanCode}
+            onPress={() => void handleScanCode()}
             accessibilityRole="button"
             accessibilityLabel={`Scan ${friendFirstName}'s code`}
           >
@@ -196,19 +224,6 @@ export function TogetherDayUnlockScreen({
             Ask {friendFirstName} to scan this code. It refreshes every few
             seconds.
           </Text>
-          <Pressable
-            style={[
-              styles.mockCompleteButton,
-              { borderColor: colors.surfaceBorder },
-            ]}
-            onPress={finishUnlock}
-            accessibilityRole="button"
-            accessibilityLabel="Simulate scan for preview"
-          >
-            <Text style={[styles.mockCompleteText, { color: colors.textMuted }]}>
-              Preview: simulate successful scan
-            </Text>
-          </Pressable>
         </View>
       ) : null}
 
@@ -331,16 +346,6 @@ const styles = StyleSheet.create({
       },
       default: {},
     }),
-  },
-  mockCompleteButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  mockCompleteText: {
-    fontSize: 13,
-    textAlign: "center",
   },
   scanBody: {
     flex: 1,

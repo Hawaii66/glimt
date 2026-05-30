@@ -15,7 +15,7 @@ import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
 import { getAccentTheme, type AccentThemeId } from "@/lib/accent-themes";
 import { formatGlimtSentTime } from "@/lib/format-glimt-time";
 import { formatJourneyDate } from "@/lib/format-journey-date";
-import type { DailyJourneyGlimt } from "@/lib/glimt-mock-data";
+import type { DailyJourneyGlimt } from "@/lib/journey-types";
 import {
   buildJourneyChatMessages,
   getFirstChatMessage,

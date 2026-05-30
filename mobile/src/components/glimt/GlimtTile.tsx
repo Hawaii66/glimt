@@ -1,5 +1,6 @@
 import { Image } from "expo-image";
-import { Platform, StyleSheet, View } from "react-native";
+import { SymbolView } from "expo-symbols";
+import { Platform, StyleSheet, Text, View } from "react-native";
 
 import { UserAvatar } from "@/components/UserAvatar";
 import {
@@ -18,6 +19,7 @@ type GlimtTileProps = {
   displayName: string;
   index: number;
   size?: number;
+  showMeetDayBadge?: boolean;
 };
 
 export function GlimtTile({
@@ -26,6 +28,7 @@ export function GlimtTile({
   displayName,
   index,
   size = 280,
+  showMeetDayBadge = false,
 }: GlimtTileProps) {
   const innerRadius = TILE_CORNER_RADIUS - TILE_BORDER_WIDTH;
   const rotation = tileRotation(index);
@@ -86,6 +89,13 @@ export function GlimtTile({
           initialsColor="#6B6560"
         />
       </View>
+
+      {showMeetDayBadge ? (
+        <View style={styles.meetBadge}>
+          <SymbolView name="lock.fill" size={10} tintColor="#FFFFFF" />
+          <Text style={styles.meetBadgeText}>Meet</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -100,6 +110,23 @@ const styles = StyleSheet.create({
   },
   photo: {
     overflow: "hidden",
+  },
+  meetBadge: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    backgroundColor: "rgba(0, 0, 0, 0.55)",
+  },
+  meetBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
   avatarContainer: {
     position: "absolute",

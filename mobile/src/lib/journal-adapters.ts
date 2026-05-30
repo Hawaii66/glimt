@@ -8,6 +8,7 @@ type ApiJournalEntry = {
 
 type ApiJournalDay = {
   date: string;
+  meetLocked: boolean;
   togetherUnlockedAt: number | null;
   yours: ApiJournalEntry[];
   theirs: ApiJournalEntry[];
@@ -29,6 +30,7 @@ export function toJourneyDay(apiDay: ApiJournalDay): JourneyDay {
     date: apiDay.date,
     yours: yours.length > 0 ? yours : undefined,
     theirs: theirs.length > 0 ? theirs : undefined,
+    meetLock: apiDay.meetLocked,
     unlockedAt: apiDay.togetherUnlockedAt ?? undefined,
   };
 }

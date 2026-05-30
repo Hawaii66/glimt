@@ -32,6 +32,10 @@ export default function HomeScreen() {
   const router = useRouter();
   const today = todayIsoDate();
   const homeData = useQuery(api.journals.listHomeFriends, { dayDate: today });
+  const todayMeetLocks = useQuery(api.journals.getTodayMeetLocksForFriends);
+  const meetLockedByFriendId = new Map(
+    (todayMeetLocks ?? []).map((row) => [row.friendUserId, row.meetLocked]),
+  );
   const { accentTheme } = useCurrentUserAccentTheme();
   const gradientColors = getAccentTheme(accentTheme).gradientColors;
   const insets = useSafeAreaInsets();
@@ -112,6 +116,7 @@ export default function HomeScreen() {
               displayName={item.displayName}
               index={index}
               size={tileSize}
+              showMeetDayBadge={meetLockedByFriendId.get(item.id) === true}
             />
           </Pressable>
         )}
@@ -131,15 +136,11 @@ export default function HomeScreen() {
           <Text style={styles.captureButtonText}>Take a picture</Text>
         </Pressable>
       </SafeAreaView>
-
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  host: {
-    flex: 1,
-  },
   container: {
     flex: 1,
   },

@@ -15,5 +15,3 @@ export const MEET_DAY_INFO_BODY = [
 export const MEET_DAY_UNLOCK_SCREEN_TITLE = "Unlock meet to view";
 
 export const MEET_LOCK_PROBABILITY = 1 / 7;
-
-export const MEET_LOCK_ROLL_WHEN = "day_end_both_posted" as const;
