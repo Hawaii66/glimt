@@ -4,12 +4,12 @@ import {
   isRowLocked,
   todayIsoDate,
 } from "@/lib/format-journey-date";
-import type { DailyJourney } from "@/lib/glimt-mock-data";
+import type { JourneyDay } from "@/lib/journey-types";
 import { getMockJourneysForFriend } from "@/lib/glimt-mock-data";
 import { useMockUnlockStore } from "@/stores/mockUnlockStore";
 
 export function resolveJourneyLockState(
-  journey: DailyJourney,
+  journey: JourneyDay,
   _friendId: string,
   runtimeUnlocked: boolean,
   now = new Date(),
@@ -20,7 +20,7 @@ export function resolveJourneyLockState(
   canNavigateToDay: boolean;
   showUnlockButton: boolean;
 } {
-  const merged: DailyJourney = runtimeUnlocked
+  const merged: JourneyDay = runtimeUnlocked
     ? { ...journey, unlockedAt: journey.unlockedAt ?? Date.now() }
     : journey;
 
@@ -37,7 +37,7 @@ export function resolveJourneyLockState(
   };
 }
 
-export function getMockJourneysWithUnlocks(friendId: string): DailyJourney[] {
+export function getMockJourneysWithUnlocks(friendId: string): JourneyDay[] {
   const journeys = getMockJourneysForFriend(friendId);
   const { isUnlocked } = useMockUnlockStore.getState();
   return journeys.map((journey) => {

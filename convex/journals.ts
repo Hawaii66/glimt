@@ -4,6 +4,7 @@ import type { QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { requireAuthUserId } from "./lib/auth";
 import {
+  findGroupForUsers,
   getOrCreateFriendGroupForUsers,
   requireGroupMember,
   validateDayDate,
@@ -25,6 +26,18 @@ type JournalDay = {
   togetherUnlockedAt: number | null;
   yours: JournalEntry[];
   theirs: JournalEntry[];
+};
+
+type UserProfile = {
+  id: Id<"users">;
+  displayName: string;
+  username: string;
+  avatarUrl: string;
+  accentTheme?: string;
+};
+
+type HomeFriendTile = UserProfile & {
+  previewPhotoUrl: string;
 };
 
 function dayDateFromTimestamp(timestamp: number) {
@@ -107,42 +120,199 @@ async function buildJournalDay(
   };
 }
 
+async function getUserProfile(
+  ctx: QueryCtx,
+  userId: Id<"users">,
+): Promise<UserProfile | null> {
+  const user = await ctx.db.get(userId);
+  if (!user) {
+    return null;
+  }
+
+  const avatarUrl = user.avatarStorageId
+    ? ((await ctx.storage.getUrl(user.avatarStorageId)) ?? "")
+    : "";
+
+  return {
+    id: user._id,
+    displayName: user.name ?? "",
+    username: user.username ?? "",
+    avatarUrl,
+    accentTheme: user.accentTheme,
+  };
+}
+
+async function areFriends(
+  ctx: QueryCtx,
+  userId: Id<"users">,
+  friendUserId: Id<"users">,
+) {
+  const friendship = await ctx.db
+    .query("friendships")
+    .withIndex("by_user_and_friend", (q) =>
+      q.eq("userId", userId).eq("friendUserId", friendUserId),
+    )
+    .unique();
+  return friendship !== null;
+}
+
+async function resolveFriendGroup(
+  ctx: QueryCtx,
+  userId: Id<"users">,
+  friendUserId: Id<"users">,
+): Promise<Id<"friendGroups"> | null> {
+  if (!(await areFriends(ctx, userId, friendUserId))) {
+    return null;
+  }
+
+  return await findGroupForUsers(ctx, userId, friendUserId);
+}
+
+async function collectListDays(
+  ctx: QueryCtx,
+  groupId: Id<"friendGroups">,
+  userId: Id<"users">,
+): Promise<JournalDay[]> {
+  const entries = await ctx.db
+    .query("journalEntries")
+    .withIndex("by_group", (q) => q.eq("groupId", groupId))
+    .collect();
+
+  const entriesByDate = new Map<string, typeof entries>();
+  for (const entry of entries) {
+    const dayEntries = entriesByDate.get(entry.dayDate) ?? [];
+    dayEntries.push(entry);
+    entriesByDate.set(entry.dayDate, dayEntries);
+  }
+
+  const dayRecords = await ctx.db
+    .query("journalDays")
+    .withIndex("by_group_and_date", (q) => q.eq("groupId", groupId))
+    .collect();
+
+  for (const dayRecord of dayRecords) {
+    if (!entriesByDate.has(dayRecord.date)) {
+      entriesByDate.set(dayRecord.date, []);
+    }
+  }
+
+  const days = await Promise.all(
+    [...entriesByDate.entries()].map(([date, dayEntries]) =>
+      buildJournalDay(ctx, groupId, userId, date, dayEntries),
+    ),
+  );
+
+  return days.sort((a, b) => b.date.localeCompare(a.date));
+}
+
 export const listDays = query({
   args: { groupId: v.id("friendGroups") },
   handler: async (ctx, { groupId }): Promise<JournalDay[]> => {
     const userId = await requireAuthUserId(ctx);
     await requireGroupMember(ctx, groupId, userId);
+    return await collectListDays(ctx, groupId, userId);
+  },
+});
 
+export const listDaysForFriend = query({
+  args: { friendUserId: v.id("users") },
+  handler: async (ctx, { friendUserId }): Promise<JournalDay[]> => {
+    const userId = await requireAuthUserId(ctx);
+    const groupId = await resolveFriendGroup(ctx, userId, friendUserId);
+    if (!groupId) {
+      return [];
+    }
+    return await collectListDays(ctx, groupId, userId);
+  },
+});
+
+export const getDayForFriend = query({
+  args: {
+    friendUserId: v.id("users"),
+    date: v.string(),
+  },
+  handler: async (ctx, { friendUserId, date }): Promise<JournalDay | null> => {
+    const userId = await requireAuthUserId(ctx);
+    const groupId = await resolveFriendGroup(ctx, userId, friendUserId);
+    if (!groupId) {
+      return null;
+    }
+
+    const normalizedDate = validateDayDate(date);
     const entries = await ctx.db
       .query("journalEntries")
-      .withIndex("by_group", (q) => q.eq("groupId", groupId))
+      .withIndex("by_group_and_day", (q) =>
+        q.eq("groupId", groupId).eq("dayDate", normalizedDate),
+      )
       .collect();
 
-    const entriesByDate = new Map<string, typeof entries>();
-    for (const entry of entries) {
-      const dayEntries = entriesByDate.get(entry.dayDate) ?? [];
-      dayEntries.push(entry);
-      entriesByDate.set(entry.dayDate, dayEntries);
-    }
-
-    const dayRecords = await ctx.db
-      .query("journalDays")
-      .withIndex("by_group_and_date", (q) => q.eq("groupId", groupId))
-      .collect();
-
-    for (const dayRecord of dayRecords) {
-      if (!entriesByDate.has(dayRecord.date)) {
-        entriesByDate.set(dayRecord.date, []);
-      }
-    }
-
-    const days = await Promise.all(
-      [...entriesByDate.entries()].map(([date, dayEntries]) =>
-        buildJournalDay(ctx, groupId, userId, date, dayEntries),
-      ),
+    return await buildJournalDay(
+      ctx,
+      groupId,
+      userId,
+      normalizedDate,
+      entries,
     );
+  },
+});
 
-    return days.sort((a, b) => b.date.localeCompare(a.date));
+export const listHomeFriends = query({
+  args: { dayDate: v.string() },
+  handler: async (
+    ctx,
+    { dayDate },
+  ): Promise<{ tiles: HomeFriendTile[]; totalFriendCount: number }> => {
+    const userId = await requireAuthUserId(ctx);
+    const normalizedDayDate = validateDayDate(dayDate);
+
+    const friendships = await ctx.db
+      .query("friendships")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+
+    const tiles: HomeFriendTile[] = [];
+
+    for (const friendship of friendships) {
+      const friendUserId = friendship.friendUserId;
+      const groupId = await findGroupForUsers(ctx, userId, friendUserId);
+      if (!groupId) {
+        continue;
+      }
+
+      const entries = await ctx.db
+        .query("journalEntries")
+        .withIndex("by_group_and_day", (q) =>
+          q.eq("groupId", groupId).eq("dayDate", normalizedDayDate),
+        )
+        .collect();
+
+      const theirs = entries.filter(
+        (entry) => entry.authorUserId === friendUserId,
+      );
+      if (theirs.length === 0) {
+        continue;
+      }
+
+      theirs.sort((a, b) => b.sentAt - a.sentAt);
+      const latestEntry = theirs[0];
+      const previewPhotoUrl =
+        (await ctx.storage.getUrl(latestEntry.photoStorageId)) ?? "";
+
+      const profile = await getUserProfile(ctx, friendUserId);
+      if (!profile) {
+        continue;
+      }
+
+      tiles.push({
+        ...profile,
+        previewPhotoUrl,
+      });
+    }
+
+    return {
+      tiles,
+      totalFriendCount: friendships.length,
+    };
   },
 });
 
@@ -215,8 +385,9 @@ export const sendGlimt = mutation({
     photoStorageId: v.id("_storage"),
     caption: v.optional(v.string()),
     friendUserId: v.optional(v.id("users")),
+    dayDate: v.optional(v.string()),
   },
-  handler: async (ctx, { photoStorageId, caption, friendUserId }) => {
+  handler: async (ctx, { photoStorageId, caption, friendUserId, dayDate }) => {
     const userId = await requireAuthUserId(ctx);
     const normalizedCaption = normalizeCaption(caption);
 
@@ -255,7 +426,9 @@ export const sendGlimt = mutation({
     }
 
     const sentAt = Date.now();
-    const dayDate = dayDateFromTimestamp(sentAt);
+    const normalizedDayDate = dayDate
+      ? validateDayDate(dayDate)
+      : dayDateFromTimestamp(sentAt);
     const entryIds: Id<"journalEntries">[] = [];
 
     for (const targetFriendId of targetFriendIds) {
@@ -271,7 +444,7 @@ export const sendGlimt = mutation({
         photoStorageId,
         caption: normalizedCaption,
         sentAt,
-        dayDate,
+        dayDate: normalizedDayDate,
       });
 
       entryIds.push(entryId);

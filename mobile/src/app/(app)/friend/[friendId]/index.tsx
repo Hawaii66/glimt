@@ -16,14 +16,13 @@ import {
 
 import { DailyJourneyRow } from "@/components/journey/DailyJourneyRow";
 import { ProfilePreview } from "@/components/onboarding/ProfilePreview";
+import { useFriendJourney } from "@/hooks/useFriendJourney";
 import { useFriendProfile } from "@/hooks/useFriendProfile";
 import {
   DEFAULT_ACCENT_THEME_ID,
   getAccentTheme,
 } from "@/lib/accent-themes";
-import { getMockJourneysWithUnlocks } from "@/lib/journey-lock";
 import { useAppColors } from "@/lib/theme";
-import { useMockUnlockStore } from "@/stores/mockUnlockStore";
 
 const HORIZONTAL_PADDING = 24;
 const PREVIEW_TILE_GAP = 12;
@@ -36,12 +35,10 @@ export default function FriendJourneyScreen() {
   const { friendId } = useLocalSearchParams<{ friendId: string }>();
 
   const { friend, isLoading } = useFriendProfile(friendId);
+  const { journeys, isLoading: journeysLoading } = useFriendJourney(friendId);
   const gradientColors = getAccentTheme(
     friend?.accentId ?? DEFAULT_ACCENT_THEME_ID,
   ).gradientColors;
-  const unlockVersion = useMockUnlockStore((s) => s.unlockedDates);
-  const journeys = friendId ? getMockJourneysWithUnlocks(friendId) : [];
-  void unlockVersion;
 
   const contentWidth = windowWidth - HORIZONTAL_PADDING * 2;
   const tileSize = (contentWidth - PREVIEW_TILE_GAP - 32) / 2;
@@ -126,7 +123,7 @@ export default function FriendJourneyScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {journeys.length === 0 ? (
+        {journeysLoading ? null : journeys.length === 0 ? (
           <View
             style={[
               styles.emptyState,

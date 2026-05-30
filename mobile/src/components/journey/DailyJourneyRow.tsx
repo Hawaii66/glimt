@@ -13,7 +13,7 @@ import { JourneyGlimtImage } from "@/components/journey/JourneyGlimtImage";
 import { UserAvatar } from "@/components/UserAvatar";
 import { getAccentTheme, type AccentThemeId } from "@/lib/accent-themes";
 import { formatJourneyDate } from "@/lib/format-journey-date";
-import type { DailyJourney, DailyJourneyGlimt } from "@/lib/glimt-mock-data";
+import type { JourneyDay, JourneyGlimt } from "@/lib/journey-types";
 import {
   PHOTO_BORDER_COLOR,
   TILE_BORDER_WIDTH,
@@ -36,8 +36,8 @@ type DailyJourneyRowProps = {
   friendAvatarUrl: string;
   friendDisplayName: string;
   date: string;
-  yours?: DailyJourneyGlimt[];
-  theirs?: DailyJourneyGlimt[];
+  yours?: JourneyGlimt[];
+  theirs?: JourneyGlimt[];
   meetLock?: boolean;
   unlockedAt?: number;
   tileSize: number;
@@ -191,7 +191,7 @@ function GlimtPhotoTile({
   enableZoom = false,
   onImageLoad,
 }: {
-  glimt: DailyJourneyGlimt;
+  glimt: JourneyGlimt;
   tileSize: number;
   tilt: `${number}deg`;
   stackIndex?: number;
@@ -299,7 +299,7 @@ function JourneyGlimtStack({
   zoomPhotoUrl,
   onZoomImageLoad,
 }: {
-  glimts?: DailyJourneyGlimt[];
+  glimts?: JourneyGlimt[];
   tileSize: number;
   baseTilt: number;
   locked?: boolean;
@@ -405,8 +405,8 @@ function JourneyRowContent({
   friendAvatarUrl: string;
   friendDisplayName: string;
   date: string;
-  yours?: DailyJourneyGlimt[];
-  theirs?: DailyJourneyGlimt[];
+  yours?: JourneyGlimt[];
+  theirs?: JourneyGlimt[];
   tileSize: number;
   calendarLocked: boolean;
   meetLocked: boolean;
@@ -554,7 +554,7 @@ export function DailyJourneyRow({
   const runtimeUnlocked = useMockUnlockStore((s) =>
     s.isUnlocked(friendId, date),
   );
-  const journey: DailyJourney = {
+  const journey: JourneyDay = {
     date,
     yours,
     theirs,
