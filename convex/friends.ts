@@ -4,6 +4,7 @@ import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { requireAuthUserId, validateUsername } from "./lib/auth";
 import { createFriendGroup } from "./lib/friendGroups";
+import { userError } from "./lib/userError";
 
 type UserProfile = {
   id: Id<"users">;
@@ -114,21 +115,21 @@ export const sendRequest = mutation({
       .unique();
 
     if (!targetUser) {
-      throw new Error("No user found with that username.");
+      userError("No one found with that username.");
     }
 
     if (!targetUser.onboardingComplete) {
-      throw new Error("That user has not finished setting up their account.");
+      userError("That user has not finished setting up their account.");
     }
 
     const toUserId = targetUser._id;
 
     if (fromUserId === toUserId) {
-      throw new Error("You cannot send a friend request to yourself.");
+      userError("You cannot send a friend request to yourself.");
     }
 
     if (await areFriends(ctx, fromUserId, toUserId)) {
-      throw new Error("You are already friends with this user.");
+      userError("You are already friends with this user.");
     }
 
     const incoming = await ctx.db
@@ -139,7 +140,7 @@ export const sendRequest = mutation({
       .unique();
 
     if (incoming?.status === "pending") {
-      throw new Error("This user already sent you a friend request.");
+      userError("This user already sent you a friend request.");
     }
 
     const outgoing = await ctx.db
@@ -150,7 +151,7 @@ export const sendRequest = mutation({
       .unique();
 
     if (outgoing?.status === "pending") {
-      throw new Error("Friend request already sent.");
+      userError("Friend request already sent.");
     }
 
     const now = Date.now();
@@ -180,15 +181,15 @@ export const acceptRequest = mutation({
     const request = await ctx.db.get(requestId);
 
     if (!request) {
-      throw new Error("Friend request not found.");
+      userError("Friend request not found.");
     }
 
     if (request.toUserId !== userId) {
-      throw new Error("You can only accept requests sent to you.");
+      userError("You can only accept requests sent to you.");
     }
 
     if (request.status !== "pending") {
-      throw new Error("This friend request is no longer pending.");
+      userError("This friend request is no longer pending.");
     }
 
     const now = Date.now();
@@ -221,15 +222,15 @@ export const declineRequest = mutation({
     const request = await ctx.db.get(requestId);
 
     if (!request) {
-      throw new Error("Friend request not found.");
+      userError("Friend request not found.");
     }
 
     if (request.toUserId !== userId) {
-      throw new Error("You can only decline requests sent to you.");
+      userError("You can only decline requests sent to you.");
     }
 
     if (request.status !== "pending") {
-      throw new Error("This friend request is no longer pending.");
+      userError("This friend request is no longer pending.");
     }
 
     await ctx.db.patch(requestId, {

@@ -21,6 +21,7 @@ import type * as lib_auth from "../lib/auth.js";
 import type * as lib_friendGroups from "../lib/friendGroups.js";
 import type * as lib_random from "../lib/random.js";
 import type * as lib_requireEnv from "../lib/requireEnv.js";
+import type * as lib_userError from "../lib/userError.js";
 import type * as test from "../test.js";
 import type * as users from "../users.js";
 
@@ -44,6 +45,7 @@ declare const fullApi: ApiFromModules<{
   "lib/friendGroups": typeof lib_friendGroups;
   "lib/random": typeof lib_random;
   "lib/requireEnv": typeof lib_requireEnv;
+  "lib/userError": typeof lib_userError;
   test: typeof test;
   users: typeof users;
 }>;

@@ -1,6 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
 import type { DataModel } from "../_generated/dataModel";
+import { userError } from "./userError";
 
 type AuthCtx = GenericQueryCtx<DataModel> | GenericMutationCtx<DataModel>;
 
@@ -21,7 +22,7 @@ export function normalizeUsername(username: string) {
 export function validateUsername(username: string) {
   const normalized = normalizeUsername(username);
   if (!USERNAME_PATTERN.test(normalized)) {
-    throw new Error(
+    userError(
       "Username must be 3–20 characters and contain only lowercase letters, numbers, and underscores.",
     );
   }

@@ -21,7 +21,12 @@ import {
 import { ProfilePreview } from "@/components/onboarding/ProfilePreview";
 import { AccentThemePicker } from "@/components/settings/AccentThemePicker";
 import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
-import { getAccentTheme } from "@/lib/accent-themes";
+import {
+  ACCENT_THEMES,
+  getAccentTheme,
+  type AccentThemeId,
+} from "@/lib/accent-themes";
+import { getConvexErrorMessage } from "@/lib/convexError";
 import { appFriendJourney } from "@/lib/routes";
 import { useAppColors } from "@/lib/theme";
 import { useOnboardingStore } from "@/stores/onboardingStore";
@@ -126,11 +131,10 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
         `Your friend request to @${normalized} was sent.`,
       );
     } catch (addError) {
-      const message =
-        addError instanceof Error
-          ? addError.message
-          : "Could not send friend request.";
-      Alert.alert("Could not add friend", message);
+      Alert.alert(
+        "Could not add friend",
+        getConvexErrorMessage(addError, "Could not send friend request."),
+      );
     } finally {
       setAddingFriend(false);
     }
@@ -149,11 +153,10 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
       await acceptFriendRequest({ requestId: request.requestId });
       Alert.alert("Friend added", `${request.displayName} is now on your list.`);
     } catch (acceptError) {
-      const message =
-        acceptError instanceof Error
-          ? acceptError.message
-          : "Could not accept friend request.";
-      Alert.alert("Could not accept", message);
+      Alert.alert(
+        "Could not accept",
+        getConvexErrorMessage(acceptError, "Could not accept friend request."),
+      );
     } finally {
       setRespondingRequestId(null);
     }
@@ -168,11 +171,10 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
     try {
       await declineFriendRequest({ requestId });
     } catch (declineError) {
-      const message =
-        declineError instanceof Error
-          ? declineError.message
-          : "Could not decline friend request.";
-      Alert.alert("Could not decline", message);
+      Alert.alert(
+        "Could not decline",
+        getConvexErrorMessage(declineError, "Could not decline friend request."),
+      );
     } finally {
       setRespondingRequestId(null);
     }
