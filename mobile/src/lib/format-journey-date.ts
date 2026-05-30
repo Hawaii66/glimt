@@ -1,5 +1,5 @@
-import type { DailyJourney } from "@/lib/glimt-mock-data";
-import type { DailyJourneyGlimt } from "@/lib/glimt-mock-data";
+import type { DailyJourney } from "@/lib/journey-types";
+import type { DailyJourneyGlimt } from "@/lib/journey-types";
 
 function parseIsoDate(isoDate: string): Date {
   const [year, month, day] = isoDate.split("-").map(Number);

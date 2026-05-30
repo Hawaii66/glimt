@@ -8,11 +8,11 @@ import {
 } from "react-native-safe-area-context";
 
 import { JourneyDayChat } from "@/components/journey/JourneyDayChat";
+import { useFriendGroupId } from "@/hooks/useFriendGroupId";
+import { useFriendJourneyDay } from "@/hooks/useFriendJourney";
 import { useFriendProfile } from "@/hooks/useFriendProfile";
-import { getJourneyByDate } from "@/lib/journey-chat";
 import { resolveJourneyLockState } from "@/lib/journey-lock";
 import { useAppColors } from "@/lib/theme";
-import { useMockUnlockStore } from "@/stores/mockUnlockStore";
 
 export default function JourneyDayScreen() {
   const router = useRouter();
@@ -23,25 +23,24 @@ export default function JourneyDayScreen() {
     date: string;
   }>();
 
-  const runtimeUnlocked = useMockUnlockStore((s) =>
-    friendId && date ? s.isUnlocked(friendId, date) : false,
+  const { friend, isLoading: isFriendLoading } = useFriendProfile(friendId);
+  const { groupId, isLoading: isGroupLoading } = useFriendGroupId(friendId);
+  const { journey, isLoading: isJourneyLoading } = useFriendJourneyDay(
+    groupId,
+    date,
   );
 
-  const { friend, isLoading } = useFriendProfile(friendId);
-  const journey =
-    friendId && date ? getJourneyByDate(friendId, date) : undefined;
-
-  const blocked =
-    journey && friendId && date
-      ? !resolveJourneyLockState(journey, friendId, runtimeUnlocked)
-          .canNavigateToDay
-      : true;
+  const blocked = journey
+    ? !resolveJourneyLockState(journey).canNavigateToDay
+    : true;
 
   useEffect(() => {
-    if (blocked) {
+    if (!isFriendLoading && !isGroupLoading && !isJourneyLoading && blocked) {
       router.back();
     }
-  }, [blocked, router]);
+  }, [blocked, isFriendLoading, isGroupLoading, isJourneyLoading, router]);
+
+  const isLoading = isFriendLoading || isGroupLoading || isJourneyLoading;
 
   if (isLoading || !friend || !journey || !date || blocked) {
     if (isLoading) {

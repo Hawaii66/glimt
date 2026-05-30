@@ -1,5 +1,4 @@
-import type { DailyJourney, DailyJourneyGlimt } from "@/lib/glimt-mock-data";
-import { getMockJourneysWithUnlocks } from "@/lib/journey-lock";
+import type { DailyJourney, DailyJourneyGlimt } from "@/lib/journey-types";
 
 export type JourneyChatSender = "yours" | "theirs";
 
@@ -34,15 +33,6 @@ export function sortGlimtsChronological(
 ): DailyJourneyGlimt[] {
   return [...glimts].sort(
     (a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime(),
-  );
-}
-
-export function getJourneyByDate(
-  friendId: string,
-  date: string,
-): DailyJourney | undefined {
-  return getMockJourneysWithUnlocks(friendId).find(
-    (journey) => journey.date === date,
   );
 }
 

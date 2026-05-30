@@ -1,14 +1,22 @@
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
-import type { QueryCtx } from "./_generated/server";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { requireAuthUserId } from "./lib/auth";
 import {
   getOrCreateFriendGroupForUsers,
+  listGroupMemberIds,
   requireGroupMember,
   validateDayDate,
   validateEmoji,
 } from "./lib/friendGroups";
+import {
+  ensureJournalDayForFirstEntryOfDay,
+  isDayComplete,
+  isDayEnded,
+  rollMeetLockForDayIfEligible,
+  syncMeetLocksForGroup as syncMeetLocksForGroupInternal,
+} from "./lib/meetLock";
 import { userError } from "./lib/userError";
 
 type JournalEntry = {
@@ -23,6 +31,7 @@ type JournalDay = {
   date: string;
   sharedEmoji: string | null;
   togetherUnlockedAt: number | null;
+  meetLocked: boolean;
   yours: JournalEntry[];
   theirs: JournalEntry[];
 };
@@ -102,9 +111,34 @@ async function buildJournalDay(
     date,
     sharedEmoji: day?.sharedEmoji ?? null,
     togetherUnlockedAt: day?.togetherUnlockedAt ?? null,
+    meetLocked: day?.meetLocked ?? false,
     yours,
     theirs,
   };
+}
+
+async function maybeRollMeetLockAfterEntry(
+  ctx: MutationCtx,
+  groupId: Id<"friendGroups">,
+  dayDate: string,
+) {
+  await ensureJournalDayForFirstEntryOfDay(ctx, groupId, dayDate);
+
+  const memberUserIds = await listGroupMemberIds(ctx, groupId);
+  const entries = await ctx.db
+    .query("journalEntries")
+    .withIndex("by_group_and_day", (q) =>
+      q.eq("groupId", groupId).eq("dayDate", dayDate),
+    )
+    .collect();
+
+  await rollMeetLockForDayIfEligible(
+    ctx,
+    groupId,
+    dayDate,
+    entries,
+    memberUserIds,
+  );
 }
 
 export const listDays = query({
@@ -173,6 +207,23 @@ export const getDay = query({
   },
 });
 
+export const syncMeetLocksForGroup = mutation({
+  args: { groupId: v.id("friendGroups") },
+  handler: async (ctx, { groupId }) => {
+    const userId = await requireAuthUserId(ctx);
+    await requireGroupMember(ctx, groupId, userId);
+
+    const memberUserIds = await listGroupMemberIds(ctx, groupId);
+    const rolledCount = await syncMeetLocksForGroupInternal(
+      ctx,
+      groupId,
+      memberUserIds,
+    );
+
+    return { rolledCount };
+  },
+});
+
 export const addEntry = mutation({
   args: {
     groupId: v.id("friendGroups"),
@@ -191,7 +242,7 @@ export const addEntry = mutation({
       ? validateDayDate(dayDate)
       : dayDateFromTimestamp(sentAt);
 
-    return await ctx.db.insert("journalEntries", {
+    const entryId = await ctx.db.insert("journalEntries", {
       groupId,
       authorUserId: userId,
       photoStorageId,
@@ -199,6 +250,10 @@ export const addEntry = mutation({
       sentAt,
       dayDate: normalizedDayDate,
     });
+
+    await maybeRollMeetLockAfterEntry(ctx, groupId, normalizedDayDate);
+
+    return entryId;
   },
 });
 
@@ -274,6 +329,8 @@ export const sendGlimt = mutation({
         dayDate,
       });
 
+      await maybeRollMeetLockAfterEntry(ctx, groupId, dayDate);
+
       entryIds.push(entryId);
     }
 
@@ -331,12 +388,36 @@ export const unlockTogetherDay = mutation({
     const normalizedDate = validateDayDate(date);
     const now = Date.now();
 
+    if (!isDayEnded(normalizedDate, now)) {
+      userError("Today's glimts cannot be unlocked yet.");
+    }
+
+    const memberUserIds = await listGroupMemberIds(ctx, groupId);
+    const entries = await ctx.db
+      .query("journalEntries")
+      .withIndex("by_group_and_day", (q) =>
+        q.eq("groupId", groupId).eq("dayDate", normalizedDate),
+      )
+      .collect();
+
+    if (!isDayComplete(entries, memberUserIds)) {
+      userError("Both friends need to share glimts for this day.");
+    }
+
     const existingDay = await ctx.db
       .query("journalDays")
       .withIndex("by_group_and_date", (q) =>
         q.eq("groupId", groupId).eq("date", normalizedDate),
       )
       .unique();
+
+    if (existingDay?.togetherUnlockedAt !== undefined) {
+      return existingDay._id;
+    }
+
+    if (existingDay?.meetLocked !== true) {
+      userError("This day is not meet-locked.");
+    }
 
     if (existingDay) {
       await ctx.db.patch(existingDay._id, {
@@ -345,10 +426,6 @@ export const unlockTogetherDay = mutation({
       return existingDay._id;
     }
 
-    return await ctx.db.insert("journalDays", {
-      groupId,
-      date: normalizedDate,
-      togetherUnlockedAt: now,
-    });
+    userError("This day is not meet-locked.");
   },
 });

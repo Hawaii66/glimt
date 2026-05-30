@@ -80,7 +80,20 @@ export default defineSchema({
     date: v.string(),
     sharedEmoji: v.optional(v.string()),
     togetherUnlockedAt: v.optional(v.number()),
+    meetLocked: v.optional(v.boolean()),
+    meetLockedAt: v.optional(v.number()),
   })
     .index("by_group", ["groupId"])
+    .index("by_group_and_date", ["groupId", "date"]),
+  meetUnlockSessions: defineTable({
+    groupId: v.id("friendGroups"),
+    date: v.string(),
+    sessionId: v.string(),
+    hostUserId: v.id("users"),
+    nonce: v.string(),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_session", ["sessionId"])
     .index("by_group_and_date", ["groupId", "date"]),
 });
