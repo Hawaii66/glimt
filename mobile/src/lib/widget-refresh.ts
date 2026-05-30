@@ -1,8 +1,41 @@
 import Constants from "expo-constants";
 import { Directory, File, Paths } from "expo-file-system";
 
+import {
+  getAccentTheme,
+  resolveAccentThemeId,
+  type AccentThemeId,
+} from "./accent-themes";
 import { MOCK_FRIEND_GLIMTS } from "./glimt-mock-data";
-import { FriendGlimtWidget, WidgetGlimtItem } from "./widget";
+import {
+  AVATAR_OFFSET,
+  AVATAR_SIZE,
+  PHOTO_BORDER_COLOR,
+  TILE_BORDER_WIDTH,
+  TILE_CORNER_RADIUS,
+  TILE_SCALE,
+} from "./glimt-tile-styles";
+import {
+  FriendGlimtWidget,
+  WidgetGlimtItem,
+  type WidgetTileStyle,
+} from "./widget";
+
+function getWidgetTileStyle(accentThemeId?: AccentThemeId): WidgetTileStyle {
+  const gradientColors = getAccentTheme(
+    resolveAccentThemeId(accentThemeId),
+  ).gradientColors;
+
+  return {
+    gradientColors: [...gradientColors] as [string, string, string],
+    photoBorderColor: PHOTO_BORDER_COLOR,
+    tileCornerRadius: TILE_CORNER_RADIUS,
+    tileBorderWidth: TILE_BORDER_WIDTH,
+    avatarSize: AVATAR_SIZE,
+    avatarOffset: AVATAR_OFFSET,
+    tileScale: TILE_SCALE,
+  };
+}
 
 function getAppGroupDirectory(): Directory | null {
   const bundleIdentifier = Constants.expoConfig?.ios?.bundleIdentifier;
@@ -74,7 +107,9 @@ async function buildMockWidgetGlimts(): Promise<WidgetGlimtItem[]> {
   return glimts.filter((item): item is WidgetGlimtItem => item !== null);
 }
 
-export async function refreshFriendGlimtWidget(): Promise<void> {
+export async function refreshFriendGlimtWidget(
+  accentThemeId?: AccentThemeId,
+): Promise<void> {
   const glimts = await buildMockWidgetGlimts();
 
   if (glimts.length === 0) {
@@ -82,5 +117,9 @@ export async function refreshFriendGlimtWidget(): Promise<void> {
     return;
   }
 
-  FriendGlimtWidget.updateSnapshot({ glimts });
+  FriendGlimtWidget.updateSnapshot({
+    glimts,
+    style: getWidgetTileStyle(accentThemeId),
+  });
+  FriendGlimtWidget.reload();
 }
