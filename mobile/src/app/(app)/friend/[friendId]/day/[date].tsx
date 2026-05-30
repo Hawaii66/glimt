@@ -44,6 +44,10 @@ export default function JourneyDayScreen() {
   }, [blocked, router]);
 
   if (isLoading || !friend || !journey || !date || blocked) {
+    if (isLoading) {
+      return null;
+    }
+
     return (
       <SafeAreaView
         style={[styles.safeArea, { backgroundColor: colors.background }]}
