@@ -17,7 +17,9 @@ import {
 import { DailyJourneyRow } from "@/components/journey/DailyJourneyRow";
 import { ProfilePreview } from "@/components/onboarding/ProfilePreview";
 import { getAccentTheme } from "@/lib/accent-themes";
-import { getFriendById, getMockJourneysForFriend } from "@/lib/glimt-mock-data";
+import { getFriendById } from "@/lib/glimt-mock-data";
+import { getMockJourneysWithUnlocks } from "@/lib/journey-lock";
+import { useMockUnlockStore } from "@/stores/mockUnlockStore";
 import { useAppColors } from "@/lib/theme";
 
 const HORIZONTAL_PADDING = 24;
@@ -34,7 +36,9 @@ export default function FriendJourneyScreen() {
   const gradientColors = friend
     ? getAccentTheme(friend.accentId).gradientColors
     : undefined;
-  const journeys = friendId ? getMockJourneysForFriend(friendId) : [];
+  const unlockVersion = useMockUnlockStore((s) => s.unlockedDates);
+  const journeys = friendId ? getMockJourneysWithUnlocks(friendId) : [];
+  void unlockVersion;
 
   const contentWidth = windowWidth - HORIZONTAL_PADDING * 2;
   const tileSize = (contentWidth - PREVIEW_TILE_GAP - 32) / 2;

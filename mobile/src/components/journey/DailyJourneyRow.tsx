@@ -7,8 +7,15 @@ import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { JourneyGlimtImage } from "@/components/journey/JourneyGlimtImage";
 import { getAccentTheme, type AccentThemeId } from "@/lib/accent-themes";
-import { formatJourneyDate, isJourneyLocked } from "@/lib/format-journey-date";
-import type { DailyJourneyGlimt } from "@/lib/glimt-mock-data";
+import { formatJourneyDate } from "@/lib/format-journey-date";
+import { resolveJourneyLockState } from "@/lib/journey-lock";
+import type { DailyJourney, DailyJourneyGlimt } from "@/lib/glimt-mock-data";
+import { appFriendTogetherDayUnlock } from "@/lib/routes";
+import {
+  TOGETHER_DAY_BADGE,
+  TOGETHER_DAY_LOCKED_MESSAGE,
+} from "@/lib/together-day";
+import { useMockUnlockStore } from "@/stores/mockUnlockStore";
 import {
   PHOTO_BORDER_COLOR,
   TILE_BORDER_WIDTH,
@@ -29,8 +36,12 @@ type DailyJourneyRowProps = {
   date: string;
   yours?: DailyJourneyGlimt[];
   theirs?: DailyJourneyGlimt[];
+  meetLock?: boolean;
+  unlockedAt?: number;
   tileSize: number;
 };
+
+type LockVariant = "calendar" | "meet";
 
 const INWARD_TILT = 1;
 const LOCKED_CONNECTOR_SIZE = 36;
@@ -80,9 +91,11 @@ function GlimtCountLabel({ count }: { count: number }) {
 function LockedDayConnector({
   tileSize,
   accentColor,
+  variant,
 }: {
   tileSize: number;
   accentColor: string;
+  variant: LockVariant;
 }) {
   return (
     <View
@@ -96,7 +109,11 @@ function LockedDayConnector({
         },
       ]}
     >
-      <SymbolView name="gift.fill" size={18} tintColor={accentColor} />
+      <SymbolView
+        name={variant === "meet" ? "lock.fill" : "gift.fill"}
+        size={18}
+        tintColor={accentColor}
+      />
     </View>
   );
 }
@@ -105,10 +122,12 @@ function LockedGlimtTile({
   tileSize,
   tilt,
   count,
+  variant,
 }: {
   tileSize: number;
   tilt: `${number}deg`;
   count: number;
+  variant: LockVariant;
 }) {
   const innerRadius = TILE_CORNER_RADIUS - TILE_BORDER_WIDTH;
   const compactBorderWidth = Math.max(4, TILE_BORDER_WIDTH - 2);
@@ -149,10 +168,10 @@ function LockedGlimtTile({
             },
           ]}
         >
-          <GlimtCountLabel count={count} />
+          {count > 0 ? <GlimtCountLabel count={count} /> : null}
           <SymbolView
-            name="sparkles"
-            size={22}
+            name={variant === "meet" ? "questionmark" : "sparkles"}
+            size={variant === "meet" ? 28 : 22}
             tintColor="rgba(100, 100, 120, 0.5)"
           />
         </LinearGradient>
@@ -274,6 +293,7 @@ function JourneyGlimtStack({
   tileSize,
   baseTilt,
   locked = false,
+  lockVariant = "calendar",
   zoomPhotoUrl,
   onZoomImageLoad,
 }: {
@@ -281,6 +301,7 @@ function JourneyGlimtStack({
   tileSize: number;
   baseTilt: number;
   locked?: boolean;
+  lockVariant?: LockVariant;
   zoomPhotoUrl?: string;
   onZoomImageLoad?: (size: ImageSize) => void;
 }) {
@@ -299,6 +320,7 @@ function JourneyGlimtStack({
           tileSize={tileSize}
           tilt={`${baseTilt}deg`}
           count={count}
+          variant={lockVariant}
         />
       </View>
     );
@@ -361,30 +383,39 @@ function JourneyGlimtStack({
 }
 
 function JourneyRowContent({
+  friendId,
   friendAvatarUrl,
   friendDisplayName,
   date,
   yours,
   theirs,
   tileSize,
-  locked,
+  calendarLocked,
+  meetLocked,
+  rowLocked,
+  showUnlockButton,
   colors,
   accentColor,
   zoomPhotoUrl,
   onZoomImageLoad,
 }: {
+  friendId: string;
   friendAvatarUrl: string;
   friendDisplayName: string;
   date: string;
   yours?: DailyJourneyGlimt[];
   theirs?: DailyJourneyGlimt[];
   tileSize: number;
-  locked: boolean;
+  calendarLocked: boolean;
+  meetLocked: boolean;
+  rowLocked: boolean;
+  showUnlockButton: boolean;
   colors: ReturnType<typeof useAppColors>;
   accentColor: string;
   zoomPhotoUrl?: string;
   onZoomImageLoad: (size: ImageSize) => void;
 }) {
+  const lockVariant: LockVariant = meetLocked ? "meet" : "calendar";
   const dateHeader = (
     <View style={styles.dateHeader}>
       <View style={styles.dateHeaderLeft}>
@@ -398,18 +429,26 @@ function JourneyRowContent({
           <Text style={[styles.dateLabel, { color: colors.text }]}>
             {formatJourneyDate(date)}
           </Text>
-          {!locked ? (
+          {!rowLocked ? (
             <Text style={[styles.friendName, { color: colors.textMuted }]}>
               {friendDisplayName}
             </Text>
           ) : null}
         </View>
       </View>
-      {locked ? (
+      {calendarLocked ? (
         <View style={[styles.lockedBadge, { backgroundColor: colors.fill }]}>
           <SymbolView name="lock.fill" size={11} tintColor={colors.textMuted} />
           <Text style={[styles.lockedBadgeText, { color: colors.textMuted }]}>
             Opens tomorrow
+          </Text>
+        </View>
+      ) : null}
+      {meetLocked ? (
+        <View style={[styles.lockedBadge, { backgroundColor: colors.fill }]}>
+          <SymbolView name="lock.fill" size={11} tintColor={colors.textMuted} />
+          <Text style={[styles.lockedBadgeText, { color: colors.textMuted }]}>
+            {TOGETHER_DAY_BADGE}
           </Text>
         </View>
       ) : null}
