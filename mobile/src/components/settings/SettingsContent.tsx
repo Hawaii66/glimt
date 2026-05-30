@@ -3,10 +3,13 @@ import { useMutation, useQuery } from "convex/react";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,14 +19,11 @@ import {
 } from "react-native";
 
 import { ProfilePreview } from "@/components/onboarding/ProfilePreview";
-import {
-  ACCENT_THEMES,
-  getAccentTheme,
-  type AccentThemeId,
-} from "@/lib/accent-themes";
+import { AccentThemePicker } from "@/components/settings/AccentThemePicker";
+import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
+import { getAccentTheme } from "@/lib/accent-themes";
 import { appFriendJourney } from "@/lib/routes";
 import { useAppColors } from "@/lib/theme";
-import { useAccentThemeStore } from "@/stores/accentThemeStore";
 import { useOnboardingStore } from "@/stores/onboardingStore";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
@@ -66,15 +66,45 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
   const sendFriendRequest = useMutation(api.friends.sendRequest);
   const acceptFriendRequest = useMutation(api.friends.acceptRequest);
   const declineFriendRequest = useMutation(api.friends.declineRequest);
-  const accentId = useAccentThemeStore((state) => state.accentId);
-  const setAccentId = useAccentThemeStore((state) => state.setAccentId);
-  const gradientColors = getAccentTheme(accentId).gradientColors;
+  const { accentTheme, setAccentTheme } = useCurrentUserAccentTheme();
+  const gradientColors = getAccentTheme(accentTheme).gradientColors;
   const resetOnboarding = useOnboardingStore((state) => state.reset);
   const [friendUsername, setFriendUsername] = useState("@");
   const [signingOut, setSigningOut] = useState(false);
   const [addingFriend, setAddingFriend] = useState(false);
   const [respondingRequestId, setRespondingRequestId] =
     useState<Id<"friendRequests"> | null>(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const scrollRef = useRef<ScrollView>(null);
+  const addFriendSectionY = useRef(0);
+
+  useEffect(() => {
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const showSubscription = Keyboard.addListener(showEvent, (event) => {
+      setKeyboardHeight(event.endCoordinates.height);
+    });
+    const hideSubscription = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
+  const scrollToAddFriend = () => {
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({
+        y: Math.max(0, addFriendSectionY.current - 16),
+        animated: true,
+      });
+    });
+  };
 
   const handleFriendUsernameChange = (text: string) => {
     const withoutAt = text.replace(/^@+/, "");
@@ -163,12 +193,28 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
   };
 
   return (
-    <ScrollView
-      style={[styles.scroll, scrollMaxHeight != null && { maxHeight: scrollMaxHeight }]}
-      contentContainerStyle={styles.scrollContent}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
+    <KeyboardAvoidingView
+      style={[
+        styles.keyboardAvoid,
+        scrollMaxHeight != null && { maxHeight: scrollMaxHeight },
+      ]}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scroll}
+        contentContainerStyle={[
+          styles.scrollContent,
+          scrollMaxHeight == null && styles.scrollContentGrow,
+          { paddingBottom: 32 + keyboardHeight },
+        ]}
+        automaticallyAdjustKeyboardInsets
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode={
+          Platform.OS === "ios" ? "interactive" : "on-drag"
+        }
+        showsVerticalScrollIndicator={false}
+      >
       <Text style={[styles.pageTitle, { color: colors.text }]}>Settings</Text>
 
       <LinearGradient
@@ -192,53 +238,18 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
         <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
           Theme
         </Text>
-        <View style={styles.themeGrid}>
-          {ACCENT_THEMES.map((theme) => {
-            const selected = accentId === theme.id;
-            return (
-              <Pressable
-                key={theme.id}
-                style={styles.themeOption}
-                onPress={() => setAccentId(theme.id as AccentThemeId)}
-                accessibilityRole="button"
-                accessibilityLabel={`${theme.label} theme`}
-                accessibilityState={{ selected }}
-              >
-                <View
-                  style={[
-                    styles.themePreview,
-                    {
-                      borderColor: selected
-                        ? colors.text
-                        : colors.surfaceBorder,
-                    },
-                  ]}
-                >
-                  <LinearGradient
-                    colors={[...theme.gradientColors]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.themePreviewGradient}
-                  />
-                </View>
-                <Text
-                  style={[
-                    styles.themeLabel,
-                    {
-                      color: selected ? colors.text : colors.textMuted,
-                      fontWeight: selected ? "600" : "400",
-                    },
-                  ]}
-                >
-                  {theme.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <AccentThemePicker
+          selectedId={accentTheme}
+          onSelect={setAccentTheme}
+        />
       </View>
 
-      <View style={styles.section}>
+      <View
+        style={styles.section}
+        onLayout={(event) => {
+          addFriendSectionY.current = event.nativeEvent.layout.y;
+        }}
+      >
         <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
           Add friend
         </Text>
@@ -260,6 +271,7 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
             autoCorrect={false}
             returnKeyType="done"
             onSubmitEditing={handleAddFriend}
+            onFocus={scrollToAddFriend}
           />
           <Pressable
             style={[
@@ -448,20 +460,24 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
           {signingOut ? "Signing out…" : "Sign out"}
         </Text>
       </Pressable>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
-const THEME_PREVIEW_SIZE = 52;
-
 const styles = StyleSheet.create({
+  keyboardAvoid: {
+    flex: 1,
+  },
   scroll: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingBottom: 32,
     gap: 24,
+  },
+  scrollContentGrow: {
+    flexGrow: 1,
   },
   pageTitle: {
     fontSize: 22,
@@ -491,29 +507,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textTransform: "uppercase",
     letterSpacing: 0.6,
-  },
-  themeGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 16,
-  },
-  themeOption: {
-    alignItems: "center",
-    gap: 6,
-    width: THEME_PREVIEW_SIZE + 8,
-  },
-  themePreview: {
-    width: THEME_PREVIEW_SIZE,
-    height: THEME_PREVIEW_SIZE,
-    borderRadius: 10,
-    overflow: "hidden",
-    borderWidth: 2,
-  },
-  themePreviewGradient: {
-    flex: 1,
-  },
-  themeLabel: {
-    fontSize: 12,
   },
   addFriendRow: {
     flexDirection: "row",

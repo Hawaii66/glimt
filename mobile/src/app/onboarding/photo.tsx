@@ -91,7 +91,7 @@ export default function PhotoScreen() {
   return (
     <OnboardingScreen
       onNext={() => {
-        router.push("/onboarding/confirm");
+        router.push("/onboarding/theme");
       }}
     >
       <Text style={[styles.label, { color: colors.text }]}>Profile photo</Text>
@@ -124,7 +124,7 @@ export default function PhotoScreen() {
       <Pressable
         onPress={() => {
           setLocalAvatarUri(null);
-          router.push("/onboarding/confirm");
+          router.push("/onboarding/theme");
         }}
       >
         <Text style={[styles.skip, { color: colors.textMuted }]}>Skip</Text>
