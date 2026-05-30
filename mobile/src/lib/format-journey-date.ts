@@ -1,5 +1,4 @@
-import type { DailyJourney } from "@/lib/journey-types";
-import type { DailyJourneyGlimt } from "@/lib/journey-types";
+import type { JourneyDay, JourneyGlimt } from "@/lib/journey-types";
 
 function parseIsoDate(isoDate: string): Date {
   const [year, month, day] = isoDate.split("-").map(Number);
@@ -28,8 +27,8 @@ export function isJourneyToday(isoDate: string, now = new Date()): boolean {
 }
 
 export function isJourneyComplete(
-  yours?: DailyJourneyGlimt[],
-  theirs?: DailyJourneyGlimt[],
+  yours?: JourneyGlimt[],
+  theirs?: JourneyGlimt[],
 ): boolean {
   return Boolean(yours?.length && theirs?.length);
 }
@@ -39,13 +38,13 @@ export function isCalendarLocked(isoDate: string, now = new Date()): boolean {
 }
 
 export function isMeetLocked(
-  journey: Pick<DailyJourney, "meetLock" | "unlockedAt">,
+  journey: Pick<JourneyDay, "meetLock" | "unlockedAt">,
 ): boolean {
   return Boolean(journey.meetLock && !journey.unlockedAt);
 }
 
 export function isRowLocked(
-  journey: Pick<DailyJourney, "meetLock" | "unlockedAt">,
+  journey: Pick<JourneyDay, "meetLock" | "unlockedAt">,
   isoDate: string,
   now = new Date(),
 ): boolean {
@@ -58,8 +57,8 @@ export function isRowLocked(
 /** @deprecated Use isRowLocked with journey metadata */
 export function isJourneyLocked(
   isoDate: string,
-  _yours?: DailyJourneyGlimt[],
-  _theirs?: DailyJourneyGlimt[],
+  _yours?: JourneyGlimt[],
+  _theirs?: JourneyGlimt[],
   now = new Date(),
 ): boolean {
   return isCalendarLocked(isoDate, now);

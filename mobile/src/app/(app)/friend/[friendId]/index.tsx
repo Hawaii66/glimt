@@ -16,7 +16,6 @@ import {
 
 import { DailyJourneyRow } from "@/components/journey/DailyJourneyRow";
 import { ProfilePreview } from "@/components/onboarding/ProfilePreview";
-import { useFriendGroupId } from "@/hooks/useFriendGroupId";
 import { useFriendJourney } from "@/hooks/useFriendJourney";
 import { useFriendProfile } from "@/hooks/useFriendProfile";
 import {
@@ -36,8 +35,7 @@ export default function FriendJourneyScreen() {
   const { friendId } = useLocalSearchParams<{ friendId: string }>();
 
   const { friend, isLoading } = useFriendProfile(friendId);
-  const { groupId } = useFriendGroupId(friendId);
-  const { journeys, isLoading: isJourneyLoading } = useFriendJourney(groupId);
+  const { journeys, isLoading: journeysLoading } = useFriendJourney(friendId);
   const gradientColors = getAccentTheme(
     friend?.accentId ?? DEFAULT_ACCENT_THEME_ID,
   ).gradientColors;
@@ -125,7 +123,7 @@ export default function FriendJourneyScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {journeys.length === 0 ? (
+        {journeysLoading ? null : journeys.length === 0 ? (
           <View
             style={[
               styles.emptyState,

@@ -1,6 +1,7 @@
+import { useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import {
   SafeAreaView,
@@ -8,11 +9,12 @@ import {
 } from "react-native-safe-area-context";
 
 import { JourneyDayChat } from "@/components/journey/JourneyDayChat";
-import { useFriendGroupId } from "@/hooks/useFriendGroupId";
-import { useFriendJourneyDay } from "@/hooks/useFriendJourney";
 import { useFriendProfile } from "@/hooks/useFriendProfile";
+import { toJourneyDay } from "@/lib/journal-adapters";
 import { resolveJourneyLockState } from "@/lib/journey-lock";
 import { useAppColors } from "@/lib/theme";
+import { api } from "convex/_generated/api";
+import type { Id } from "convex/_generated/dataModel";
 
 export default function JourneyDayScreen() {
   const router = useRouter();
@@ -23,24 +25,34 @@ export default function JourneyDayScreen() {
     date: string;
   }>();
 
-  const { friend, isLoading: isFriendLoading } = useFriendProfile(friendId);
-  const { groupId, isLoading: isGroupLoading } = useFriendGroupId(friendId);
-  const { journey, isLoading: isJourneyLoading } = useFriendJourneyDay(
-    groupId,
-    date,
+  const { friend, isLoading: friendLoading } = useFriendProfile(friendId);
+  const apiDay = useQuery(
+    api.journals.getDayForFriend,
+    friendId && date
+      ? {
+          friendUserId: friendId as Id<"users">,
+          date,
+        }
+      : "skip",
   );
 
-  const blocked = journey
-    ? !resolveJourneyLockState(journey).canNavigateToDay
-    : true;
+  const journey = useMemo(
+    () => (apiDay ? toJourneyDay(apiDay) : undefined),
+    [apiDay],
+  );
+
+  const blocked =
+    journey && friendId && date
+      ? !resolveJourneyLockState(journey).canNavigateToDay
+      : true;
 
   useEffect(() => {
-    if (!isFriendLoading && !isGroupLoading && !isJourneyLoading && blocked) {
+    if (blocked && apiDay !== undefined) {
       router.back();
     }
-  }, [blocked, isFriendLoading, isGroupLoading, isJourneyLoading, router]);
+  }, [blocked, router, apiDay]);
 
-  const isLoading = isFriendLoading || isGroupLoading || isJourneyLoading;
+  const isLoading = friendLoading || apiDay === undefined;
 
   if (isLoading || !friend || !journey || !date || blocked) {
     if (isLoading) {

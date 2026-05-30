@@ -1,7 +1,9 @@
 import type { AccentThemeId } from "@/lib/accent-themes";
-import type { DailyJourney, DailyJourneyGlimt } from "@/lib/journey-types";
+import type { JourneyDay, JourneyGlimt } from "@/lib/journey-types";
 
-export type { DailyJourney, DailyJourneyGlimt };
+export type { JourneyDay, JourneyGlimt };
+export type DailyJourneyGlimt = JourneyGlimt;
+export type DailyJourney = JourneyDay;
 
 export type FriendGlimt = {
   id: string;

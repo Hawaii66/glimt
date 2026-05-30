@@ -18,7 +18,7 @@ import {
 import { GlimtTile } from "@/components/glimt/GlimtTile";
 import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
 import { getAccentTheme } from "@/lib/accent-themes";
-import { getMockPhotoUrlForFriend } from "@/lib/glimt-mock-data";
+import { todayIsoDate } from "@/lib/format-journey-date";
 import { APP_CAPTURE, APP_SETTINGS, appFriendJourney } from "@/lib/routes";
 import { api } from "convex/_generated/api";
 
@@ -30,7 +30,8 @@ const BOTTOM_BAR_PADDING = 24;
 
 export default function HomeScreen() {
   const router = useRouter();
-  const friends = useQuery(api.friends.listFriends);
+  const today = todayIsoDate();
+  const homeData = useQuery(api.journals.listHomeFriends, { dayDate: today });
   const todayMeetLocks = useQuery(api.journals.getTodayMeetLocksForFriends);
   const meetLockedByFriendId = new Map(
     (todayMeetLocks ?? []).map((row) => [row.friendUserId, row.meetLocked]),
@@ -42,6 +43,12 @@ export default function HomeScreen() {
   const contentWidth = windowWidth - HORIZONTAL_PADDING * 2;
   const tileSize =
     (contentWidth - TILE_HORIZONTAL_GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
+
+  const tiles = homeData?.tiles ?? [];
+  const showEmptyState = homeData !== undefined && tiles.length === 0;
+  const hasNoFriends = homeData?.totalFriendCount === 0;
+  const hasFriendsButNothingToday =
+    showEmptyState && (homeData?.totalFriendCount ?? 0) > 0;
 
   return (
     <View style={styles.container}>
@@ -67,7 +74,7 @@ export default function HomeScreen() {
       </Pressable>
 
       <FlashList
-        data={friends ?? []}
+        data={tiles}
         numColumns={NUM_COLUMNS}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
@@ -78,11 +85,17 @@ export default function HomeScreen() {
           </View>
         }
         ListEmptyComponent={
-          friends !== undefined ? (
+          showEmptyState ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>No friends yet</Text>
+              <Text style={styles.emptyTitle}>
+                {hasNoFriends ? "No friends yet" : "Nothing new today"}
+              </Text>
               <Text style={styles.emptyBody}>
-                Add friends in settings to start sharing glimts together.
+                {hasNoFriends
+                  ? "Add friends in settings to start sharing glimts together."
+                  : hasFriendsButNothingToday
+                    ? "When a friend sends you a glimt today, they'll show up here."
+                    : ""}
               </Text>
             </View>
           ) : null
@@ -98,7 +111,7 @@ export default function HomeScreen() {
             accessibilityLabel={`Open journey with ${item.displayName}`}
           >
             <GlimtTile
-              photoUrl={getMockPhotoUrlForFriend(item.id)}
+              photoUrl={item.previewPhotoUrl}
               avatarUrl={item.avatarUrl}
               displayName={item.displayName}
               index={index}
@@ -123,15 +136,11 @@ export default function HomeScreen() {
           <Text style={styles.captureButtonText}>Take a picture</Text>
         </Pressable>
       </SafeAreaView>
-
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  host: {
-    flex: 1,
-  },
   container: {
     flex: 1,
   },

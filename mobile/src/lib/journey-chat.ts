@@ -1,4 +1,4 @@
-import type { DailyJourney, DailyJourneyGlimt } from "@/lib/journey-types";
+import type { JourneyDay, JourneyGlimt } from "@/lib/journey-types";
 
 export type JourneyChatSender = "yours" | "theirs";
 
@@ -11,7 +11,7 @@ export type JourneyChatMessage = {
 };
 
 export function getFirstChatMessage(
-  journey: DailyJourney,
+  journey: JourneyDay,
 ): JourneyChatMessage | undefined {
   const messages = buildJourneyChatMessages(journey);
   return messages[0];
@@ -19,8 +19,8 @@ export function getFirstChatMessage(
 
 /** Earliest glimt on a side — top of the journey row stack. */
 export function getEarliestGlimt(
-  glimts?: DailyJourneyGlimt[],
-): DailyJourneyGlimt | undefined {
+  glimts?: JourneyGlimt[],
+): JourneyGlimt | undefined {
   if (!glimts?.length) {
     return undefined;
   }
@@ -29,15 +29,15 @@ export function getEarliestGlimt(
 
 /** Oldest-first ordering by send time. */
 export function sortGlimtsChronological(
-  glimts: DailyJourneyGlimt[],
-): DailyJourneyGlimt[] {
+  glimts: JourneyGlimt[],
+): JourneyGlimt[] {
   return [...glimts].sort(
     (a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime(),
   );
 }
 
 export function buildJourneyChatMessages(
-  journey: DailyJourney,
+  journey: JourneyDay,
 ): JourneyChatMessage[] {
   const messages: JourneyChatMessage[] = [];
 

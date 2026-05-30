@@ -3,10 +3,10 @@ import {
   isMeetLocked,
   isRowLocked,
 } from "@/lib/format-journey-date";
-import type { DailyJourney } from "@/lib/journey-types";
+import type { JourneyDay } from "@/lib/journey-types";
 
 export function resolveJourneyLockState(
-  journey: DailyJourney,
+  journey: JourneyDay,
   now = new Date(),
 ): {
   calendarLocked: boolean;
