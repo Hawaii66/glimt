@@ -153,12 +153,14 @@ const FriendGlimt = (
         ]}
       >
         <ZStack modifiers={[cornerRadius(metrics.cornerRadius)]}>
-          <Rectangle
+          <Image
+            systemName="square.fill"
+            color={photoBorderColor}
             modifiers={[
-              foregroundStyle({
-                type: "color",
-                color: photoBorderColor,
-              }),
+              resizable(),
+              aspectRatio({ contentMode: "fill", ratio: 1 }),
+              cornerRadius(metrics.cornerRadius),
+              widgetAccentedRenderingMode("fullColor"),
             ]}
           />
           <Image
