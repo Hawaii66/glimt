@@ -18,6 +18,74 @@ type FriendRequestWithProfile = UserProfile & {
   requestId: Id<"friendRequests">;
 };
 
+type FriendRequestDoc = {
+  _id: Id<"friendRequests">;
+  fromUserId: Id<"users">;
+  toUserId: Id<"users">;
+  status: "pending" | "accepted" | "declined";
+  createdAt: number;
+  respondedAt?: number;
+};
+
+const REQUEST_STATUS_PRIORITY: Record<FriendRequestDoc["status"], number> = {
+  pending: 0,
+  declined: 1,
+  accepted: 2,
+};
+
+async function getRequestBetweenUsers(
+  ctx: MutationCtx,
+  fromUserId: Id<"users">,
+  toUserId: Id<"users">,
+): Promise<FriendRequestDoc | null> {
+  const requests = await ctx.db
+    .query("friendRequests")
+    .withIndex("by_from_and_to", (q) =>
+      q.eq("fromUserId", fromUserId).eq("toUserId", toUserId),
+    )
+    .collect();
+
+  if (requests.length === 0) {
+    return null;
+  }
+
+  const sorted = [...requests].sort((a, b) => {
+    const priorityDiff =
+      REQUEST_STATUS_PRIORITY[a.status] - REQUEST_STATUS_PRIORITY[b.status];
+    if (priorityDiff !== 0) {
+      return priorityDiff;
+    }
+    return b.createdAt - a.createdAt;
+  });
+
+  const canonical = sorted[0]!;
+  for (const duplicate of sorted.slice(1)) {
+    await ctx.db.delete(duplicate._id);
+  }
+
+  return canonical;
+}
+
+async function deleteRequestsBetweenUsers(
+  ctx: MutationCtx,
+  fromUserId: Id<"users">,
+  toUserId: Id<"users">,
+  exceptId?: Id<"friendRequests">,
+) {
+  const requests = await ctx.db
+    .query("friendRequests")
+    .withIndex("by_from_and_to", (q) =>
+      q.eq("fromUserId", fromUserId).eq("toUserId", toUserId),
+    )
+    .collect();
+
+  for (const request of requests) {
+    if (request._id !== exceptId) {
+      await ctx.db.delete(request._id);
+    }
+  }
+}
+
 async function getUserProfile(
   ctx: QueryCtx | MutationCtx,
   userId: Id<"users">,
@@ -175,23 +243,13 @@ export const sendRequest = mutation({
       userError("You are already friends with this user.");
     }
 
-    const incoming = await ctx.db
-      .query("friendRequests")
-      .withIndex("by_from_and_to", (q) =>
-        q.eq("fromUserId", toUserId).eq("toUserId", fromUserId),
-      )
-      .unique();
+    const incoming = await getRequestBetweenUsers(ctx, toUserId, fromUserId);
 
     if (incoming?.status === "pending") {
       userError("This user already sent you a friend request.");
     }
 
-    const outgoing = await ctx.db
-      .query("friendRequests")
-      .withIndex("by_from_and_to", (q) =>
-        q.eq("fromUserId", fromUserId).eq("toUserId", toUserId),
-      )
-      .unique();
+    const outgoing = await getRequestBetweenUsers(ctx, fromUserId, toUserId);
 
     if (outgoing?.status === "pending") {
       userError("Friend request already sent.");
@@ -205,7 +263,20 @@ export const sendRequest = mutation({
         createdAt: now,
         respondedAt: undefined,
       });
+      await deleteRequestsBetweenUsers(ctx, toUserId, fromUserId);
       return outgoing._id;
+    }
+
+    if (incoming?.status === "declined") {
+      await deleteRequestsBetweenUsers(ctx, fromUserId, toUserId);
+      await ctx.db.patch(incoming._id, {
+        fromUserId,
+        toUserId,
+        status: "pending",
+        createdAt: now,
+        respondedAt: undefined,
+      });
+      return incoming._id;
     }
 
     return await ctx.db.insert("friendRequests", {
