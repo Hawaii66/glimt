@@ -43,7 +43,7 @@ function buildPlugins(envIcon: string,bundleIdentifier:string): NonNullable<Expo
           "Allow $(PRODUCT_NAME) to access your camera to capture glimts.",
         microphonePermission: false,
         recordAudioAndroid: false,
-        barcodeScannerEnabled: false,
+        barcodeScannerEnabled: true,
       },
     ],
     [

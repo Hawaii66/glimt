@@ -26,6 +26,8 @@ export type DailyJourney = {
   date: string;
   yours?: DailyJourneyGlimt[];
   theirs?: DailyJourneyGlimt[];
+  meetLock?: boolean;
+  unlockedAt?: number;
 };
 
 export const MOCK_FRIEND_REQUESTS: FriendRequest[] = [
@@ -140,6 +142,7 @@ const MOCK_JOURNEYS_BY_FRIEND: Record<string, DailyJourney[]> = {
     },
     {
       date: isoDateDaysAgo(1),
+      meetLock: true,
       yours: [
         glimt(
           isoDateDaysAgo(1),
@@ -256,6 +259,7 @@ const MOCK_JOURNEYS_BY_FRIEND: Record<string, DailyJourney[]> = {
     },
     {
       date: isoDateDaysAgo(2),
+      meetLock: true,
       yours: [
         glimt(
           isoDateDaysAgo(2),
