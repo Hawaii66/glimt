@@ -1,4 +1,5 @@
 import type { Href } from "expo-router";
+import * as Linking from "expo-linking";
 
 export const APP_HOME = "/(app)/" as Href;
 export const APP_CAPTURE = "/(app)/capture" as Href;
@@ -18,4 +19,8 @@ export function appFriendTogetherDayUnlock(
   date: string,
 ): Href {
   return `/(app)/friend/${friendId}/unlock/${date}` as Href;
+}
+
+export function getCaptureDeepLinkUrl(): string {
+  return Linking.createURL("/capture");
 }
