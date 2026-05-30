@@ -2,21 +2,20 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
-import QRCode from "react-native-qrcode-svg";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
+import {
+  MeetDayInfoButton,
+  MeetDayInfoModal,
+} from "@/components/journey/MeetDayInfoModal";
+import { UnlockQrCode } from "@/components/journey/UnlockQrCode";
 import { formatJourneyDate } from "@/lib/format-journey-date";
 import { getFriendById } from "@/lib/glimt-mock-data";
+import { MEET_DAY_UNLOCK_SCREEN_TITLE } from "@/lib/meet-day";
 import {
   recordMockUnlockScan,
   refreshMockUnlockSession,
@@ -43,6 +42,7 @@ export function TogetherDayUnlockScreen({
   const unlockDay = useMockUnlockStore((s) => s.unlockDay);
 
   const [mode, setMode] = useState<Mode>("choose");
+  const [infoVisible, setInfoVisible] = useState(false);
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [permission, requestPermission] = useCameraPermissions();
@@ -128,11 +128,16 @@ export function TogetherDayUnlockScreen({
             weight="semibold"
           />
         </Pressable>
-        <Text style={[styles.title, { color: colors.text }]}>
-          Unlock Together day
+        <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+          {MEET_DAY_UNLOCK_SCREEN_TITLE}
         </Text>
-        <View style={styles.headerSpacer} />
+        <MeetDayInfoButton onPress={() => setInfoVisible(true)} />
       </View>
+
+      <MeetDayInfoModal
+        visible={infoVisible}
+        onClose={() => setInfoVisible(false)}
+      />
 
       <Text style={[styles.subtitle, { color: colors.textMuted }]}>
         {formattedDate} with {friendFirstName}
@@ -179,17 +184,23 @@ export function TogetherDayUnlockScreen({
           <View
             style={[
               styles.qrFrame,
-              { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.surfaceBorder,
+              },
             ]}
           >
-            <QRCode value={qrToken} size={220} />
+            <UnlockQrCode key={qrToken} value={qrToken} />
           </View>
           <Text style={[styles.hint, { color: colors.textMuted }]}>
             Ask {friendFirstName} to scan this code. It refreshes every few
             seconds.
           </Text>
           <Pressable
-            style={[styles.mockCompleteButton, { borderColor: colors.surfaceBorder }]}
+            style={[
+              styles.mockCompleteButton,
+              { borderColor: colors.surfaceBorder },
+            ]}
             onPress={finishUnlock}
             accessibilityRole="button"
             accessibilityLabel="Simulate scan for preview"
@@ -248,12 +259,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 8,
   },
-  headerSpacer: {
-    width: 28,
-  },
   title: {
+    flex: 1,
     fontSize: 17,
     fontWeight: "700",
+    textAlign: "center",
+    marginHorizontal: 8,
   },
   subtitle: {
     fontSize: 15,
@@ -303,9 +314,23 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   qrFrame: {
-    padding: 20,
+    padding: 16,
     borderRadius: 20,
     borderWidth: StyleSheet.hairlineWidth,
+    alignItems: "center",
+    justifyContent: "center",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000000",
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.12,
+        shadowRadius: 20,
+      },
+      android: {
+        elevation: 8,
+      },
+      default: {},
+    }),
   },
   mockCompleteButton: {
     paddingVertical: 12,

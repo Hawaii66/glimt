@@ -1,4 +1,6 @@
-const TOKEN_PREFIX = "glimt-mock-unlock-v1";
+import * as Crypto from "expo-crypto";
+
+const TOKEN_PREFIX = "glimt-mock-unlock-v1:";
 const SESSION_TTL_MS = 3 * 60 * 1000;
 const NONCE_REFRESH_MS = 12_000;
 
@@ -20,34 +22,26 @@ type ActiveSession = {
 let activeSession: ActiveSession | null = null;
 
 function randomNonce(): string {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
+  const bytes = Crypto.getRandomBytes(16);
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 export function encodeMockUnlockToken(
   payload: MockUnlockTokenPayload,
 ): string {
-  const json = JSON.stringify(payload);
-  const body = btoa(json)
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-  return `${TOKEN_PREFIX}.${body}`;
+  return `${TOKEN_PREFIX}${JSON.stringify(payload)}`;
 }
 
 export function decodeMockUnlockToken(
   token: string,
 ): MockUnlockTokenPayload | null {
-  if (!token.startsWith(`${TOKEN_PREFIX}.`)) {
+  if (!token.startsWith(TOKEN_PREFIX)) {
     return null;
   }
   try {
-    const body = token.slice(TOKEN_PREFIX.length + 1);
-    const padded = body.replace(/-/g, "+").replace(/_/g, "/");
-    const padLen = (4 - (padded.length % 4)) % 4;
-    const json = atob(padded + "=".repeat(padLen));
-    const parsed = JSON.parse(json) as MockUnlockTokenPayload;
+    const parsed = JSON.parse(
+      token.slice(TOKEN_PREFIX.length),
+    ) as MockUnlockTokenPayload;
     if (
       typeof parsed.sessionId !== "string" ||
       typeof parsed.friendId !== "string" ||
@@ -70,7 +64,7 @@ export function startMockUnlockSession(
   const now = Date.now();
   const expiresAt = now + SESSION_TTL_MS;
   const payload: MockUnlockTokenPayload = {
-    sessionId: `mock-${now}`,
+    sessionId: Crypto.randomUUID(),
     friendId,
     isoDate,
     hostRole: "show",
@@ -124,19 +118,4 @@ export function recordMockUnlockScan(token: string): {
   }
   activeSession = null;
   return { friendId: payload.friendId, isoDate: payload.isoDate };
-}
-
-export function getMockSessionStatus(): "pending" | "completed" | null {
-  if (!activeSession) {
-    return null;
-  }
-  if (activeSession.payload.exp <= Date.now()) {
-    activeSession = null;
-    return "expired" as null;
-  }
-  return "pending";
-}
-
-export function completeMockSessionFromHost(): void {
-  activeSession = null;
 }

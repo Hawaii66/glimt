@@ -1,23 +1,29 @@
 import type { ConfigContext, ExpoConfig } from "expo/config";
 
-const { envToInfo, parseMobileEnvironment, resolveConvexUrl } = require("./environment.js") as {
-  envToInfo: (env: "dev" | "stage" | "prod") => {
-    name: string;
-    icon: string;
-    iconAndroid: string;
-    version: string;
-    runtimeVersion: string;
-    scheme: string;
-    bundleIdentifier: string;
+const { envToInfo, parseMobileEnvironment, resolveConvexUrl } =
+  require("./environment.js") as {
+    envToInfo: (env: "dev" | "stage" | "prod") => {
+      name: string;
+      icon: string;
+      iconAndroid: string;
+      version: string;
+      runtimeVersion: string;
+      scheme: string;
+      bundleIdentifier: string;
+    };
+    parseMobileEnvironment: (
+      value: string | undefined,
+    ) => "dev" | "stage" | "prod";
+    resolveConvexUrl: (env: "dev" | "stage" | "prod") => string | undefined;
   };
-  parseMobileEnvironment: (value: string | undefined) => "dev" | "stage" | "prod";
-  resolveConvexUrl: (env: "dev" | "stage" | "prod") => string | undefined;
-};
 
 const DEFAULT_EAS_PROJECT_ID = "b92605ee-1590-47dd-a260-11dc4b24b3bf";
 const easProjectId = process.env.EAS_PROJECT_ID ?? DEFAULT_EAS_PROJECT_ID;
 
-function buildPlugins(envIcon: string,bundleIdentifier:string): NonNullable<ExpoConfig["plugins"]> {
+function buildPlugins(
+  envIcon: string,
+  bundleIdentifier: string,
+): NonNullable<ExpoConfig["plugins"]> {
   return [
     "expo-router",
     "expo-apple-authentication",
@@ -43,7 +49,7 @@ function buildPlugins(envIcon: string,bundleIdentifier:string): NonNullable<Expo
           "Allow $(PRODUCT_NAME) to access your camera to capture glimts.",
         microphonePermission: false,
         recordAudioAndroid: false,
-        barcodeScannerEnabled: false,
+        barcodeScannerEnabled: true,
       },
     ],
     [
@@ -101,6 +107,13 @@ function buildPlugins(envIcon: string,bundleIdentifier:string): NonNullable<Expo
             displayName: "Glimt",
             description: "A random friend's latest moment.",
             supportedFamilies: ["systemSmall", "systemMedium", "systemLarge"],
+            contentMarginsDisabled: true,
+          },
+          {
+            name: "FriendGlimtCamera",
+            displayName: "Glimt Camera",
+            description: "Take a photo.",
+            supportedFamilies: ["systemSmall"],
             contentMarginsDisabled: true,
           },
         ],

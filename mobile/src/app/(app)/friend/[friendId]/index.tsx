@@ -21,6 +21,7 @@ import { getFriendById } from "@/lib/glimt-mock-data";
 import { getMockJourneysWithUnlocks } from "@/lib/journey-lock";
 import { useMockUnlockStore } from "@/stores/mockUnlockStore";
 import { useAppColors } from "@/lib/theme";
+import { useMockUnlockStore } from "@/stores/mockUnlockStore";
 
 const HORIZONTAL_PADDING = 24;
 const PREVIEW_TILE_GAP = 12;
@@ -153,6 +154,8 @@ export default function FriendJourneyScreen() {
               date={journey.date}
               yours={journey.yours}
               theirs={journey.theirs}
+              meetLock={journey.meetLock}
+              unlockedAt={journey.unlockedAt}
               tileSize={tileSize}
             />
           ))

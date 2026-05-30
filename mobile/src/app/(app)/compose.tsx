@@ -19,7 +19,9 @@ import {
 } from "react-native-safe-area-context";
 
 import { APP_HOME } from "@/lib/routes";
+import { isFriendLockedToday } from "@/lib/journey-lock";
 import { MOCK_FRIEND_GLIMTS } from "@/lib/glimt-mock-data";
+import { useMockUnlockStore } from "@/stores/mockUnlockStore";
 import { useAppColors } from "@/lib/theme";
 import { useCaptureStore } from "@/stores/captureStore";
 import { useToastStore } from "@/stores/toastStore";
@@ -44,6 +46,8 @@ export default function ComposeScreen() {
   const setSelectedFriendId = useCaptureStore((state) => state.setSelectedFriendId);
   const reset = useCaptureStore((state) => state.reset);
   const showToast = useToastStore((state) => state.show);
+  const unlockVersion = useMockUnlockStore((s) => s.unlockedDates);
+  void unlockVersion;
   const selectedFriend = MOCK_FRIEND_GLIMTS.find(
     (friend) => friend.id === selectedFriendId,
   );
@@ -230,6 +234,7 @@ export default function ComposeScreen() {
 
               {MOCK_FRIEND_GLIMTS.map((friend) => {
                 const isSelected = friend.id === selectedFriendId;
+                const lockedToday = isFriendLockedToday(friend.id);
 
                 return (
                   <Pressable
@@ -238,7 +243,7 @@ export default function ComposeScreen() {
                     onPress={() => handleFriendPress(friend.id)}
                     accessibilityRole="button"
                     accessibilityState={{ selected: isSelected }}
-                    accessibilityLabel={`Send to ${friend.displayName}`}
+                    accessibilityLabel={`Send to ${friend.displayName}${lockedToday ? ", locked today" : ""}`}
                   >
                     <View
                       style={[
@@ -255,6 +260,20 @@ export default function ComposeScreen() {
                         style={styles.friendAvatar}
                         contentFit="cover"
                       />
+                      {lockedToday ? (
+                        <View
+                          style={[
+                            styles.avatarLockBadge,
+                            { backgroundColor: colors.background },
+                          ]}
+                        >
+                          <SymbolView
+                            name="lock.fill"
+                            size={10}
+                            tintColor={colors.textMuted}
+                          />
+                        </View>
+                      ) : null}
                     </View>
                     <Text
                       style={[
@@ -378,6 +397,17 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     borderWidth: 2,
     padding: 2,
+    position: "relative",
+  },
+  avatarLockBadge: {
+    position: "absolute",
+    right: -2,
+    bottom: -2,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
   },
   friendAvatar: {
     width: "100%",

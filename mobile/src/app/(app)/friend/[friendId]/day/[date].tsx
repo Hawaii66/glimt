@@ -8,10 +8,11 @@ import {
 } from "react-native-safe-area-context";
 
 import { JourneyDayChat } from "@/components/journey/JourneyDayChat";
-import { isJourneyLocked } from "@/lib/format-journey-date";
 import { getFriendById } from "@/lib/glimt-mock-data";
 import { getJourneyByDate } from "@/lib/journey-chat";
+import { resolveJourneyLockState } from "@/lib/journey-lock";
 import { useAppColors } from "@/lib/theme";
+import { useMockUnlockStore } from "@/stores/mockUnlockStore";
 
 export default function JourneyDayScreen() {
   const router = useRouter();
@@ -22,20 +23,27 @@ export default function JourneyDayScreen() {
     date: string;
   }>();
 
+  const runtimeUnlocked = useMockUnlockStore((s) =>
+    friendId && date ? s.isUnlocked(friendId, date) : false,
+  );
+
   const friend = friendId ? getFriendById(friendId) : undefined;
   const journey =
     friendId && date ? getJourneyByDate(friendId, date) : undefined;
-  const locked = date
-    ? isJourneyLocked(date, journey?.yours, journey?.theirs)
-    : true;
+
+  const blocked =
+    journey && friendId && date
+      ? !resolveJourneyLockState(journey, friendId, runtimeUnlocked)
+          .canNavigateToDay
+      : true;
 
   useEffect(() => {
-    if (locked) {
+    if (blocked) {
       router.back();
     }
-  }, [locked, router]);
+  }, [blocked, router]);
 
-  if (!friend || !journey || !date || locked) {
+  if (!friend || !journey || !date || blocked) {
     return (
       <SafeAreaView
         style={[styles.safeArea, { backgroundColor: colors.background }]}

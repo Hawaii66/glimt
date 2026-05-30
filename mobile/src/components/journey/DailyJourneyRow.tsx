@@ -3,6 +3,10 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Link } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { useState } from "react";
+import {
+  MeetDayInfoButton,
+  MeetDayInfoModal,
+} from "@/components/journey/MeetDayInfoModal";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { JourneyGlimtImage } from "@/components/journey/JourneyGlimtImage";
@@ -26,7 +30,14 @@ import {
   getFirstChatMessage,
   sortGlimtsChronological,
 } from "@/lib/journey-chat";
+import { resolveJourneyLockState } from "@/lib/journey-lock";
+import { appFriendTogetherDayUnlock } from "@/lib/routes";
 import { useAppColors } from "@/lib/theme";
+import {
+  MEET_DAY_LABEL,
+  MEET_DAY_LOCKED_MESSAGE,
+} from "@/lib/meet-day";
+import { useMockUnlockStore } from "@/stores/mockUnlockStore";
 
 type DailyJourneyRowProps = {
   friendId: string;
@@ -416,6 +427,7 @@ function JourneyRowContent({
   onZoomImageLoad: (size: ImageSize) => void;
 }) {
   const lockVariant: LockVariant = meetLocked ? "meet" : "calendar";
+  const [infoVisible, setInfoVisible] = useState(false);
   const dateHeader = (
     <View style={styles.dateHeader}>
       <View style={styles.dateHeaderLeft}>
@@ -445,11 +457,18 @@ function JourneyRowContent({
         </View>
       ) : null}
       {meetLocked ? (
-        <View style={[styles.lockedBadge, { backgroundColor: colors.fill }]}>
-          <SymbolView name="lock.fill" size={11} tintColor={colors.textMuted} />
-          <Text style={[styles.lockedBadgeText, { color: colors.textMuted }]}>
-            {TOGETHER_DAY_BADGE}
-          </Text>
+        <View style={styles.meetLockedHeaderRight}>
+          <View style={[styles.lockedBadge, { backgroundColor: colors.fill }]}>
+            <SymbolView
+              name="lock.fill"
+              size={11}
+              tintColor={colors.textMuted}
+            />
+            <Text style={[styles.lockedBadgeText, { color: colors.textMuted }]}>
+              {MEET_DAY_LABEL}
+            </Text>
+          </View>
+          <MeetDayInfoButton onPress={() => setInfoVisible(true)} />
         </View>
       ) : null}
     </View>
@@ -457,6 +476,10 @@ function JourneyRowContent({
 
   return (
     <>
+      <MeetDayInfoModal
+        visible={infoVisible}
+        onClose={() => setInfoVisible(false)}
+      />
       {dateHeader}
 
       <View style={[styles.tilesArea, { minHeight: tileSize }]}>
@@ -465,7 +488,8 @@ function JourneyRowContent({
             glimts={theirs}
             tileSize={tileSize}
             baseTilt={INWARD_TILT}
-            locked={locked}
+            locked={rowLocked}
+            lockVariant={lockVariant}
             zoomPhotoUrl={zoomPhotoUrl}
             onZoomImageLoad={onZoomImageLoad}
           />
@@ -473,23 +497,50 @@ function JourneyRowContent({
             glimts={yours}
             tileSize={tileSize}
             baseTilt={-INWARD_TILT}
-            locked={locked}
+            locked={rowLocked}
+            lockVariant={lockVariant}
             zoomPhotoUrl={zoomPhotoUrl}
             onZoomImageLoad={onZoomImageLoad}
           />
         </View>
 
-        {locked ? (
-          <LockedDayConnector tileSize={tileSize} accentColor={accentColor} />
+        {rowLocked ? (
+          <LockedDayConnector
+            tileSize={tileSize}
+            accentColor={accentColor}
+            variant={lockVariant}
+          />
         ) : null}
       </View>
 
-      {locked ? (
+      {calendarLocked ? (
         <View style={styles.lockedMessage}>
           <Text style={[styles.lockedBody, { color: colors.textMuted }]}>
-            Today's glimts stay sealed until the day is done.
+            Today&apos;s glimts stay sealed until the day is done.
           </Text>
         </View>
+      ) : null}
+      {meetLocked ? (
+        <View style={styles.lockedMessage}>
+          <Text style={[styles.lockedBody, { color: colors.textMuted }]}>
+            {MEET_DAY_LOCKED_MESSAGE}
+          </Text>
+        </View>
+      ) : null}
+      {showUnlockButton ? (
+        <Link href={appFriendTogetherDayUnlock(friendId, date)} asChild>
+          <Pressable
+            style={StyleSheet.flatten([
+              styles.unlockButton,
+              { backgroundColor: accentColor },
+            ])}
+            accessibilityRole="button"
+            accessibilityLabel="Unlock meet to view day"
+          >
+            <SymbolView name="lock.open.fill" size={16} tintColor="#FFFFFF" />
+            <Text style={styles.unlockButtonText}>Unlock</Text>
+          </Pressable>
+        </Link>
       ) : null}
     </>
   );
@@ -503,37 +554,54 @@ export function DailyJourneyRow({
   date,
   yours,
   theirs,
+  meetLock,
+  unlockedAt,
   tileSize,
 }: DailyJourneyRowProps) {
   const colors = useAppColors();
-  const locked = isJourneyLocked(date, yours, theirs);
+  const runtimeUnlocked = useMockUnlockStore((s) =>
+    s.isUnlocked(friendId, date),
+  );
+  const journey: DailyJourney = {
+    date,
+    yours,
+    theirs,
+    meetLock,
+    unlockedAt,
+  };
+  const { calendarLocked, meetLocked, rowLocked, canNavigateToDay } =
+    resolveJourneyLockState(journey, friendId, runtimeUnlocked);
   const accentColor = getAccentTheme(friendAccentId).gradientColors[0];
   const [pressed, setPressed] = useState(false);
   const [zoomImageSize, setZoomImageSize] = useState<ImageSize | null>(null);
-  const firstMessage = locked
-    ? undefined
-    : getFirstChatMessage({ date, yours, theirs });
+  const firstMessage = canNavigateToDay
+    ? getFirstChatMessage({ date, yours, theirs })
+    : undefined;
   const zoomPhotoUrl = firstMessage?.photoUrl;
 
   const rowStyle = StyleSheet.flatten([
     styles.row,
-    locked && styles.rowLocked,
+    rowLocked && styles.rowLocked,
     {
       backgroundColor: colors.fill,
       borderColor: colors.surfaceBorder,
-      opacity: pressed && !locked ? 0.92 : 1,
+      opacity: pressed && canNavigateToDay ? 0.92 : 1,
     },
   ]);
 
   const content = (
     <JourneyRowContent
+      friendId={friendId}
       friendAvatarUrl={friendAvatarUrl}
       friendDisplayName={friendDisplayName}
       date={date}
       yours={yours}
       theirs={theirs}
       tileSize={tileSize}
-      locked={locked}
+      calendarLocked={calendarLocked}
+      meetLocked={meetLocked}
+      rowLocked={rowLocked}
+      showUnlockButton={meetLocked}
       colors={colors}
       accentColor={accentColor}
       zoomPhotoUrl={zoomPhotoUrl}
@@ -541,7 +609,7 @@ export function DailyJourneyRow({
     />
   );
 
-  if (locked) {
+  if (!canNavigateToDay) {
     return (
       <Pressable disabled style={rowStyle}>
         {content}
@@ -616,6 +684,12 @@ const styles = StyleSheet.create({
   friendName: {
     fontSize: 13,
   },
+  meetLockedHeaderRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    flexShrink: 1,
+  },
   lockedBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -623,6 +697,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 999,
+    flexShrink: 1,
   },
   lockedBadgeText: {
     fontSize: 12,
@@ -720,5 +795,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     textAlign: "center",
+  },
+  unlockButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 4,
+  },
+  unlockButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
 });
