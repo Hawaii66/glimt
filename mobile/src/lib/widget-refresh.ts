@@ -1,6 +1,8 @@
 import Constants from "expo-constants";
 import { Directory, File, Paths } from "expo-file-system";
 
+import { Asset } from "expo-asset";
+import { Alert } from "react-native";
 import {
   getAccentTheme,
   resolveAccentThemeId,
@@ -60,9 +62,23 @@ function getWidgetCacheDirectory(): Directory | null {
   return cacheDir;
 }
 
+async function getWhiteImageAssetUri(): Promise<string | null> {
+  try {
+    const asset = Asset.fromModule(require("../../assets/white.png"));
+
+    await asset.downloadAsync();
+
+    return asset.localUri;
+  } catch (error) {
+    console.error("Failed to resolve white.png asset:", error);
+    return null;
+  }
+}
+
 async function cacheImageToAppGroup(
   url: string,
   filename: string,
+  copy: boolean,
 ): Promise<string | null> {
   const cacheDir = getWidgetCacheDirectory();
   if (!cacheDir) {
@@ -75,10 +91,16 @@ async function cacheImageToAppGroup(
   }
 
   try {
-    const downloaded = await File.downloadFileAsync(url, destination, {
-      idempotent: true,
-    });
-    return downloaded.uri;
+    if (copy) {
+      const sourceFile = new File(url);
+      sourceFile.copy(destination);
+      return destination.uri;
+    } else {
+      const downloaded = await File.downloadFileAsync(url, destination, {
+        idempotent: true,
+      });
+      return downloaded.uri;
+    }
   } catch (error) {
     console.warn(`[FriendGlimt] failed to cache ${filename}:`, error);
     return null;
@@ -89,8 +111,8 @@ async function buildMockWidgetGlimts(): Promise<WidgetGlimtItem[]> {
   const glimts = await Promise.all(
     MOCK_FRIEND_GLIMTS.map(async ({ photoUrl, avatarUrl }, index) => {
       const [photoUri, avatarUri] = await Promise.all([
-        cacheImageToAppGroup(photoUrl, `photo-${index}.jpg`),
-        cacheImageToAppGroup(avatarUrl, `avatar-${index}.jpg`),
+        cacheImageToAppGroup(photoUrl, `photo-${index}.jpg`, false),
+        cacheImageToAppGroup(avatarUrl, `avatar-${index}.jpg`, false),
       ]);
 
       if (!photoUri) {
@@ -117,9 +139,24 @@ export async function refreshFriendGlimtWidget(
     return;
   }
 
+  const whiteUrl = await getWhiteImageAssetUri();
+  if (!whiteUrl) {
+    Alert.alert("No white");
+    return;
+  }
+  console.log(whiteUrl, "url", glimts);
+  const whiteUri = await cacheImageToAppGroup(whiteUrl, "white.png", true);
+  if (!whiteUri) {
+    Alert.alert("No white uri");
+    return;
+  }
+
+  console.log(whiteUri, "uri", glimts);
+
   FriendGlimtWidget.updateSnapshot({
     glimts,
     style: getWidgetTileStyle(accentThemeId),
+    whiteUri,
   });
   FriendGlimtWidget.reload();
 }
