@@ -2,7 +2,32 @@ import Constants from "expo-constants";
 import { Directory, File, Paths } from "expo-file-system";
 
 import { MOCK_FRIEND_GLIMTS } from "./glimt-mock-data";
-import { FriendGlimtWidget, WidgetGlimtItem } from "./widget";
+import {
+  AVATAR_OFFSET,
+  AVATAR_SIZE,
+  PHOTO_BORDER_COLOR,
+  TILE_BORDER_WIDTH,
+  TILE_CORNER_RADIUS,
+  TILE_SCALE,
+  WIDGET_GRADIENT_COLORS,
+} from "./glimt-tile-styles";
+import {
+  FriendGlimtWidget,
+  WidgetGlimtItem,
+  type WidgetTileStyle,
+} from "./widget";
+
+function getWidgetTileStyle(): WidgetTileStyle {
+  return {
+    gradientColors: [...WIDGET_GRADIENT_COLORS] as [string, string, string],
+    photoBorderColor: PHOTO_BORDER_COLOR,
+    tileCornerRadius: TILE_CORNER_RADIUS,
+    tileBorderWidth: TILE_BORDER_WIDTH,
+    avatarSize: AVATAR_SIZE,
+    avatarOffset: AVATAR_OFFSET,
+    tileScale: TILE_SCALE,
+  };
+}
 
 function getAppGroupDirectory(): Directory | null {
   const bundleIdentifier = Constants.expoConfig?.ios?.bundleIdentifier;
@@ -82,5 +107,9 @@ export async function refreshFriendGlimtWidget(): Promise<void> {
     return;
   }
 
-  FriendGlimtWidget.updateSnapshot({ glimts });
+  FriendGlimtWidget.updateSnapshot({
+    glimts,
+    style: getWidgetTileStyle(),
+  });
+  FriendGlimtWidget.reload();
 }
