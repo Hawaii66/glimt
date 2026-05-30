@@ -3,6 +3,10 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Link } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { useState } from "react";
+import {
+  MeetDayInfoButton,
+  MeetDayInfoModal,
+} from "@/components/journey/MeetDayInfoModal";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { JourneyGlimtImage } from "@/components/journey/JourneyGlimtImage";
@@ -23,9 +27,9 @@ import { resolveJourneyLockState } from "@/lib/journey-lock";
 import { appFriendTogetherDayUnlock } from "@/lib/routes";
 import { useAppColors } from "@/lib/theme";
 import {
-  TOGETHER_DAY_BADGE,
-  TOGETHER_DAY_LOCKED_MESSAGE,
-} from "@/lib/together-day";
+  MEET_DAY_LABEL,
+  MEET_DAY_LOCKED_MESSAGE,
+} from "@/lib/meet-day";
 import { useMockUnlockStore } from "@/stores/mockUnlockStore";
 
 type DailyJourneyRowProps = {
@@ -416,6 +420,7 @@ function JourneyRowContent({
   onZoomImageLoad: (size: ImageSize) => void;
 }) {
   const lockVariant: LockVariant = meetLocked ? "meet" : "calendar";
+  const [infoVisible, setInfoVisible] = useState(false);
   const dateHeader = (
     <View style={styles.dateHeader}>
       <View style={styles.dateHeaderLeft}>
@@ -445,11 +450,18 @@ function JourneyRowContent({
         </View>
       ) : null}
       {meetLocked ? (
-        <View style={[styles.lockedBadge, { backgroundColor: colors.fill }]}>
-          <SymbolView name="lock.fill" size={11} tintColor={colors.textMuted} />
-          <Text style={[styles.lockedBadgeText, { color: colors.textMuted }]}>
-            {TOGETHER_DAY_BADGE}
-          </Text>
+        <View style={styles.meetLockedHeaderRight}>
+          <View style={[styles.lockedBadge, { backgroundColor: colors.fill }]}>
+            <SymbolView
+              name="lock.fill"
+              size={11}
+              tintColor={colors.textMuted}
+            />
+            <Text style={[styles.lockedBadgeText, { color: colors.textMuted }]}>
+              {MEET_DAY_LABEL}
+            </Text>
+          </View>
+          <MeetDayInfoButton onPress={() => setInfoVisible(true)} />
         </View>
       ) : null}
     </View>
@@ -457,6 +469,10 @@ function JourneyRowContent({
 
   return (
     <>
+      <MeetDayInfoModal
+        visible={infoVisible}
+        onClose={() => setInfoVisible(false)}
+      />
       {dateHeader}
 
       <View style={[styles.tilesArea, { minHeight: tileSize }]}>
@@ -500,7 +516,7 @@ function JourneyRowContent({
       {meetLocked ? (
         <View style={styles.lockedMessage}>
           <Text style={[styles.lockedBody, { color: colors.textMuted }]}>
-            {TOGETHER_DAY_LOCKED_MESSAGE}
+            {MEET_DAY_LOCKED_MESSAGE}
           </Text>
         </View>
       ) : null}
@@ -512,7 +528,7 @@ function JourneyRowContent({
               { backgroundColor: accentColor },
             ])}
             accessibilityRole="button"
-            accessibilityLabel="Unlock Together day"
+            accessibilityLabel="Unlock meet to view day"
           >
             <SymbolView name="lock.open.fill" size={16} tintColor="#FFFFFF" />
             <Text style={styles.unlockButtonText}>Unlock</Text>
@@ -661,6 +677,12 @@ const styles = StyleSheet.create({
   friendName: {
     fontSize: 13,
   },
+  meetLockedHeaderRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    flexShrink: 1,
+  },
   lockedBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -668,6 +690,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 999,
+    flexShrink: 1,
   },
   lockedBadgeText: {
     fontSize: 12,

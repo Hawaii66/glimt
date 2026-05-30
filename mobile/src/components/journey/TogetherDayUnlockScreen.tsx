@@ -2,14 +2,20 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
+import {
+  MeetDayInfoButton,
+  MeetDayInfoModal,
+} from "@/components/journey/MeetDayInfoModal";
+import { UnlockQrCode } from "@/components/journey/UnlockQrCode";
 import { formatJourneyDate } from "@/lib/format-journey-date";
 import { getFriendById } from "@/lib/glimt-mock-data";
+import { MEET_DAY_UNLOCK_SCREEN_TITLE } from "@/lib/meet-day";
 import {
   recordMockUnlockScan,
   refreshMockUnlockSession,
@@ -17,8 +23,6 @@ import {
 } from "@/lib/mock-unlock-session";
 import { useAppColors } from "@/lib/theme";
 import { useMockUnlockStore } from "@/stores/mockUnlockStore";
-import Svg, { Circle, Rect } from "react-native-svg";
-import { QRCode } from "react-qr-code";
 
 type Mode = "choose" | "show" | "scan" | "success";
 
@@ -38,6 +42,7 @@ export function TogetherDayUnlockScreen({
   const unlockDay = useMockUnlockStore((s) => s.unlockDay);
 
   const [mode, setMode] = useState<Mode>("choose");
+  const [infoVisible, setInfoVisible] = useState(false);
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [permission, requestPermission] = useCameraPermissions();
@@ -61,7 +66,7 @@ export function TogetherDayUnlockScreen({
       if (refreshed) {
         setQrToken(refreshed.token);
       }
-    }, 12_000);
+    }, 10_000);
     return () => clearInterval(interval);
   }, [mode, qrToken]);
 
@@ -111,26 +116,6 @@ export function TogetherDayUnlockScreen({
     <SafeAreaView
       style={[styles.safeArea, { backgroundColor: colors.background }]}
     >
-      <QRCode value="20" />
-      <Svg height="50%" width="50%" viewBox="0 0 100 100">
-        <Circle
-          cx="50"
-          cy="50"
-          r="45"
-          stroke="blue"
-          strokeWidth="2.5"
-          fill="green"
-        />
-        <Rect
-          x="15"
-          y="15"
-          width="70"
-          height="70"
-          stroke="red"
-          strokeWidth="2"
-          fill="yellow"
-        />
-      </Svg>
       <View style={[styles.header, { paddingTop: insets.top > 0 ? 0 : 8 }]}>
         <Pressable
           onPress={() => router.back()}
@@ -145,11 +130,16 @@ export function TogetherDayUnlockScreen({
             weight="semibold"
           />
         </Pressable>
-        <Text style={[styles.title, { color: colors.text }]}>
-          Unlock Together day
+        <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+          {MEET_DAY_UNLOCK_SCREEN_TITLE}
         </Text>
-        <View style={styles.headerSpacer} />
+        <MeetDayInfoButton onPress={() => setInfoVisible(true)} />
       </View>
+
+      <MeetDayInfoModal
+        visible={infoVisible}
+        onClose={() => setInfoVisible(false)}
+      />
 
       <Text style={[styles.subtitle, { color: colors.textMuted }]}>
         {formattedDate} with {friendFirstName}
@@ -203,7 +193,9 @@ export function TogetherDayUnlockScreen({
                 borderColor: colors.surfaceBorder,
               },
             ]}
-          ></View>
+          >
+            <UnlockQrCode key={qrToken} value={qrToken} />
+          </View>
           <Text style={[styles.hint, { color: colors.textMuted }]}>
             Ask {friendFirstName} to scan this code. It refreshes every few
             seconds.
@@ -279,12 +271,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 8,
   },
-  headerSpacer: {
-    width: 28,
-  },
   title: {
+    flex: 1,
     fontSize: 17,
     fontWeight: "700",
+    textAlign: "center",
+    marginHorizontal: 8,
   },
   subtitle: {
     fontSize: 15,
@@ -334,9 +326,23 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   qrFrame: {
-    padding: 20,
+    padding: 16,
     borderRadius: 20,
     borderWidth: StyleSheet.hairlineWidth,
+    alignItems: "center",
+    justifyContent: "center",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000000",
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.12,
+        shadowRadius: 20,
+      },
+      android: {
+        elevation: 8,
+      },
+      default: {},
+    }),
   },
   mockCompleteButton: {
     paddingVertical: 12,
