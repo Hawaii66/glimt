@@ -12,7 +12,14 @@ import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { JourneyGlimtImage } from "@/components/journey/JourneyGlimtImage";
 import { getAccentTheme, type AccentThemeId } from "@/lib/accent-themes";
 import { formatJourneyDate } from "@/lib/format-journey-date";
+import { resolveJourneyLockState } from "@/lib/journey-lock";
 import type { DailyJourney, DailyJourneyGlimt } from "@/lib/glimt-mock-data";
+import { appFriendTogetherDayUnlock } from "@/lib/routes";
+import {
+  TOGETHER_DAY_BADGE,
+  TOGETHER_DAY_LOCKED_MESSAGE,
+} from "@/lib/together-day";
+import { useMockUnlockStore } from "@/stores/mockUnlockStore";
 import {
   PHOTO_BORDER_COLOR,
   TILE_BORDER_WIDTH,

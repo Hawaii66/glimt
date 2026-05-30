@@ -66,7 +66,7 @@ export function TogetherDayUnlockScreen({
       if (refreshed) {
         setQrToken(refreshed.token);
       }
-    }, 10_000);
+    }, 12_000);
     return () => clearInterval(interval);
   }, [mode, qrToken]);
 
@@ -97,9 +97,7 @@ export function TogetherDayUnlockScreen({
       }
       const result = recordMockUnlockScan(data);
       if (!result || result.friendId !== friendId || result.isoDate !== date) {
-        setError(
-          "That code didn't work. Ask your friend to show a fresh code.",
-        );
+        setError("That code didn't work. Ask your friend to show a fresh code.");
         return;
       }
       scannedRef.current = true;
@@ -157,9 +155,7 @@ export function TogetherDayUnlockScreen({
             accessibilityLabel="Show my code"
           >
             <SymbolView name="qrcode" size={20} tintColor={colors.background} />
-            <Text
-              style={[styles.primaryButtonText, { color: colors.background }]}
-            >
+            <Text style={[styles.primaryButtonText, { color: colors.background }]}>
               Show my code
             </Text>
           </Pressable>
@@ -209,9 +205,7 @@ export function TogetherDayUnlockScreen({
             accessibilityRole="button"
             accessibilityLabel="Simulate scan for preview"
           >
-            <Text
-              style={[styles.mockCompleteText, { color: colors.textMuted }]}
-            >
+            <Text style={[styles.mockCompleteText, { color: colors.textMuted }]}>
               Preview: simulate successful scan
             </Text>
           </Pressable>
@@ -229,9 +223,7 @@ export function TogetherDayUnlockScreen({
             />
           </View>
           {error ? (
-            <Text style={[styles.errorText, { color: "#C62828" }]}>
-              {error}
-            </Text>
+            <Text style={[styles.errorText, { color: "#C62828" }]}>{error}</Text>
           ) : (
             <Text style={[styles.hint, { color: colors.textMuted }]}>
               Point your camera at {friendFirstName}&apos;s screen
@@ -242,11 +234,7 @@ export function TogetherDayUnlockScreen({
 
       {mode === "success" ? (
         <View style={styles.successBody}>
-          <SymbolView
-            name="checkmark.circle.fill"
-            size={56}
-            tintColor="#2E7D32"
-          />
+          <SymbolView name="checkmark.circle.fill" size={56} tintColor="#2E7D32" />
           <Text style={[styles.successTitle, { color: colors.text }]}>
             Day unlocked!
           </Text>
