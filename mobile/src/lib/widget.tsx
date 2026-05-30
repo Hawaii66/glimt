@@ -312,12 +312,15 @@ export type FriendGlimtCameraProps = {
 
 const FriendGlimtCamera = (
   props: FriendGlimtCameraProps,
-  _environment: WidgetEnvironment,
+  environment: WidgetEnvironment,
 ) => {
   "use no memo";
   "widget";
 
   const { gradientColors } = props.style;
+  const renderingMode = environment.widgetRenderingMode ?? "fullColor";
+  const isAccented =
+    renderingMode === "accented" || renderingMode === "vibrant";
   const widgetGradient = {
     colors: gradientColors,
     startPoint: { x: 0, y: 0 },
@@ -326,25 +329,30 @@ const FriendGlimtCamera = (
 
   return (
     <ZStack modifiers={[widgetURL(props.captureUrl)]}>
-      <Rectangle
-        modifiers={[
-          frame({ maxWidth: 10_000, maxHeight: 10_000 }),
-          foregroundStyle({
-            type: "linearGradient",
-            colors: [...widgetGradient.colors],
-            startPoint: widgetGradient.startPoint,
-            endPoint: widgetGradient.endPoint,
-          }),
-        ]}
-      />
-      <VStack spacing={6}>
-        <Image systemName="camera.circle.fill" size={52} color="#FFFFFF" />
-        <Text
+      {!isAccented ? (
+        <Rectangle
           modifiers={[
-            font({ weight: "semibold", size: 13 }),
-            foregroundStyle("#FFFFFF"),
+            frame({ maxWidth: 10_000, maxHeight: 10_000 }),
+            foregroundStyle({
+              type: "linearGradient",
+              colors: [...widgetGradient.colors],
+              startPoint: widgetGradient.startPoint,
+              endPoint: widgetGradient.endPoint,
+            }),
           ]}
-        >
+        />
+      ) : null}
+      <VStack spacing={6}>
+        {isAccented ? (
+          <Image
+            systemName="camera.circle.fill"
+            size={52}
+            modifiers={[widgetAccentedRenderingMode("accented")]}
+          />
+        ) : (
+          <Image systemName="camera.circle.fill" size={52} color="#FFFFFF" />
+        )}
+        <Text modifiers={[font({ weight: "semibold", size: 13 })]}>
           Take a Glimt
         </Text>
       </VStack>
