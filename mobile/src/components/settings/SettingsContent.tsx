@@ -21,11 +21,7 @@ import {
 import { ProfilePreview } from "@/components/onboarding/ProfilePreview";
 import { AccentThemePicker } from "@/components/settings/AccentThemePicker";
 import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
-import {
-  ACCENT_THEMES,
-  getAccentTheme,
-  type AccentThemeId,
-} from "@/lib/accent-themes";
+import { getAccentTheme } from "@/lib/accent-themes";
 import { getConvexErrorMessage } from "@/lib/convexError";
 import { appFriendJourney } from "@/lib/routes";
 import { useAppColors } from "@/lib/theme";
@@ -152,7 +148,10 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
     setRespondingRequestId(request.requestId);
     try {
       await acceptFriendRequest({ requestId: request.requestId });
-      Alert.alert("Friend added", `${request.displayName} is now on your list.`);
+      Alert.alert(
+        "Friend added",
+        `${request.displayName} is now on your list.`,
+      );
     } catch (acceptError) {
       Alert.alert(
         "Could not accept",
@@ -174,7 +173,10 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
     } catch (declineError) {
       Alert.alert(
         "Could not decline",
-        getConvexErrorMessage(declineError, "Could not decline friend request."),
+        getConvexErrorMessage(
+          declineError,
+          "Could not decline friend request.",
+        ),
       );
     } finally {
       setRespondingRequestId(null);
@@ -213,120 +215,207 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
         ]}
         automaticallyAdjustKeyboardInsets
         keyboardShouldPersistTaps="handled"
-        keyboardDismissMode={
-          Platform.OS === "ios" ? "interactive" : "on-drag"
-        }
+        keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
         showsVerticalScrollIndicator={false}
       >
-      <Text style={[styles.pageTitle, { color: colors.text }]}>Settings</Text>
+        <Text style={[styles.pageTitle, { color: colors.text }]}>Settings</Text>
 
-      <LinearGradient
-        colors={[...gradientColors]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.accountSection}
-      >
-        <ProfilePreview
-          embedded
-          onGradientBackground
-          profile={{
-            displayName: user?.name,
-            username: user?.username,
-            avatarUri: user?.avatarUrl,
-          }}
-        />
-      </LinearGradient>
-
-      <View style={styles.section}>
-        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
-          Theme
-        </Text>
-        <AccentThemePicker
-          selectedId={accentTheme}
-          onSelect={setAccentTheme}
-        />
-      </View>
-
-      <View
-        style={styles.section}
-        onLayout={(event) => {
-          addFriendSectionY.current = event.nativeEvent.layout.y;
-        }}
-      >
-        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
-          Add friend
-        </Text>
-        <View style={styles.addFriendRow}>
-          <TextInput
-            style={[
-              styles.friendInput,
-              {
-                color: colors.text,
-                borderColor: colors.surfaceBorder,
-                backgroundColor: colors.fill,
-              },
-            ]}
-            placeholder="username"
-            placeholderTextColor={colors.textMuted}
-            value={friendUsername}
-            onChangeText={handleFriendUsernameChange}
-            autoCapitalize="none"
-            autoCorrect={false}
-            returnKeyType="done"
-            onSubmitEditing={handleAddFriend}
-            onFocus={scrollToAddFriend}
+        <LinearGradient
+          colors={[...gradientColors]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.accountSection}
+        >
+          <ProfilePreview
+            embedded
+            onGradientBackground
+            profile={{
+              displayName: user?.name,
+              username: user?.username,
+              avatarUri: user?.avatarUrl,
+            }}
           />
-          <Pressable
-            style={[
-              styles.addFriendButton,
-              { backgroundColor: colors.text, opacity: addingFriend ? 0.6 : 1 },
-            ]}
-            onPress={handleAddFriend}
-            disabled={addingFriend}
-          >
-            {addingFriend ? (
-              <ActivityIndicator color={colors.background} />
-            ) : (
-              <Text
-                style={[
-                  styles.addFriendButtonText,
-                  { color: colors.background },
-                ]}
-              >
-                Add
-              </Text>
-            )}
-          </Pressable>
-        </View>
-      </View>
+        </LinearGradient>
 
-      {incomingRequests === undefined ? (
-        <View style={styles.sectionLoading}>
-          <ActivityIndicator color={colors.textMuted} />
-        </View>
-      ) : incomingRequests.length > 0 ? (
         <View style={styles.section}>
           <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
-            Friend requests
+            Theme
           </Text>
-          <View
-            style={[
-              styles.card,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.surfaceBorder,
-              },
-            ]}
-          >
-            {incomingRequests.map((request, index) => {
-              const isResponding =
-                respondingRequestId === request.requestId;
-              return (
+          <AccentThemePicker
+            selectedId={accentTheme}
+            onSelect={setAccentTheme}
+          />
+        </View>
+
+        <View
+          style={styles.section}
+          onLayout={(event) => {
+            addFriendSectionY.current = event.nativeEvent.layout.y;
+          }}
+        >
+          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+            Add friend
+          </Text>
+          <View style={styles.addFriendRow}>
+            <TextInput
+              style={[
+                styles.friendInput,
+                {
+                  color: colors.text,
+                  borderColor: colors.surfaceBorder,
+                  backgroundColor: colors.fill,
+                },
+              ]}
+              placeholder="username"
+              placeholderTextColor={colors.textMuted}
+              value={friendUsername}
+              onChangeText={handleFriendUsernameChange}
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="done"
+              onFocus={scrollToAddFriend}
+            />
+            <Pressable
+              style={[
+                styles.addFriendButton,
+                {
+                  backgroundColor: colors.text,
+                  opacity: addingFriend ? 0.6 : 1,
+                },
+              ]}
+              onPress={handleAddFriend}
+              disabled={addingFriend}
+            >
+              {addingFriend ? (
+                <ActivityIndicator color={colors.background} />
+              ) : (
+                <Text
+                  style={[
+                    styles.addFriendButtonText,
+                    { color: colors.background },
+                  ]}
+                >
+                  Add
+                </Text>
+              )}
+            </Pressable>
+          </View>
+        </View>
+
+        {incomingRequests === undefined ? (
+          <View style={styles.sectionLoading}>
+            <ActivityIndicator color={colors.textMuted} />
+          </View>
+        ) : incomingRequests.length > 0 ? (
+          <View style={styles.section}>
+            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+              Friend requests
+            </Text>
+            <View
+              style={[
+                styles.card,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.surfaceBorder,
+                },
+              ]}
+            >
+              {incomingRequests.map((request, index) => {
+                const isResponding = respondingRequestId === request.requestId;
+                return (
+                  <View
+                    key={request.requestId}
+                    style={[
+                      styles.requestRow,
+                      index < incomingRequests.length - 1 && {
+                        borderBottomWidth: StyleSheet.hairlineWidth,
+                        borderBottomColor: colors.surfaceBorder,
+                      },
+                    ]}
+                  >
+                    <FriendAvatar avatarUrl={request.avatarUrl} />
+                    <View style={styles.friendText}>
+                      <Text style={[styles.friendName, { color: colors.text }]}>
+                        {request.displayName}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.friendUsername,
+                          { color: colors.textMuted },
+                        ]}
+                      >
+                        @{request.username}
+                      </Text>
+                    </View>
+                    <View style={styles.requestActions}>
+                      <Pressable
+                        style={[
+                          styles.declineButton,
+                          {
+                            borderColor: colors.surfaceBorder,
+                            opacity: isResponding ? 0.6 : 1,
+                          },
+                        ]}
+                        onPress={() => handleDeclineRequest(request.requestId)}
+                        disabled={respondingRequestId !== null}
+                      >
+                        <Text
+                          style={[
+                            styles.declineButtonText,
+                            { color: colors.textMuted },
+                          ]}
+                        >
+                          Decline
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        style={[
+                          styles.acceptButton,
+                          {
+                            backgroundColor: colors.text,
+                            opacity: isResponding ? 0.6 : 1,
+                          },
+                        ]}
+                        onPress={() => handleAcceptRequest(request)}
+                        disabled={respondingRequestId !== null}
+                      >
+                        <Text
+                          style={[
+                            styles.acceptButtonText,
+                            { color: colors.background },
+                          ]}
+                        >
+                          Accept
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        ) : null}
+
+        {outgoingRequests !== undefined && outgoingRequests.length > 0 ? (
+          <View style={styles.section}>
+            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+              Pending approval
+            </Text>
+            <View
+              style={[
+                styles.card,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.surfaceBorder,
+                },
+              ]}
+            >
+              {outgoingRequests.map((request, index) => (
                 <View
                   key={request.requestId}
                   style={[
-                    styles.requestRow,
-                    index < incomingRequests.length - 1 && {
+                    styles.friendRow,
+                    index < outgoingRequests.length - 1 && {
                       borderBottomWidth: StyleSheet.hairlineWidth,
                       borderBottomColor: colors.surfaceBorder,
                     },
@@ -346,172 +435,92 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
                       @{request.username}
                     </Text>
                   </View>
-                  <View style={styles.requestActions}>
-                    <Pressable
-                      style={[
-                        styles.declineButton,
-                        {
-                          borderColor: colors.surfaceBorder,
-                          opacity: isResponding ? 0.6 : 1,
-                        },
-                      ]}
-                      onPress={() => handleDeclineRequest(request.requestId)}
-                      disabled={respondingRequestId !== null}
-                    >
-                      <Text
-                        style={[
-                          styles.declineButtonText,
-                          { color: colors.textMuted },
-                        ]}
-                      >
-                        Decline
-                      </Text>
-                    </Pressable>
-                    <Pressable
-                      style={[
-                        styles.acceptButton,
-                        {
-                          backgroundColor: colors.text,
-                          opacity: isResponding ? 0.6 : 1,
-                        },
-                      ]}
-                      onPress={() => handleAcceptRequest(request)}
-                      disabled={respondingRequestId !== null}
-                    >
-                      <Text
-                        style={[
-                          styles.acceptButtonText,
-                          { color: colors.background },
-                        ]}
-                      >
-                        Accept
-                      </Text>
-                    </Pressable>
-                  </View>
+                  <Text
+                    style={[styles.pendingLabel, { color: colors.textMuted }]}
+                  >
+                    Pending
+                  </Text>
                 </View>
-              );
-            })}
+              ))}
+            </View>
           </View>
-        </View>
-      ) : null}
+        ) : null}
 
-      {outgoingRequests !== undefined && outgoingRequests.length > 0 ? (
         <View style={styles.section}>
           <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
-            Pending approval
+            Friends
           </Text>
-          <View
-            style={[
-              styles.card,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.surfaceBorder,
-              },
-            ]}
-          >
-            {outgoingRequests.map((request, index) => (
-              <View
-                key={request.requestId}
-                style={[
-                  styles.friendRow,
-                  index < outgoingRequests.length - 1 && {
-                    borderBottomWidth: StyleSheet.hairlineWidth,
-                    borderBottomColor: colors.surfaceBorder,
-                  },
-                ]}
-              >
-                <FriendAvatar avatarUrl={request.avatarUrl} />
-                <View style={styles.friendText}>
-                  <Text style={[styles.friendName, { color: colors.text }]}>
-                    {request.displayName}
-                  </Text>
-                  <Text
-                    style={[styles.friendUsername, { color: colors.textMuted }]}
-                  >
-                    @{request.username}
-                  </Text>
-                </View>
-                <Text
-                  style={[styles.pendingLabel, { color: colors.textMuted }]}
+          {friends === undefined ? (
+            <View style={styles.sectionLoading}>
+              <ActivityIndicator color={colors.textMuted} />
+            </View>
+          ) : friends.length === 0 ? (
+            <Text
+              style={[styles.emptyFriendsText, { color: colors.textMuted }]}
+            >
+              {outgoingRequests && outgoingRequests.length > 0
+                ? "No friends yet. Waiting on pending requests above."
+                : "No friends yet. Add someone by username above."}
+            </Text>
+          ) : (
+            <View
+              style={[
+                styles.card,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.surfaceBorder,
+                },
+              ]}
+            >
+              {friends.map((friend, index) => (
+                <Pressable
+                  key={friend.id}
+                  onPress={() => router.push(appFriendJourney(friend.id))}
+                  style={({ pressed }) => [
+                    styles.friendRow,
+                    index < friends.length - 1 && {
+                      borderBottomWidth: StyleSheet.hairlineWidth,
+                      borderBottomColor: colors.surfaceBorder,
+                    },
+                    pressed && styles.friendRowPressed,
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open journey with ${friend.displayName}`}
                 >
-                  Pending
-                </Text>
-              </View>
-            ))}
-          </View>
+                  <FriendAvatar avatarUrl={friend.avatarUrl} />
+                  <View style={styles.friendText}>
+                    <Text style={[styles.friendName, { color: colors.text }]}>
+                      {friend.displayName}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.friendUsername,
+                        { color: colors.textMuted },
+                      ]}
+                    >
+                      @{friend.username}
+                    </Text>
+                  </View>
+                  <Text
+                    style={[styles.friendChevron, { color: colors.textMuted }]}
+                  >
+                    ›
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
         </View>
-      ) : null}
 
-      <View style={styles.section}>
-        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
-          Friends
-        </Text>
-        {friends === undefined ? (
-          <View style={styles.sectionLoading}>
-            <ActivityIndicator color={colors.textMuted} />
-          </View>
-        ) : friends.length === 0 ? (
-          <Text style={[styles.emptyFriendsText, { color: colors.textMuted }]}>
-            {outgoingRequests && outgoingRequests.length > 0
-              ? "No friends yet. Waiting on pending requests above."
-              : "No friends yet. Add someone by username above."}
+        <Pressable
+          style={styles.signOutButton}
+          onPress={handleSignOut}
+          disabled={signingOut}
+        >
+          <Text style={styles.signOutText}>
+            {signingOut ? "Signing out…" : "Sign out"}
           </Text>
-        ) : (
-          <View
-            style={[
-              styles.card,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.surfaceBorder,
-              },
-            ]}
-          >
-            {friends.map((friend, index) => (
-              <Pressable
-                key={friend.id}
-                onPress={() => router.push(appFriendJourney(friend.id))}
-                style={({ pressed }) => [
-                  styles.friendRow,
-                  index < friends.length - 1 && {
-                    borderBottomWidth: StyleSheet.hairlineWidth,
-                    borderBottomColor: colors.surfaceBorder,
-                  },
-                  pressed && styles.friendRowPressed,
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel={`Open journey with ${friend.displayName}`}
-              >
-                <FriendAvatar avatarUrl={friend.avatarUrl} />
-                <View style={styles.friendText}>
-                  <Text style={[styles.friendName, { color: colors.text }]}>
-                    {friend.displayName}
-                  </Text>
-                  <Text
-                    style={[styles.friendUsername, { color: colors.textMuted }]}
-                  >
-                    @{friend.username}
-                  </Text>
-                </View>
-                <Text
-                  style={[styles.friendChevron, { color: colors.textMuted }]}
-                >
-                  ›
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        )}
-      </View>
-
-      <Pressable
-        style={styles.signOutButton}
-        onPress={handleSignOut}
-        disabled={signingOut}
-      >
-        <Text style={styles.signOutText}>
-          {signingOut ? "Signing out…" : "Sign out"}
-        </Text>
-      </Pressable>
+        </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
   );
