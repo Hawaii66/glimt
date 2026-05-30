@@ -11,7 +11,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { JourneyGlimtImage } from "@/components/journey/JourneyGlimtImage";
-import { getAccentTheme } from "@/lib/accent-themes";
+import { getAccentTheme, type AccentThemeId } from "@/lib/accent-themes";
 import { formatGlimtSentTime } from "@/lib/format-glimt-time";
 import { formatJourneyDate } from "@/lib/format-journey-date";
 import type { DailyJourneyGlimt } from "@/lib/glimt-mock-data";
@@ -35,6 +35,7 @@ type JourneyDayChatProps = {
   theirs?: DailyJourneyGlimt[];
   friendDisplayName: string;
   friendAvatarUrl: string;
+  friendAccentId: AccentThemeId;
   yoursImageWidth?: number;
   yoursImageHeight?: number;
   theirsImageWidth?: number;
@@ -80,6 +81,7 @@ function ChatMessageBubble({
   currentUserAvatarUrl,
   bubbleMaxWidth,
   yoursBubbleColor,
+  theirsBubbleColor,
 }: {
   message: JourneyChatMessage;
   isZoomTarget: boolean;
@@ -87,6 +89,7 @@ function ChatMessageBubble({
   currentUserAvatarUrl?: string | null;
   bubbleMaxWidth: number;
   yoursBubbleColor: string;
+  theirsBubbleColor: string;
 }) {
   const colors = useAppColors();
   const isYours = message.sender === "yours";
@@ -119,8 +122,8 @@ function ChatMessageBubble({
           style={[
             styles.bubble,
             {
-              backgroundColor: isYours ? yoursBubbleColor : colors.surface,
-              borderColor: colors.surfaceBorder,
+              backgroundColor: isYours ? yoursBubbleColor : theirsBubbleColor,
+              borderColor: "transparent",
             },
           ]}
         >
@@ -129,12 +132,7 @@ function ChatMessageBubble({
           ) : (
             imageContent
           )}
-          <Text
-            style={[
-              styles.caption,
-              { color: isYours ? "#FFFFFF" : colors.text },
-            ]}
-          >
+          <Text style={[styles.caption, { color: "#FFFFFF" }]}>
             {captionText}
           </Text>
         </View>
@@ -167,12 +165,14 @@ export function JourneyDayChat({
   theirs,
   friendDisplayName,
   friendAvatarUrl,
+  friendAccentId,
 }: JourneyDayChatProps) {
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
   const { width: windowWidth } = useWindowDimensions();
   const accentId = useAccentThemeStore((state) => state.accentId);
   const yoursBubbleColor = getAccentTheme(accentId).gradientColors[0];
+  const theirsBubbleColor = getAccentTheme(friendAccentId).gradientColors[0];
   const bubbleMaxWidth = windowWidth * BUBBLE_MAX_WIDTH_RATIO;
   const user = useQuery(api.users.current);
   const storeAvatarUri = useOnboardingStore((state) => state.localAvatarUri);
@@ -184,7 +184,7 @@ export function JourneyDayChat({
 
   return (
     <ScrollView
-      style={[styles.scroll, { backgroundColor: colors.background }]}
+      style={[styles.scroll, { backgroundColor: colors.fill }]}
       contentContainerStyle={[
         styles.scrollContent,
         { paddingBottom: insets.bottom + 24 },
@@ -213,6 +213,7 @@ export function JourneyDayChat({
             currentUserAvatarUrl={currentUserAvatarUrl}
             bubbleMaxWidth={bubbleMaxWidth}
             yoursBubbleColor={yoursBubbleColor}
+            theirsBubbleColor={theirsBubbleColor}
           />
         ))
       )}
@@ -254,7 +255,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-end",
     gap: 8,
-    maxWidth: "100%",
+    width: "100%",
   },
   messageRowYours: {
     justifyContent: "flex-end",

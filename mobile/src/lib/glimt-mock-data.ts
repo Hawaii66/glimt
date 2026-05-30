@@ -1,9 +1,12 @@
+import type { AccentThemeId } from "@/lib/accent-themes";
+
 export type FriendGlimt = {
   id: string;
   displayName: string;
   username: string;
   photoUrl: string;
   avatarUrl: string;
+  accentId: AccentThemeId;
 };
 
 export type FriendRequest = {
@@ -47,6 +50,7 @@ export const MOCK_FRIEND_GLIMTS: FriendGlimt[] = [
     username: "alexr",
     photoUrl: "https://picsum.photos/seed/glimt-widget-1/400/400",
     avatarUrl: "https://i.pravatar.cc/128?u=glimt-friend-1",
+    accentId: "blue",
   },
   {
     id: "friend-2",
@@ -54,6 +58,7 @@ export const MOCK_FRIEND_GLIMTS: FriendGlimt[] = [
     username: "jordanl",
     photoUrl: "https://picsum.photos/seed/glimt-widget-2/400/400",
     avatarUrl: "https://i.pravatar.cc/128?u=glimt-friend-2",
+    accentId: "purple",
   },
   {
     id: "friend-3",
@@ -61,6 +66,7 @@ export const MOCK_FRIEND_GLIMTS: FriendGlimt[] = [
     username: "samc",
     photoUrl: "https://picsum.photos/seed/glimt-widget-3/400/400",
     avatarUrl: "https://i.pravatar.cc/128?u=glimt-friend-3",
+    accentId: "teal",
   },
   {
     id: "friend-4",
@@ -68,6 +74,7 @@ export const MOCK_FRIEND_GLIMTS: FriendGlimt[] = [
     username: "taylorb",
     photoUrl: "https://picsum.photos/seed/glimt-widget-4/400/400",
     avatarUrl: "https://i.pravatar.cc/128?u=glimt-friend-4",
+    accentId: "pink",
   },
 ];
 

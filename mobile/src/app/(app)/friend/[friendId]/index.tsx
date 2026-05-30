@@ -19,7 +19,6 @@ import { ProfilePreview } from "@/components/onboarding/ProfilePreview";
 import { getAccentTheme } from "@/lib/accent-themes";
 import { getFriendById, getMockJourneysForFriend } from "@/lib/glimt-mock-data";
 import { useAppColors } from "@/lib/theme";
-import { useAccentThemeStore } from "@/stores/accentThemeStore";
 
 const HORIZONTAL_PADDING = 24;
 const PREVIEW_TILE_GAP = 12;
@@ -30,10 +29,11 @@ export default function FriendJourneyScreen() {
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const { friendId } = useLocalSearchParams<{ friendId: string }>();
-  const accentId = useAccentThemeStore((state) => state.accentId);
-  const gradientColors = getAccentTheme(accentId).gradientColors;
 
   const friend = friendId ? getFriendById(friendId) : undefined;
+  const gradientColors = friend
+    ? getAccentTheme(friend.accentId).gradientColors
+    : undefined;
   const journeys = friendId ? getMockJourneysForFriend(friendId) : [];
 
   const contentWidth = windowWidth - HORIZONTAL_PADDING * 2;
@@ -73,12 +73,14 @@ export default function FriendJourneyScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={[...gradientColors]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
+      {gradientColors ? (
+        <LinearGradient
+          colors={[...gradientColors]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      ) : null}
 
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         <View style={styles.header}>
@@ -141,6 +143,7 @@ export default function FriendJourneyScreen() {
             <DailyJourneyRow
               key={journey.date}
               friendId={friendId!}
+              friendAccentId={friend.accentId}
               friendAvatarUrl={friend.avatarUrl}
               friendDisplayName={friend.displayName}
               date={journey.date}

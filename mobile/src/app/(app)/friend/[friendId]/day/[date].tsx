@@ -25,7 +25,9 @@ export default function JourneyDayScreen() {
   const friend = friendId ? getFriendById(friendId) : undefined;
   const journey =
     friendId && date ? getJourneyByDate(friendId, date) : undefined;
-  const locked = date ? isJourneyLocked(date, journey?.yours, journey?.theirs) : true;
+  const locked = date
+    ? isJourneyLocked(date, journey?.yours, journey?.theirs)
+    : true;
 
   useEffect(() => {
     if (locked) {
@@ -48,7 +50,7 @@ export default function JourneyDayScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.fill }]}>
       <SafeAreaView edges={["top"]} style={styles.headerSafeArea}>
         <View style={[styles.header, { paddingTop: insets.top > 0 ? 0 : 8 }]}>
           <Pressable
@@ -74,6 +76,7 @@ export default function JourneyDayScreen() {
         theirs={journey.theirs}
         friendDisplayName={friend.displayName}
         friendAvatarUrl={friend.avatarUrl}
+        friendAccentId={friend.accentId}
       />
     </View>
   );

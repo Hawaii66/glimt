@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { JourneyGlimtImage } from "@/components/journey/JourneyGlimtImage";
-import { getAccentTheme } from "@/lib/accent-themes";
+import { getAccentTheme, type AccentThemeId } from "@/lib/accent-themes";
 import { formatJourneyDate, isJourneyLocked } from "@/lib/format-journey-date";
 import type { DailyJourneyGlimt } from "@/lib/glimt-mock-data";
 import {
@@ -14,12 +14,16 @@ import {
   TILE_BORDER_WIDTH,
   TILE_CORNER_RADIUS,
 } from "@/lib/glimt-tile-styles";
-import { getEarliestGlimt, getFirstChatMessage, sortGlimtsChronological } from "@/lib/journey-chat";
+import {
+  getEarliestGlimt,
+  getFirstChatMessage,
+  sortGlimtsChronological,
+} from "@/lib/journey-chat";
 import { useAppColors } from "@/lib/theme";
-import { useAccentThemeStore } from "@/stores/accentThemeStore";
 
 type DailyJourneyRowProps = {
   friendId: string;
+  friendAccentId: AccentThemeId;
   friendAvatarUrl: string;
   friendDisplayName: string;
   date: string;
@@ -308,7 +312,7 @@ function JourneyGlimtStack({
           style={[styles.caption, { color: colors.textMuted }]}
           numberOfLines={1}
         >
-          No glimt
+          No glimts
         </Text>
       </View>
     );
@@ -419,7 +423,7 @@ function JourneyRowContent({
       <View style={[styles.tilesArea, { minHeight: tileSize }]}>
         <View style={styles.previewRow}>
           <JourneyGlimtStack
-            glimts={yours}
+            glimts={theirs}
             tileSize={tileSize}
             baseTilt={INWARD_TILT}
             locked={locked}
@@ -427,7 +431,7 @@ function JourneyRowContent({
             onZoomImageLoad={onZoomImageLoad}
           />
           <JourneyGlimtStack
-            glimts={theirs}
+            glimts={yours}
             tileSize={tileSize}
             baseTilt={-INWARD_TILT}
             locked={locked}
@@ -454,6 +458,7 @@ function JourneyRowContent({
 
 export function DailyJourneyRow({
   friendId,
+  friendAccentId,
   friendAvatarUrl,
   friendDisplayName,
   date,
@@ -463,8 +468,7 @@ export function DailyJourneyRow({
 }: DailyJourneyRowProps) {
   const colors = useAppColors();
   const locked = isJourneyLocked(date, yours, theirs);
-  const accentId = useAccentThemeStore((state) => state.accentId);
-  const accentColor = getAccentTheme(accentId).gradientColors[0];
+  const accentColor = getAccentTheme(friendAccentId).gradientColors[0];
   const [pressed, setPressed] = useState(false);
   const [zoomImageSize, setZoomImageSize] = useState<ImageSize | null>(null);
   const firstMessage = locked
@@ -476,7 +480,7 @@ export function DailyJourneyRow({
     styles.row,
     locked && styles.rowLocked,
     {
-      backgroundColor: colors.surface,
+      backgroundColor: colors.fill,
       borderColor: colors.surfaceBorder,
       opacity: pressed && !locked ? 0.92 : 1,
     },
