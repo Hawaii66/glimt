@@ -17,6 +17,8 @@ import {
 } from "@/lib/mock-unlock-session";
 import { useAppColors } from "@/lib/theme";
 import { useMockUnlockStore } from "@/stores/mockUnlockStore";
+import Svg, { Circle, Rect } from "react-native-svg";
+import { QRCode } from "react-qr-code";
 
 type Mode = "choose" | "show" | "scan" | "success";
 
@@ -109,6 +111,26 @@ export function TogetherDayUnlockScreen({
     <SafeAreaView
       style={[styles.safeArea, { backgroundColor: colors.background }]}
     >
+      <QRCode value="20" />
+      <Svg height="50%" width="50%" viewBox="0 0 100 100">
+        <Circle
+          cx="50"
+          cy="50"
+          r="45"
+          stroke="blue"
+          strokeWidth="2.5"
+          fill="green"
+        />
+        <Rect
+          x="15"
+          y="15"
+          width="70"
+          height="70"
+          stroke="red"
+          strokeWidth="2"
+          fill="yellow"
+        />
+      </Svg>
       <View style={[styles.header, { paddingTop: insets.top > 0 ? 0 : 8 }]}>
         <Pressable
           onPress={() => router.back()}

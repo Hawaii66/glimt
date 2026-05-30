@@ -1,3 +1,5 @@
+import * as Crypto from "expo-crypto";
+
 const TOKEN_PREFIX = "glimt-mock-unlock-v1:";
 const SESSION_TTL_MS = 3 * 60 * 1000;
 const NONCE_REFRESH_MS = 12_000;
@@ -20,8 +22,7 @@ type ActiveSession = {
 let activeSession: ActiveSession | null = null;
 
 function randomNonce(): string {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
+  const bytes = Crypto.getRandomBytes(16);
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
@@ -63,7 +64,7 @@ export function startMockUnlockSession(
   const now = Date.now();
   const expiresAt = now + SESSION_TTL_MS;
   const payload: MockUnlockTokenPayload = {
-    sessionId: `mock-${now}`,
+    sessionId: Crypto.randomUUID(),
     friendId,
     isoDate,
     hostRole: "show",
