@@ -57,6 +57,12 @@ export default function AppLayout() {
             headerShown: false,
           }}
         />
+        <Stack.Screen
+          name="friend/[friendId]/unlock/[date]"
+          options={{
+            headerShown: false,
+          }}
+        />
       </Stack>
       <Toast />
     </View>
