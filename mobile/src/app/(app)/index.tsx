@@ -63,10 +63,13 @@ export default function HomeScreen() {
         data={MOCK_FRIEND_GLIMTS}
         numColumns={NUM_COLUMNS}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={[
-          styles.listContent,
-          { paddingTop: insets.top + 8 },
-        ]}
+        contentContainerStyle={styles.listContent}
+        ListHeaderComponent={
+          <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+            <Text style={styles.title}>Glimt</Text>
+            <Text style={styles.tagline}>Small everyday moments</Text>
+          </View>
+        }
         renderItem={({ item, index }) => (
           <Pressable
             style={[
@@ -127,6 +130,22 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: HORIZONTAL_PADDING,
     paddingBottom: 120,
+  },
+  header: {
+    paddingBottom: 28,
+    paddingRight: 52,
+  },
+  title: {
+    color: "#FFFFFF",
+    fontSize: 36,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+  },
+  tagline: {
+    color: "rgba(255, 255, 255, 0.92)",
+    fontSize: 15,
+    fontWeight: "700",
+    marginTop: 4,
   },
   listItem: {
     marginBottom: TILE_VERTICAL_GAP,

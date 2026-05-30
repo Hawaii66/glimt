@@ -3,6 +3,7 @@ import { useQuery } from "convex/react";
 import { Redirect, Stack } from "expo-router";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 
+import { Toast } from "@/components/Toast";
 import { useAppColors } from "@/lib/theme";
 import { api } from "convex/_generated/api";
 
@@ -28,42 +29,44 @@ export default function AppLayout() {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: colors.background },
-      }}
-    >
-      <Stack.Screen
-        name="index"
-        options={{
-          contentStyle: { backgroundColor: "transparent" },
-          statusBarStyle: "light",
-          statusBarBackgroundColor: "transparent",
-        }}
-      />
-      <Stack.Screen name="capture" />
-      <Stack.Screen name="compose" />
-      <Stack.Screen name="settings" />
-      <Stack.Screen
-        name="friend/[friendId]/index"
-        options={{
-          contentStyle: { backgroundColor: "transparent" },
-          statusBarStyle: "light",
-          statusBarBackgroundColor: "transparent",
-        }}
-      />
-      <Stack.Screen
-        name="friend/[friendId]/day/[date]"
-        options={{
+    <View style={styles.appRoot}>
+      <Stack
+        screenOptions={{
           headerShown: false,
+          contentStyle: { backgroundColor: colors.background },
         }}
-      />
-    </Stack>
+      >
+        <Stack.Screen
+          name="index"
+          options={{
+            contentStyle: { backgroundColor: "transparent" },
+          }}
+        />
+        <Stack.Screen name="capture" />
+        <Stack.Screen name="compose" />
+        <Stack.Screen name="settings" />
+        <Stack.Screen
+          name="friend/[friendId]/index"
+          options={{
+            contentStyle: { backgroundColor: "transparent" },
+          }}
+        />
+        <Stack.Screen
+          name="friend/[friendId]/day/[date]"
+          options={{
+            headerShown: false,
+          }}
+        />
+      </Stack>
+      <Toast />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  appRoot: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     alignItems: "center",

@@ -22,6 +22,7 @@ import { APP_HOME } from "@/lib/routes";
 import { MOCK_FRIEND_GLIMTS } from "@/lib/glimt-mock-data";
 import { useAppColors } from "@/lib/theme";
 import { useCaptureStore } from "@/stores/captureStore";
+import { useToastStore } from "@/stores/toastStore";
 
 const CAPTION_MAX_LENGTH = 30;
 const INPUT_LINE_HEIGHT = 22;
@@ -42,6 +43,7 @@ export default function ComposeScreen() {
   const selectedFriendId = useCaptureStore((state) => state.selectedFriendId);
   const setSelectedFriendId = useCaptureStore((state) => state.setSelectedFriendId);
   const reset = useCaptureStore((state) => state.reset);
+  const showToast = useToastStore((state) => state.show);
   const selectedFriend = MOCK_FRIEND_GLIMTS.find(
     (friend) => friend.id === selectedFriendId,
   );
@@ -75,6 +77,10 @@ export default function ComposeScreen() {
   };
 
   const handleSend = () => {
+    const recipientName = selectedFriend?.displayName.split(" ")[0];
+    showToast(
+      recipientName ? `Glimt sent to ${recipientName}` : "Glimt sent",
+    );
     reset();
     router.replace(APP_HOME);
   };
