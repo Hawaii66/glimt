@@ -33,7 +33,7 @@ import type { Id } from "convex/_generated/dataModel";
 const CAPTION_MAX_LENGTH = 30;
 const INPUT_LINE_HEIGHT = 22;
 const INPUT_VERTICAL_PADDING = 12;
-const INPUT_HEIGHT = INPUT_LINE_HEIGHT * 2 + INPUT_VERTICAL_PADDING * 2;
+const INPUT_HEIGHT = INPUT_LINE_HEIGHT + INPUT_VERTICAL_PADDING * 2;
 const COMPACT_PREVIEW_HEIGHT = 120;
 
 export default function ComposeScreen() {
@@ -41,6 +41,7 @@ export default function ComposeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
+  const captionInputRef = useRef<TextInput>(null);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [sending, setSending] = useState(false);
   const friends = useQuery(api.friends.listFriends);
@@ -187,14 +188,15 @@ export default function ComposeScreen() {
 
           <View style={styles.captionSection}>
             <TextInput
+              ref={captionInputRef}
               autoCapitalize="sentences"
               autoCorrect
               editable={!sending}
-              multiline
-              numberOfLines={2}
               placeholder="Add a caption..."
               placeholderTextColor={colors.textMuted}
               maxLength={CAPTION_MAX_LENGTH}
+              returnKeyType="done"
+              blurOnSubmit
               style={[
                 styles.input,
                 {
@@ -206,6 +208,10 @@ export default function ComposeScreen() {
               value={caption}
               onChangeText={setCaption}
               onFocus={scrollToCaption}
+              onSubmitEditing={() => {
+                captionInputRef.current?.blur();
+                Keyboard.dismiss();
+              }}
             />
             <Text style={[styles.charCount, { color: colors.textMuted }]}>
               {caption.length}/{CAPTION_MAX_LENGTH}
@@ -428,7 +434,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: INPUT_LINE_HEIGHT,
     height: INPUT_HEIGHT,
-    textAlignVertical: "top",
+    textAlignVertical: "center",
   },
   charCount: {
     alignSelf: "flex-end",
