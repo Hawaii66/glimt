@@ -11,7 +11,6 @@ import { formatJourneyDate } from "@/lib/format-journey-date";
 import type { DailyJourneyGlimt } from "@/lib/glimt-mock-data";
 import {
   buildJourneyChatMessages,
-  getFirstGlimt,
   type JourneyChatMessage,
 } from "@/lib/journey-chat";
 import { useAppColors } from "@/lib/theme";
@@ -48,17 +47,15 @@ function ChatHeader({
 
   return (
     <View style={styles.chatHeader}>
-      <Link.AppleZoomTarget>
-        <View style={styles.chatHeaderAvatarWrap}>
-          <Image
-            source={{ uri: friendAvatarUrl }}
-            style={[
-              styles.chatHeaderAvatar,
-              { borderColor: colors.surfaceBorder },
-            ]}
-          />
-        </View>
-      </Link.AppleZoomTarget>
+      <View style={styles.chatHeaderAvatarWrap}>
+        <Image
+          source={{ uri: friendAvatarUrl }}
+          style={[
+            styles.chatHeaderAvatar,
+            { borderColor: colors.surfaceBorder },
+          ]}
+        />
+      </View>
       <Text style={[styles.chatHeaderName, { color: colors.text }]}>
         {friendDisplayName}
       </Text>
@@ -178,8 +175,7 @@ export function JourneyDayChat({
   const currentUserAvatarUrl = user?.avatarUrl ?? storeAvatarUri;
 
   const messages = buildJourneyChatMessages({ date, yours, theirs });
-  const yoursZoomPhoto = getFirstGlimt(yours)?.photoUrl;
-  const theirsZoomPhoto = getFirstGlimt(theirs)?.photoUrl;
+  const firstMessage = messages[0];
   const dateLabel = formatJourneyDate(date);
 
   return (
@@ -208,10 +204,7 @@ export function JourneyDayChat({
           <ChatMessageBubble
             key={message.id}
             message={message}
-            isZoomTarget={
-              message.photoUrl === yoursZoomPhoto ||
-              message.photoUrl === theirsZoomPhoto
-            }
+            isZoomTarget={message.id === firstMessage?.id}
             friendAvatarUrl={friendAvatarUrl}
             currentUserAvatarUrl={currentUserAvatarUrl}
             bubbleMaxWidth={bubbleMaxWidth}

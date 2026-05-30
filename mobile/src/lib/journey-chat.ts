@@ -11,6 +11,13 @@ export type JourneyChatMessage = {
   sentAt: string;
 };
 
+export function getFirstChatMessage(
+  journey: DailyJourney,
+): JourneyChatMessage | undefined {
+  const messages = buildJourneyChatMessages(journey);
+  return messages[0];
+}
+
 export function getFirstGlimt(
   glimts?: DailyJourneyGlimt[],
 ): DailyJourneyGlimt | undefined {

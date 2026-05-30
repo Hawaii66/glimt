@@ -14,7 +14,7 @@ import {
   TILE_BORDER_WIDTH,
   TILE_CORNER_RADIUS,
 } from "@/lib/glimt-tile-styles";
-import { getFirstGlimt } from "@/lib/journey-chat";
+import { getFirstGlimt, getFirstChatMessage } from "@/lib/journey-chat";
 import { useAppColors } from "@/lib/theme";
 import { useAccentThemeStore } from "@/stores/accentThemeStore";
 
@@ -270,13 +270,15 @@ function JourneyGlimtStack({
   tileSize,
   baseTilt,
   locked = false,
-  onTopImageLoad,
+  zoomPhotoUrl,
+  onZoomImageLoad,
 }: {
   glimts?: DailyJourneyGlimt[];
   tileSize: number;
   baseTilt: number;
   locked?: boolean;
-  onTopImageLoad?: (size: ImageSize) => void;
+  zoomPhotoUrl?: string;
+  onZoomImageLoad?: (size: ImageSize) => void;
 }) {
   const colors = useAppColors();
   const count = glimts?.length ?? 0;
@@ -319,6 +321,7 @@ function JourneyGlimtStack({
       <View style={[styles.stack, { width: tileSize, height: stackHeight }]}>
         {glimts!.map((glimt, index) => {
           const isTop = index === count - 1;
+          const isZoomSource = zoomPhotoUrl === glimt.photoUrl;
           return (
             <View
               key={`${glimt.photoUrl}-${index}`}
@@ -337,8 +340,8 @@ function JourneyGlimtStack({
                 tilt={stackRotation(baseTilt, index, count)}
                 stackIndex={index}
                 showCount={isTop ? count : undefined}
-                enableZoom={isTop}
-                onImageLoad={isTop ? onTopImageLoad : undefined}
+                enableZoom={isZoomSource}
+                onImageLoad={isZoomSource ? onZoomImageLoad : undefined}
               />
             </View>
           );
@@ -361,8 +364,8 @@ function JourneyRowContent({
   locked,
   colors,
   accentColor,
-  onYoursImageLoad,
-  onTheirsImageLoad,
+  zoomPhotoUrl,
+  onZoomImageLoad,
 }: {
   friendAvatarUrl: string;
   friendDisplayName: string;
@@ -373,29 +376,18 @@ function JourneyRowContent({
   locked: boolean;
   colors: ReturnType<typeof useAppColors>;
   accentColor: string;
-  onYoursImageLoad: (size: ImageSize) => void;
-  onTheirsImageLoad: (size: ImageSize) => void;
+  zoomPhotoUrl?: string;
+  onZoomImageLoad: (size: ImageSize) => void;
 }) {
   const dateHeader = (
     <View style={styles.dateHeader}>
       <View style={styles.dateHeaderLeft}>
-        {!locked ? (
-          <Link.AppleZoom>
-            <View style={styles.avatarChip}>
-              <Image
-                source={{ uri: friendAvatarUrl }}
-                style={styles.avatarChipImage}
-              />
-            </View>
-          </Link.AppleZoom>
-        ) : (
-          <View style={styles.avatarChip}>
-            <Image
-              source={{ uri: friendAvatarUrl }}
-              style={styles.avatarChipImage}
-            />
-          </View>
-        )}
+        <View style={styles.avatarChip}>
+          <Image
+            source={{ uri: friendAvatarUrl }}
+            style={styles.avatarChipImage}
+          />
+        </View>
         <View style={styles.dateHeaderText}>
           <Text style={[styles.dateLabel, { color: colors.text }]}>
             {formatJourneyDate(date)}
@@ -429,14 +421,16 @@ function JourneyRowContent({
             tileSize={tileSize}
             baseTilt={INWARD_TILT}
             locked={locked}
-            onTopImageLoad={onYoursImageLoad}
+            zoomPhotoUrl={zoomPhotoUrl}
+            onZoomImageLoad={onZoomImageLoad}
           />
           <JourneyGlimtStack
             glimts={theirs}
             tileSize={tileSize}
             baseTilt={-INWARD_TILT}
             locked={locked}
-            onTopImageLoad={onTheirsImageLoad}
+            zoomPhotoUrl={zoomPhotoUrl}
+            onZoomImageLoad={onZoomImageLoad}
           />
         </View>
 
@@ -470,10 +464,11 @@ export function DailyJourneyRow({
   const accentId = useAccentThemeStore((state) => state.accentId);
   const accentColor = getAccentTheme(accentId).gradientColors[0];
   const [pressed, setPressed] = useState(false);
-  const [yoursImageSize, setYoursImageSize] = useState<ImageSize | null>(null);
-  const [theirsImageSize, setTheirsImageSize] = useState<ImageSize | null>(
-    null,
-  );
+  const [zoomImageSize, setZoomImageSize] = useState<ImageSize | null>(null);
+  const firstMessage = locked
+    ? undefined
+    : getFirstChatMessage({ date, yours, theirs });
+  const zoomPhotoUrl = firstMessage?.photoUrl;
 
   const rowStyle = StyleSheet.flatten([
     styles.row,
@@ -496,8 +491,8 @@ export function DailyJourneyRow({
       locked={locked}
       colors={colors}
       accentColor={accentColor}
-      onYoursImageLoad={setYoursImageSize}
-      onTheirsImageLoad={setTheirsImageSize}
+      zoomPhotoUrl={zoomPhotoUrl}
+      onZoomImageLoad={setZoomImageSize}
     />
   );
 
@@ -516,10 +511,8 @@ export function DailyJourneyRow({
         params: {
           friendId,
           date,
-          yoursWidth: yoursImageSize?.width?.toString(),
-          yoursHeight: yoursImageSize?.height?.toString(),
-          theirsWidth: theirsImageSize?.width?.toString(),
-          theirsHeight: theirsImageSize?.height?.toString(),
+          zoomWidth: zoomImageSize?.width?.toString(),
+          zoomHeight: zoomImageSize?.height?.toString(),
         },
       }}
       asChild
