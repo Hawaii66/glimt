@@ -3,7 +3,15 @@ import type { Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { requireAuthUserId, validateUsername } from "./lib/auth";
-import { createFriendGroup, findGroupForUsers } from "./lib/friendGroups";
+import {
+  deleteAllRequestsBetween,
+  deleteFriendshipsBetween,
+  deleteMeetUnlockSessionsForGroup,
+} from "./lib/friends";
+import {
+  findGroupForUsers,
+  getOrCreateFriendGroupForUsers,
+} from "./lib/friendGroups";
 import { prepareTodayMeetLockForGroup, todayIsoDate } from "./lib/meetLock";
 import { userError } from "./lib/userError";
 
@@ -344,12 +352,61 @@ export const acceptRequest = mutation({
         friendUserId: request.fromUserId,
         createdAt: now,
       });
-      const groupId = await createFriendGroup(ctx, [
+      const groupId = await getOrCreateFriendGroupForUsers(
+        ctx,
         request.fromUserId,
         request.toUserId,
-      ]);
+      );
       await prepareTodayMeetLockForGroup(ctx, groupId, today, now);
     }
+  },
+});
+
+export const removeFriend = mutation({
+  args: { friendUserId: v.id("users") },
+  handler: async (ctx, { friendUserId }) => {
+    const userId = await requireAuthUserId(ctx);
+
+    if (userId === friendUserId) {
+      userError("You cannot remove yourself as a friend.");
+    }
+
+    if (!(await areFriends(ctx, userId, friendUserId))) {
+      userError("You are not friends with this user.");
+    }
+
+    const groupId = await findGroupForUsers(ctx, userId, friendUserId);
+
+    await deleteFriendshipsBetween(ctx, userId, friendUserId);
+    await deleteAllRequestsBetween(ctx, userId, friendUserId);
+
+    if (groupId) {
+      await deleteMeetUnlockSessionsForGroup(ctx, groupId);
+    }
+
+    return { removed: true as const };
+  },
+});
+
+export const cancelRequest = mutation({
+  args: { requestId: v.id("friendRequests") },
+  handler: async (ctx, { requestId }) => {
+    const userId = await requireAuthUserId(ctx);
+    const request = await ctx.db.get(requestId);
+
+    if (!request) {
+      userError("Friend request not found.");
+    }
+
+    if (request.fromUserId !== userId) {
+      userError("You can only cancel requests you sent.");
+    }
+
+    if (request.status !== "pending") {
+      userError("This friend request is no longer pending.");
+    }
+
+    await ctx.db.delete(requestId);
   },
 });
 
