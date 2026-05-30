@@ -33,6 +33,7 @@ export type WidgetTileStyle = {
 export type FriendGlimtProps = {
   glimts: WidgetGlimtItem[];
   style: WidgetTileStyle;
+  whiteUri: string;
 };
 
 const FriendGlimt = (
@@ -158,8 +159,17 @@ const FriendGlimt = (
             color={photoBorderColor}
             modifiers={[
               resizable(),
+              aspectRatio({ contentMode: "fit", ratio: 1 }),
+              scaleEffect(1000),
+              widgetAccentedRenderingMode("fullColor"),
+            ]}
+          />
+          <Image
+            uiImage={props.whiteUri}
+            modifiers={[
+              resizable(),
               aspectRatio({ contentMode: "fill", ratio: 1 }),
-              cornerRadius(metrics.cornerRadius),
+              cornerRadius(metrics.cornerRadius - metrics.borderWidth),
               widgetAccentedRenderingMode("fullColor"),
             ]}
           />
@@ -174,6 +184,7 @@ const FriendGlimt = (
             ]}
           />
         </ZStack>
+
         {avatarUri ? (
           <ZStack
             modifiers={[
