@@ -1,27 +1,24 @@
 import { useConvexAuth } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
 import { Redirect, useRouter } from "expo-router";
-import { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 import { OnboardingScreen } from "@/components/onboarding/OnboardingScreen";
+import { AccentThemePicker } from "@/components/settings/AccentThemePicker";
+import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
 import { APP_HOME } from "@/lib/routes";
 import { useAppColors } from "@/lib/theme";
 import { useOnboardingStore } from "@/stores/onboardingStore";
 import { api } from "convex/_generated/api";
 
-export default function SetupScreen() {
+export default function ThemeScreen() {
   const colors = useAppColors();
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
   const user = useQuery(api.users.current);
-  const seedFromUser = useOnboardingStore((state) => state.seedFromUser);
-
-  useEffect(() => {
-    if (user) {
-      seedFromUser(user);
-    }
-  }, [user, seedFromUser]);
+  const displayName = useOnboardingStore((state) => state.displayName);
+  const username = useOnboardingStore((state) => state.username);
+  const { accentTheme, setAccentTheme } = useCurrentUserAccentTheme();
 
   if (authLoading || (isAuthenticated && user === undefined)) {
     return (
@@ -39,19 +36,26 @@ export default function SetupScreen() {
     return <Redirect href={APP_HOME} />;
   }
 
+  if (!displayName.trim()) {
+    return <Redirect href="/onboarding/setup" />;
+  }
+
+  if (!username.trim()) {
+    return <Redirect href="/onboarding/username" />;
+  }
+
   return (
     <OnboardingScreen
-      actionLabel="Start"
       onNext={() => {
-        router.push("/onboarding/name");
+        router.push("/onboarding/confirm");
       }}
     >
-      <Text style={[styles.title, { color: colors.text }]}>
-        Let's set up your account
+      <Text style={[styles.label, { color: colors.text }]}>Choose your theme</Text>
+      <Text style={[styles.hint, { color: colors.textMuted }]}>
+        This colors your profile and glimts. You can change it anytime in
+        settings.
       </Text>
-      <Text style={[styles.body, { color: colors.textMuted }]}>
-        Add a name, username, photo, and theme so friends know it's you.
-      </Text>
+      <AccentThemePicker selectedId={accentTheme} onSelect={setAccentTheme} />
     </OnboardingScreen>
   );
 }
@@ -62,14 +66,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  body: {
+  label: {
     fontSize: 16,
-    lineHeight: 22,
-    textAlign: "center",
+    fontWeight: "600",
+  },
+  hint: {
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

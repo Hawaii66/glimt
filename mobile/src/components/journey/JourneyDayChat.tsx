@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { JourneyGlimtImage } from "@/components/journey/JourneyGlimtImage";
+import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
 import { getAccentTheme, type AccentThemeId } from "@/lib/accent-themes";
 import { formatGlimtSentTime } from "@/lib/format-glimt-time";
 import { formatJourneyDate } from "@/lib/format-journey-date";
@@ -21,7 +22,6 @@ import {
   type JourneyChatMessage,
 } from "@/lib/journey-chat";
 import { useAppColors } from "@/lib/theme";
-import { useAccentThemeStore } from "@/stores/accentThemeStore";
 import { useOnboardingStore } from "@/stores/onboardingStore";
 import { api } from "convex/_generated/api";
 
@@ -170,8 +170,8 @@ export function JourneyDayChat({
   const insets = useSafeAreaInsets();
   const colors = useAppColors();
   const { width: windowWidth } = useWindowDimensions();
-  const accentId = useAccentThemeStore((state) => state.accentId);
-  const yoursBubbleColor = getAccentTheme(accentId).gradientColors[0];
+  const { accentTheme } = useCurrentUserAccentTheme();
+  const yoursBubbleColor = getAccentTheme(accentTheme).gradientColors[0];
   const theirsBubbleColor = getAccentTheme(friendAccentId).gradientColors[0];
   const bubbleMaxWidth = windowWidth * BUBBLE_MAX_WIDTH_RATIO;
   const user = useQuery(api.users.current);

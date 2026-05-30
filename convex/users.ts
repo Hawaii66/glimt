@@ -1,6 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { accentThemeValidator } from "./lib/accentTheme";
 import {
   normalizeUsername,
   requireAuthUserId,
@@ -57,13 +58,22 @@ export const generateAvatarUploadUrl = mutation({
   },
 });
 
+export const setAccentTheme = mutation({
+  args: { accentTheme: accentThemeValidator },
+  handler: async (ctx, { accentTheme }) => {
+    const userId = await requireAuthUserId(ctx);
+    await ctx.db.patch(userId, { accentTheme });
+  },
+});
+
 export const completeOnboarding = mutation({
   args: {
     name: v.string(),
     username: v.string(),
     avatarStorageId: v.optional(v.id("_storage")),
+    accentTheme: accentThemeValidator,
   },
-  handler: async (ctx, { name, username, avatarStorageId }) => {
+  handler: async (ctx, { name, username, avatarStorageId, accentTheme }) => {
     const userId = await requireAuthUserId(ctx);
     const trimmedName = name.trim();
     if (!trimmedName) {
@@ -85,6 +95,7 @@ export const completeOnboarding = mutation({
       name: trimmedName,
       username: normalizedUsername,
       avatarStorageId,
+      accentTheme,
       onboardingComplete: true,
     });
   },

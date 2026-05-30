@@ -19,6 +19,8 @@ import {
 } from "react-native";
 
 import { ProfilePreview } from "@/components/onboarding/ProfilePreview";
+import { AccentThemePicker } from "@/components/settings/AccentThemePicker";
+import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
 import {
   ACCENT_THEMES,
   getAccentTheme,
@@ -27,7 +29,6 @@ import {
 import { getConvexErrorMessage } from "@/lib/convexError";
 import { appFriendJourney } from "@/lib/routes";
 import { useAppColors } from "@/lib/theme";
-import { useAccentThemeStore } from "@/stores/accentThemeStore";
 import { useOnboardingStore } from "@/stores/onboardingStore";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
@@ -70,9 +71,8 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
   const sendFriendRequest = useMutation(api.friends.sendRequest);
   const acceptFriendRequest = useMutation(api.friends.acceptRequest);
   const declineFriendRequest = useMutation(api.friends.declineRequest);
-  const accentId = useAccentThemeStore((state) => state.accentId);
-  const setAccentId = useAccentThemeStore((state) => state.setAccentId);
-  const gradientColors = getAccentTheme(accentId).gradientColors;
+  const { accentTheme, setAccentTheme } = useCurrentUserAccentTheme();
+  const gradientColors = getAccentTheme(accentTheme).gradientColors;
   const resetOnboarding = useOnboardingStore((state) => state.reset);
   const [friendUsername, setFriendUsername] = useState("@");
   const [signingOut, setSigningOut] = useState(false);
@@ -240,50 +240,10 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
         <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
           Theme
         </Text>
-        <View style={styles.themeGrid}>
-          {ACCENT_THEMES.map((theme) => {
-            const selected = accentId === theme.id;
-            return (
-              <Pressable
-                key={theme.id}
-                style={styles.themeOption}
-                onPress={() => setAccentId(theme.id as AccentThemeId)}
-                accessibilityRole="button"
-                accessibilityLabel={`${theme.label} theme`}
-                accessibilityState={{ selected }}
-              >
-                <View
-                  style={[
-                    styles.themePreview,
-                    {
-                      borderColor: selected
-                        ? colors.text
-                        : colors.surfaceBorder,
-                    },
-                  ]}
-                >
-                  <LinearGradient
-                    colors={[...theme.gradientColors]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.themePreviewGradient}
-                  />
-                </View>
-                <Text
-                  style={[
-                    styles.themeLabel,
-                    {
-                      color: selected ? colors.text : colors.textMuted,
-                      fontWeight: selected ? "600" : "400",
-                    },
-                  ]}
-                >
-                  {theme.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <AccentThemePicker
+          selectedId={accentTheme}
+          onSelect={setAccentTheme}
+        />
       </View>
 
       <View
@@ -507,8 +467,6 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
   );
 }
 
-const THEME_PREVIEW_SIZE = 52;
-
 const styles = StyleSheet.create({
   keyboardAvoid: {
     flex: 1,
@@ -551,29 +509,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textTransform: "uppercase",
     letterSpacing: 0.6,
-  },
-  themeGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 16,
-  },
-  themeOption: {
-    alignItems: "center",
-    gap: 6,
-    width: THEME_PREVIEW_SIZE + 8,
-  },
-  themePreview: {
-    width: THEME_PREVIEW_SIZE,
-    height: THEME_PREVIEW_SIZE,
-    borderRadius: 10,
-    overflow: "hidden",
-    borderWidth: 2,
-  },
-  themePreviewGradient: {
-    flex: 1,
-  },
-  themeLabel: {
-    fontSize: 12,
   },
   addFriendRow: {
     flexDirection: "row",

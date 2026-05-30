@@ -15,10 +15,10 @@ import {
 } from "react-native-safe-area-context";
 
 import { GlimtTile } from "@/components/glimt/GlimtTile";
+import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
 import { getAccentTheme } from "@/lib/accent-themes";
 import { MOCK_FRIEND_GLIMTS } from "@/lib/glimt-mock-data";
 import { APP_CAPTURE, APP_SETTINGS, appFriendJourney } from "@/lib/routes";
-import { useAccentThemeStore } from "@/stores/accentThemeStore";
 
 const HORIZONTAL_PADDING = 24;
 const NUM_COLUMNS = 2;
@@ -28,8 +28,8 @@ const BOTTOM_BAR_PADDING = 24;
 
 export default function HomeScreen() {
   const router = useRouter();
-  const accentId = useAccentThemeStore((state) => state.accentId);
-  const gradientColors = getAccentTheme(accentId).gradientColors;
+  const { accentTheme } = useCurrentUserAccentTheme();
+  const gradientColors = getAccentTheme(accentTheme).gradientColors;
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const contentWidth = windowWidth - HORIZONTAL_PADDING * 2;

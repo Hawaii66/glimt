@@ -16,6 +16,7 @@ import type * as friendGroups from "../friendGroups.js";
 import type * as friends from "../friends.js";
 import type * as http from "../http.js";
 import type * as journals from "../journals.js";
+import type * as lib_accentTheme from "../lib/accentTheme.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_friendGroups from "../lib/friendGroups.js";
 import type * as lib_random from "../lib/random.js";
@@ -39,6 +40,7 @@ declare const fullApi: ApiFromModules<{
   friends: typeof friends;
   http: typeof http;
   journals: typeof journals;
+  "lib/accentTheme": typeof lib_accentTheme;
   "lib/auth": typeof lib_auth;
   "lib/friendGroups": typeof lib_friendGroups;
   "lib/random": typeof lib_random;

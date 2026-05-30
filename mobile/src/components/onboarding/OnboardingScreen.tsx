@@ -8,9 +8,12 @@ import {
   Text,
   View,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ProfilePreview } from "@/components/onboarding/ProfilePreview";
+import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
+import { getAccentTheme } from "@/lib/accent-themes";
 import { useAppColors } from "@/lib/theme";
 
 type OnboardingScreenProps = {
@@ -33,6 +36,8 @@ export function OnboardingScreen({
   header,
 }: OnboardingScreenProps) {
   const colors = useAppColors();
+  const { accentTheme } = useCurrentUserAccentTheme();
+  const gradientColors = getAccentTheme(accentTheme).gradientColors;
 
   return (
     <SafeAreaView
@@ -45,7 +50,14 @@ export function OnboardingScreen({
         {showPreview ? (
           <>
             <View style={styles.previewSection}>
-              <ProfilePreview />
+              <LinearGradient
+                colors={[...gradientColors]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.previewGradient}
+              >
+                <ProfilePreview onGradientBackground />
+              </LinearGradient>
             </View>
             <View
               style={[styles.divider, { backgroundColor: colors.textMuted }]}
@@ -92,6 +104,13 @@ const styles = StyleSheet.create({
   previewSection: {
     flex: 1,
     minHeight: 220,
+    paddingHorizontal: 24,
+    paddingTop: 8,
+  },
+  previewGradient: {
+    flex: 1,
+    borderRadius: 16,
+    overflow: "hidden",
   },
   headerSection: {
     flex: 1,
