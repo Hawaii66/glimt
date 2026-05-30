@@ -1,8 +1,10 @@
+import { useMutation, useQuery } from "convex/react";
 import { Image } from "expo-image";
 import { Redirect, useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -18,13 +20,14 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
+import { getConvexErrorMessage } from "@/lib/convexError";
 import { APP_HOME } from "@/lib/routes";
-import { isFriendLockedToday } from "@/lib/journey-lock";
-import { MOCK_FRIEND_GLIMTS } from "@/lib/glimt-mock-data";
-import { useMockUnlockStore } from "@/stores/mockUnlockStore";
+import { uploadGlimtPhotoToStorage } from "@/lib/uploadGlimtPhoto";
 import { useAppColors } from "@/lib/theme";
 import { useCaptureStore } from "@/stores/captureStore";
 import { useToastStore } from "@/stores/toastStore";
+import { api } from "convex/_generated/api";
+import type { Id } from "convex/_generated/dataModel";
 
 const CAPTION_MAX_LENGTH = 30;
 const INPUT_LINE_HEIGHT = 22;
@@ -38,6 +41,10 @@ export default function ComposeScreen() {
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [sending, setSending] = useState(false);
+  const friends = useQuery(api.friends.listFriends);
+  const generatePhotoUploadUrl = useMutation(api.journals.generatePhotoUploadUrl);
+  const sendGlimt = useMutation(api.journals.sendGlimt);
   const localPhotoUri = useCaptureStore((state) => state.localPhotoUri);
   const caption = useCaptureStore((state) => state.caption);
   const setCaption = useCaptureStore((state) => state.setCaption);
@@ -46,11 +53,11 @@ export default function ComposeScreen() {
   const setSelectedFriendId = useCaptureStore((state) => state.setSelectedFriendId);
   const reset = useCaptureStore((state) => state.reset);
   const showToast = useToastStore((state) => state.show);
-  const unlockVersion = useMockUnlockStore((s) => s.unlockedDates);
-  void unlockVersion;
-  const selectedFriend = MOCK_FRIEND_GLIMTS.find(
+  const selectedFriend = friends?.find(
     (friend) => friend.id === selectedFriendId,
   );
+  const hasFriends = (friends?.length ?? 0) > 0;
+  const canSend = hasFriends && !sending;
 
   useEffect(() => {
     const showEvent =
@@ -76,24 +83,69 @@ export default function ComposeScreen() {
   }
 
   const handleBack = () => {
+    if (sending) {
+      return;
+    }
     setLocalPhotoUri(null);
     router.back();
   };
 
-  const handleSend = () => {
-    const recipientName = selectedFriend?.displayName.split(" ")[0];
-    showToast(
-      recipientName ? `Glimt sent to ${recipientName}` : "Glimt sent",
-    );
-    reset();
-    router.replace(APP_HOME);
+  const handleSend = async () => {
+    if (!localPhotoUri || sending) {
+      return;
+    }
+
+    if (friends === undefined) {
+      return;
+    }
+
+    if (friends.length === 0) {
+      showToast("Add a friend first.");
+      return;
+    }
+
+    setSending(true);
+
+    try {
+      const photoStorageId = await uploadGlimtPhotoToStorage({
+        localUri: localPhotoUri,
+        generateUploadUrl: () => generatePhotoUploadUrl(),
+      });
+
+      await sendGlimt({
+        photoStorageId,
+        caption: caption.trim() || undefined,
+        friendUserId: selectedFriendId
+          ? (selectedFriendId as Id<"users">)
+          : undefined,
+      });
+
+      const recipientName = selectedFriend?.displayName.split(" ")[0];
+      showToast(
+        recipientName ? `Glimt sent to ${recipientName}` : "Glimt sent",
+      );
+      reset();
+      router.replace(APP_HOME);
+    } catch (sendError) {
+      showToast(
+        getConvexErrorMessage(sendError, "Could not send glimt."),
+      );
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleAllPress = () => {
+    if (sending) {
+      return;
+    }
     setSelectedFriendId(null);
   };
 
   const handleFriendPress = (friendId: string) => {
+    if (sending) {
+      return;
+    }
     setSelectedFriendId(selectedFriendId === friendId ? null : friendId);
   };
 
@@ -136,6 +188,7 @@ export default function ComposeScreen() {
             <TextInput
               autoCapitalize="sentences"
               autoCorrect
+              editable={!sending}
               multiline
               numberOfLines={2}
               placeholder="Add a caption..."
@@ -171,133 +224,141 @@ export default function ComposeScreen() {
             <Text style={[styles.sendToOneLabel, { color: colors.textMuted }]}>
               Send to
             </Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.friendPickerContent}
-              keyboardShouldPersistTaps="handled"
-            >
-              <Pressable
-                style={styles.friendOption}
-                onPress={handleAllPress}
-                accessibilityRole="button"
-                accessibilityState={{ selected: selectedFriendId === null }}
-                accessibilityLabel="Send to all friends"
+            {friends === undefined ? (
+              <View style={styles.friendsLoading}>
+                <ActivityIndicator color={colors.textMuted} />
+              </View>
+            ) : friends.length === 0 ? (
+              <Text style={[styles.noFriendsText, { color: colors.textMuted }]}>
+                Add a friend in Settings to send glimts.
+              </Text>
+            ) : (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.friendPickerContent}
+                keyboardShouldPersistTaps="handled"
               >
-                <View
-                  style={[
-                    styles.friendAvatarRing,
-                    {
-                      borderColor:
-                        selectedFriendId === null
-                          ? colors.text
-                          : colors.surfaceBorder,
-                    },
-                  ]}
+                <Pressable
+                  style={styles.friendOption}
+                  onPress={handleAllPress}
+                  disabled={sending}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: selectedFriendId === null }}
+                  accessibilityLabel="Send to all friends"
                 >
                   <View
                     style={[
-                      styles.allBubble,
-                      { backgroundColor: colors.fill },
+                      styles.friendAvatarRing,
+                      {
+                        borderColor:
+                          selectedFriendId === null
+                            ? colors.text
+                            : colors.surfaceBorder,
+                      },
                     ]}
-                  >
-                    <Text
-                      style={[
-                        styles.allBubbleText,
-                        {
-                          color:
-                            selectedFriendId === null
-                              ? colors.text
-                              : colors.textMuted,
-                        },
-                      ]}
-                    >
-                      All
-                    </Text>
-                  </View>
-                </View>
-                <Text
-                  style={[
-                    styles.friendOptionName,
-                    {
-                      color:
-                        selectedFriendId === null
-                          ? colors.text
-                          : colors.textMuted,
-                    },
-                  ]}
-                  numberOfLines={1}
-                >
-                  All
-                </Text>
-              </Pressable>
-
-              {MOCK_FRIEND_GLIMTS.map((friend) => {
-                const isSelected = friend.id === selectedFriendId;
-                const lockedToday = isFriendLockedToday(friend.id);
-
-                return (
-                  <Pressable
-                    key={friend.id}
-                    style={styles.friendOption}
-                    onPress={() => handleFriendPress(friend.id)}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: isSelected }}
-                    accessibilityLabel={`Send to ${friend.displayName}${lockedToday ? ", locked today" : ""}`}
                   >
                     <View
                       style={[
-                        styles.friendAvatarRing,
-                        {
-                          borderColor: isSelected
-                            ? colors.text
-                            : colors.surfaceBorder,
-                        },
+                        styles.allBubble,
+                        { backgroundColor: colors.fill },
                       ]}
                     >
-                      <Image
-                        source={{ uri: friend.avatarUrl }}
-                        style={styles.friendAvatar}
-                        contentFit="cover"
-                      />
-                      {lockedToday ? (
-                        <View
-                          style={[
-                            styles.avatarLockBadge,
-                            { backgroundColor: colors.background },
-                          ]}
-                        >
-                          <SymbolView
-                            name="lock.fill"
-                            size={10}
-                            tintColor={colors.textMuted}
-                          />
-                        </View>
-                      ) : null}
+                      <Text
+                        style={[
+                          styles.allBubbleText,
+                          {
+                            color:
+                              selectedFriendId === null
+                                ? colors.text
+                                : colors.textMuted,
+                          },
+                        ]}
+                      >
+                        All
+                      </Text>
                     </View>
-                    <Text
-                      style={[
-                        styles.friendOptionName,
-                        {
-                          color: isSelected ? colors.text : colors.textMuted,
-                        },
-                      ]}
-                      numberOfLines={1}
+                  </View>
+                  <Text
+                    style={[
+                      styles.friendOptionName,
+                      {
+                        color:
+                          selectedFriendId === null
+                            ? colors.text
+                            : colors.textMuted,
+                      },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    All
+                  </Text>
+                </Pressable>
+
+                {friends.map((friend) => {
+                  const isSelected = friend.id === selectedFriendId;
+
+                  return (
+                    <Pressable
+                      key={friend.id}
+                      style={styles.friendOption}
+                      onPress={() => handleFriendPress(friend.id)}
+                      disabled={sending}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: isSelected }}
+                      accessibilityLabel={`Send to ${friend.displayName}`}
                     >
-                      {friend.displayName.split(" ")[0]}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
+                      <View
+                        style={[
+                          styles.friendAvatarRing,
+                          {
+                            borderColor: isSelected
+                              ? colors.text
+                              : colors.surfaceBorder,
+                          },
+                        ]}
+                      >
+                        <Image
+                          source={{ uri: friend.avatarUrl }}
+                          style={styles.friendAvatar}
+                          contentFit="cover"
+                        />
+                      </View>
+                      <Text
+                        style={[
+                          styles.friendOptionName,
+                          {
+                            color: isSelected ? colors.text : colors.textMuted,
+                          },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {friend.displayName.split(" ")[0]}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            )}
           </View>
 
-          <Pressable style={styles.sendButton} onPress={handleSend}>
-            <Text style={styles.sendButtonText}>
-              {selectedFriend
-                ? `Send to ${selectedFriend.displayName.split(" ")[0]}`
-                : "Send"}
-            </Text>
+          <Pressable
+            style={[
+              styles.sendButton,
+              !canSend && styles.sendButtonDisabled,
+            ]}
+            onPress={handleSend}
+            disabled={!canSend}
+          >
+            {sending ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.sendButtonText}>
+                {selectedFriend
+                  ? `Send to ${selectedFriend.displayName.split(" ")[0]}`
+                  : "Send"}
+              </Text>
+            )}
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -305,6 +366,7 @@ export default function ComposeScreen() {
       <Pressable
         onPress={handleBack}
         hitSlop={8}
+        disabled={sending}
         accessibilityRole="button"
         accessibilityLabel="Back"
         style={[styles.backButton, { top: insets.top + 4 }]}
@@ -382,6 +444,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
   },
+  friendsLoading: {
+    minHeight: 56,
+    justifyContent: "center",
+  },
+  noFriendsText: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
   friendPickerContent: {
     gap: 12,
     paddingRight: 4,
@@ -398,16 +468,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     padding: 2,
     position: "relative",
-  },
-  avatarLockBadge: {
-    position: "absolute",
-    right: -2,
-    bottom: -2,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
   },
   friendAvatar: {
     width: "100%",
@@ -435,6 +495,9 @@ const styles = StyleSheet.create({
     minHeight: 52,
     alignItems: "center",
     justifyContent: "center",
+  },
+  sendButtonDisabled: {
+    opacity: 0.5,
   },
   sendButtonText: {
     color: "#FFFFFF",

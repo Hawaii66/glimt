@@ -2,18 +2,18 @@ import type { Id } from "convex/_generated/dataModel";
 
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
 
-type UploadAvatarArgs = {
+type UploadGlimtPhotoArgs = {
   localUri: string;
   generateUploadUrl: () => Promise<string>;
 };
 
-export async function uploadAvatarToStorage({
+export async function uploadGlimtPhotoToStorage({
   localUri,
   generateUploadUrl,
-}: UploadAvatarArgs): Promise<Id<"_storage">> {
+}: UploadGlimtPhotoArgs): Promise<Id<"_storage">> {
   return uploadImageToStorage({
     localUri,
     generateUploadUrl,
-    failureMessage: "Failed to upload avatar.",
+    failureMessage: "Failed to upload glimt photo.",
   });
 }
