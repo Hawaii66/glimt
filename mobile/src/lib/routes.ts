@@ -10,6 +10,10 @@ export function appFriendJourney(friendId: string): Href {
   return `/(app)/friend/${friendId}` as Href;
 }
 
+export function appFriendSettings(friendId: string): Href {
+  return `/(app)/friend/${friendId}/settings` as Href;
+}
+
 export function appFriendJourneyDay(friendId: string, date: string): Href {
   return `/(app)/friend/${friendId}/day/${date}` as Href;
 }

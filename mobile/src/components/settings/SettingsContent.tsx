@@ -67,6 +67,7 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
   const sendFriendRequest = useMutation(api.friends.sendRequest);
   const acceptFriendRequest = useMutation(api.friends.acceptRequest);
   const declineFriendRequest = useMutation(api.friends.declineRequest);
+  const cancelFriendRequest = useMutation(api.friends.cancelRequest);
   const { accentTheme, setAccentTheme } = useCurrentUserAccentTheme();
   const gradientColors = getAccentTheme(accentTheme).gradientColors;
   const resetOnboarding = useOnboardingStore((state) => state.reset);
@@ -76,6 +77,8 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
   const [signingOut, setSigningOut] = useState(false);
   const [addingFriend, setAddingFriend] = useState(false);
   const [respondingRequestId, setRespondingRequestId] =
+    useState<Id<"friendRequests"> | null>(null);
+  const [cancellingRequestId, setCancellingRequestId] =
     useState<Id<"friendRequests"> | null>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
@@ -226,6 +229,24 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
       );
     } finally {
       setRespondingRequestId(null);
+    }
+  };
+
+  const handleCancelRequest = async (requestId: Id<"friendRequests">) => {
+    if (cancellingRequestId) {
+      return;
+    }
+
+    setCancellingRequestId(requestId);
+    try {
+      await cancelFriendRequest({ requestId });
+    } catch (cancelError) {
+      Alert.alert(
+        "Could not cancel",
+        getConvexErrorMessage(cancelError, "Could not cancel friend request."),
+      );
+    } finally {
+      setCancellingRequestId(null);
     }
   };
 
@@ -464,7 +485,9 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
                 },
               ]}
             >
-              {outgoingRequests.map((request, index) => (
+              {outgoingRequests.map((request, index) => {
+                const isCancelling = cancellingRequestId === request.requestId;
+                return (
                 <View
                   key={request.requestId}
                   style={[
@@ -492,13 +515,33 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
                       @{request.username}
                     </Text>
                   </View>
-                  <Text
-                    style={[styles.pendingLabel, { color: colors.textMuted }]}
+                  <Pressable
+                    style={[
+                      styles.cancelButton,
+                      {
+                        borderColor: colors.surfaceBorder,
+                        opacity: isCancelling ? 0.6 : 1,
+                      },
+                    ]}
+                    onPress={() => handleCancelRequest(request.requestId)}
+                    disabled={cancellingRequestId !== null}
                   >
-                    Pending
-                  </Text>
+                    {isCancelling ? (
+                      <ActivityIndicator color={colors.textMuted} size="small" />
+                    ) : (
+                      <Text
+                        style={[
+                          styles.cancelButtonText,
+                          { color: colors.textMuted },
+                        ]}
+                      >
+                        Cancel
+                      </Text>
+                    )}
+                  </Pressable>
                 </View>
-              ))}
+              );
+              })}
             </View>
           </View>
         ) : null}
@@ -721,6 +764,20 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   acceptButtonText: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  cancelButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    flexShrink: 0,
+    minWidth: 64,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cancelButtonText: {
     fontSize: 13,
     fontWeight: "600",
   },
