@@ -159,6 +159,32 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
     return () => clearTimeout(timer);
   }, [settingsFocus, incomingRequests, clearSettingsFocus]);
 
+  useEffect(() => {
+    if (settingsFocus !== "add-friend") {
+      return;
+    }
+
+    const attemptScroll = () => {
+      if (addFriendSectionY.current > 0) {
+        scrollToAddFriend();
+        clearSettingsFocus();
+        return true;
+      }
+      return false;
+    };
+
+    if (attemptScroll()) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      attemptScroll();
+      clearSettingsFocus();
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [settingsFocus, clearSettingsFocus]);
+
   const handleFriendUsernameChange = (text: string) => {
     const withoutAt = text.replace(/^@+/, "");
     setFriendUsername(`@${withoutAt}`);
@@ -174,10 +200,6 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
     try {
       await sendFriendRequest({ username: normalized });
       setFriendUsername("@");
-      Alert.alert(
-        "Request sent",
-        `Your friend request to @${normalized} was sent.`,
-      );
     } catch (addError) {
       Alert.alert(
         "Could not add friend",
@@ -305,28 +327,6 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
             }}
           />
         </LinearGradient>
-
-        <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
-            Theme
-          </Text>
-          <AccentThemePicker
-            selectedId={accentTheme}
-            onSelect={setAccentTheme}
-          />
-        </View>
-
-        <View style={styles.section}>
-          <TimezoneInfoRow
-            label="Your timezone"
-            timezone={user?.timezone ?? getDeviceTimezone()}
-            hint={
-              user?.timezone
-                ? "Used for notifications. Updates when you open the app."
-                : "Syncs from your device when you open the app."
-            }
-          />
-        </View>
 
         <View
           style={styles.section}
@@ -627,6 +627,28 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
               ))}
             </View>
           )}
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+            Theme
+          </Text>
+          <AccentThemePicker
+            selectedId={accentTheme}
+            onSelect={setAccentTheme}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <TimezoneInfoRow
+            label="Your timezone"
+            timezone={user?.timezone ?? getDeviceTimezone()}
+            hint={
+              user?.timezone
+                ? "Used for notifications. Updates when you open the app."
+                : "Syncs from your device when you open the app."
+            }
+          />
         </View>
 
         <Pressable

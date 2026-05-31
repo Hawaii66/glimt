@@ -22,10 +22,11 @@ import {
 
 import { UserAvatar } from "@/components/UserAvatar";
 import { getConvexErrorMessage } from "@/lib/convexError";
-import { APP_HOME } from "@/lib/routes";
+import { APP_HOME, APP_SETTINGS } from "@/lib/routes";
 import { uploadGlimtPhotoToStorage } from "@/lib/uploadGlimtPhoto";
 import { useAppColors } from "@/lib/theme";
 import { useCaptureStore } from "@/stores/captureStore";
+import { useSettingsFocusStore } from "@/stores/settingsFocusStore";
 import { useToastStore } from "@/stores/toastStore";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
@@ -55,6 +56,9 @@ export default function ComposeScreen() {
   const setSelectedFriendId = useCaptureStore((state) => state.setSelectedFriendId);
   const reset = useCaptureStore((state) => state.reset);
   const showToast = useToastStore((state) => state.show);
+  const requestAddFriendFocus = useSettingsFocusStore(
+    (state) => state.requestAddFriendFocus,
+  );
   const selectedFriend = friends?.find(
     (friend) => friend.id === selectedFriendId,
   );
@@ -157,6 +161,11 @@ export default function ComposeScreen() {
     });
   };
 
+  const handleAddFriends = () => {
+    requestAddFriendFocus();
+    router.push(APP_SETTINGS);
+  };
+
   return (
     <SafeAreaView
       style={[styles.safeArea, { backgroundColor: colors.background }]}
@@ -236,9 +245,23 @@ export default function ComposeScreen() {
                 <ActivityIndicator color={colors.textMuted} />
               </View>
             ) : friends.length === 0 ? (
-              <Text style={[styles.noFriendsText, { color: colors.textMuted }]}>
-                Add a friend in Settings to send glimts.
-              </Text>
+              <View style={styles.noFriendsBlock}>
+                <Text style={[styles.noFriendsText, { color: colors.textMuted }]}>
+                  Add a friend to send glimts.
+                </Text>
+                <Pressable
+                  style={[styles.addFriendsButton, { backgroundColor: colors.text }]}
+                  onPress={handleAddFriends}
+                  accessibilityRole="button"
+                  accessibilityLabel="Add friends in settings"
+                >
+                  <Text
+                    style={[styles.addFriendsButtonText, { color: colors.background }]}
+                  >
+                    Add friends
+                  </Text>
+                </Pressable>
+              </View>
             ) : (
               <ScrollView
                 horizontal
@@ -456,9 +479,23 @@ const styles = StyleSheet.create({
     minHeight: 56,
     justifyContent: "center",
   },
+  noFriendsBlock: {
+    gap: 12,
+  },
   noFriendsText: {
     fontSize: 14,
     lineHeight: 20,
+  },
+  addFriendsButton: {
+    alignSelf: "stretch",
+    borderRadius: 12,
+    minHeight: 52,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  addFriendsButtonText: {
+    fontSize: 17,
+    fontWeight: "600",
   },
   friendPickerContent: {
     gap: 12,
