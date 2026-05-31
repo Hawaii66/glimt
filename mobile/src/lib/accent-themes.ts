@@ -133,7 +133,7 @@ export const DEFAULT_ACCENT_THEME_ID: AccentThemeId = "blue";
 
 const ACCENT_THEME_IDS = new Set(ACCENT_THEMES.map((theme) => theme.id));
 
-export function normalizeAccentThemeId(
+function normalizeAccentThemeId(
   accentTheme?: string | null,
 ): AccentThemeId | null {
   if (!accentTheme) {

@@ -51,10 +51,10 @@ export default function SetupScreen() {
       }}
     >
       <Text style={[styles.title, { color: colors.text }]}>
-        Let's set up your account
+        Let’s set up your account
       </Text>
       <Text style={[styles.body, { color: colors.textMuted }]}>
-        Add a name, username, photo, and theme so friends know it's you.
+        Add a name, username, photo, and theme so friends know it’s you.
       </Text>
     </OnboardingScreen>
   );

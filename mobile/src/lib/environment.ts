@@ -2,7 +2,6 @@ import Constants from "expo-constants";
 
 import {
   type MobileEnvironment,
-  envToInfo,
   parseMobileEnvironment,
 } from "../../environment";
 
@@ -22,8 +21,4 @@ export function getMobileEnvironment(): MobileEnvironment {
   }
 
   return parseMobileEnvironment(process.env.MOBILE_ENVIRONMENT);
-}
-
-export function getEnvInfo() {
-  return envToInfo(getMobileEnvironment());
 }

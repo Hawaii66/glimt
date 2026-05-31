@@ -1,8 +1,6 @@
-import {
-  isCalendarLocked,
-  isMeetLocked,
-  isRowLocked,
-} from "@/lib/format-journey-date";
+import { isJourneyToday } from "@glimt/date";
+
+import { isMeetLocked } from "@/lib/format-journey-date";
 import type { JourneyDay } from "@/lib/journey-types";
 
 export function resolveJourneyLockState(
@@ -15,9 +13,9 @@ export function resolveJourneyLockState(
   canNavigateToDay: boolean;
   showUnlockButton: boolean;
 } {
-  const calendarLocked = isCalendarLocked(journey.date, journalToday);
+  const calendarLocked = isJourneyToday(journey.date, journalToday);
   const meetLocked = isMeetLocked(journey);
-  const rowLocked = isRowLocked(journey, journey.date, journalToday);
+  const rowLocked = calendarLocked || meetLocked;
 
   return {
     calendarLocked,

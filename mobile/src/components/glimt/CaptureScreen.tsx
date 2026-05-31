@@ -40,15 +40,6 @@ export function CaptureScreen() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!cameraReady) {
-      const timeout = setTimeout(() => {
-        setCameraReady(true);
-      }, 2000);
-      return () => clearTimeout(timeout);
-    }
-  }, [cameraReady, facing]);
-
   const handleFlipCamera = () => {
     setError(null);
     setCameraReady(false);

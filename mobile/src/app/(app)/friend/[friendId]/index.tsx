@@ -14,7 +14,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
-import { DailyJourneyRow } from "@/components/journey/DailyJourneyRow";
+import { JourneyDayRow } from "@/components/journey/journey-day-row/JourneyDayRow";
 import { ProfilePreview } from "@/components/onboarding/ProfilePreview";
 import { useFriendJourney } from "@/hooks/useFriendJourney";
 import { useFriendProfile } from "@/hooks/useFriendProfile";
@@ -164,7 +164,7 @@ export default function FriendJourneyScreen() {
           </View>
         ) : (
           journeys.map((journey) => (
-            <DailyJourneyRow
+            <JourneyDayRow
               key={journey.date}
               friendId={friendId!}
               friendAccentId={friend?.accentId ?? DEFAULT_ACCENT_THEME_ID}
@@ -174,7 +174,7 @@ export default function FriendJourneyScreen() {
               journalToday={journalToday}
               yours={journey.yours}
               theirs={journey.theirs}
-              meetLock={journey.meetLock}
+              meetLocked={journey.meetLocked}
               unlockedAt={journey.unlockedAt}
               tileSize={tileSize}
             />

@@ -1,23 +1,6 @@
-import {
-  dayBeforeIsoDate,
-  isJourneyToday as isSameJournalDay,
-} from "@glimt/date";
+import { dayBeforeIsoDate, isJourneyToday } from "@glimt/date";
 
-import type { JourneyDay, JourneyGlimt } from "@/lib/journey-types";
-
-export function isJourneyToday(
-  isoDate: string,
-  journalToday: string,
-): boolean {
-  return isSameJournalDay(isoDate, journalToday);
-}
-
-export function isJourneyComplete(
-  yours?: JourneyGlimt[],
-  theirs?: JourneyGlimt[],
-): boolean {
-  return Boolean(yours?.length && theirs?.length);
-}
+import type { JourneyDay } from "@/lib/journey-types";
 
 export function isCalendarLocked(
   isoDate: string,
@@ -27,13 +10,13 @@ export function isCalendarLocked(
 }
 
 export function isMeetLocked(
-  journey: Pick<JourneyDay, "meetLock" | "unlockedAt">,
+  journey: Pick<JourneyDay, "meetLocked" | "unlockedAt">,
 ): boolean {
-  return Boolean(journey.meetLock && !journey.unlockedAt);
+  return Boolean(journey.meetLocked && !journey.unlockedAt);
 }
 
 export function isRowLocked(
-  journey: Pick<JourneyDay, "meetLock" | "unlockedAt">,
+  journey: Pick<JourneyDay, "meetLocked" | "unlockedAt">,
   isoDate: string,
   journalToday: string,
 ): boolean {
@@ -41,14 +24,6 @@ export function isRowLocked(
     return true;
   }
   return isMeetLocked(journey);
-}
-
-/** @deprecated Use isRowLocked with journey metadata */
-export function isJourneyLocked(
-  isoDate: string,
-  journalToday: string,
-): boolean {
-  return isCalendarLocked(isoDate, journalToday);
 }
 
 export function formatJourneyDate(
