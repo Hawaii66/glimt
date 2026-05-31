@@ -24,6 +24,7 @@ import {
   DEFAULT_ACCENT_THEME_ID,
   getAccentTheme,
 } from "@/lib/accent-themes";
+import { appFriendSettings } from "@/lib/routes";
 import { useAppColors } from "@/lib/theme";
 
 const HORIZONTAL_PADDING = 24;
@@ -93,7 +94,7 @@ export default function FriendJourneyScreen() {
           <Pressable
             onPress={() => router.back()}
             hitSlop={8}
-            style={styles.backButton}
+            style={styles.headerButton}
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
@@ -104,6 +105,24 @@ export default function FriendJourneyScreen() {
               weight="semibold"
             />
           </Pressable>
+          {friend ? (
+            <Pressable
+              onPress={() => router.push(appFriendSettings(friendId!))}
+              hitSlop={8}
+              style={styles.headerButton}
+              accessibilityRole="button"
+              accessibilityLabel="Open friendship settings"
+            >
+              <SymbolView
+                name="gearshape.fill"
+                size={18}
+                tintColor="#FFFFFF"
+                weight="semibold"
+              />
+            </Pressable>
+          ) : (
+            <View style={styles.headerButtonPlaceholder} />
+          )}
         </View>
 
         <ProfilePreview
@@ -178,17 +197,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: HORIZONTAL_PADDING,
   },
   header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingTop: 8,
     paddingBottom: 4,
   },
-  backButton: {
+  headerButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(0, 0, 0, 0.25)",
-    alignSelf: "flex-start",
+  },
+  headerButtonPlaceholder: {
+    width: 44,
+    height: 44,
   },
   sectionTitle: {
     marginTop: 8,

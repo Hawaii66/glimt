@@ -17,7 +17,9 @@ import {
   TILE_CORNER_RADIUS,
   TILE_SCALE,
 } from "./glimt-tile-styles";
+import { getCaptureDeepLinkUrl } from "./routes";
 import {
+  FriendGlimtCameraWidget,
   FriendGlimtWidget,
   WidgetGlimtItem,
   type WidgetTileStyle,
@@ -156,4 +158,12 @@ export async function refreshFriendGlimtWidget(
     whiteUri,
   });
   FriendGlimtWidget.reload();
+}
+
+export function refreshCameraWidget(accentThemeId?: AccentThemeId): void {
+  FriendGlimtCameraWidget.updateSnapshot({
+    captureUrl: getCaptureDeepLinkUrl(),
+    style: getWidgetTileStyle(accentThemeId),
+  });
+  FriendGlimtCameraWidget.reload();
 }

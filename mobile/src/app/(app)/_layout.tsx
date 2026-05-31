@@ -13,7 +13,10 @@ import {
   type AccentThemeId,
 } from "@/lib/accent-themes";
 import { useAppColors } from "@/lib/theme";
-import { refreshFriendGlimtWidget } from "@/lib/widget-refresh";
+import {
+  refreshCameraWidget,
+  refreshFriendGlimtWidget,
+} from "@/lib/widget-refresh";
 import { api } from "convex/_generated/api";
 
 export default function AppLayout() {
@@ -30,6 +33,7 @@ export default function AppLayout() {
     }
 
     void refreshFriendGlimtWidget(accentTheme);
+    refreshCameraWidget(accentTheme);
   }, [accentTheme, isAuthenticated, user]);
 
   if (authLoading || (isAuthenticated && user === undefined)) {

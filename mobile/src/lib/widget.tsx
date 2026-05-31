@@ -1,8 +1,16 @@
-import { HStack, Image, Rectangle, VStack, ZStack } from "@expo/ui/swift-ui";
+import {
+  HStack,
+  Image,
+  Rectangle,
+  Text,
+  VStack,
+  ZStack,
+} from "@expo/ui/swift-ui";
 import {
   aspectRatio,
   containerRelativeFrame,
   cornerRadius,
+  font,
   foregroundStyle,
   frame,
   offset,
@@ -12,6 +20,7 @@ import {
   scaleEffect,
   shadow,
   widgetAccentedRenderingMode,
+  widgetURL,
 } from "@expo/ui/swift-ui/modifiers";
 import { createWidget, type WidgetEnvironment } from "expo-widgets";
 
@@ -296,4 +305,63 @@ const FriendGlimt = (
   );
 };
 
+export type FriendGlimtCameraProps = {
+  captureUrl: string;
+  style: WidgetTileStyle;
+};
+
+const FriendGlimtCamera = (
+  props: FriendGlimtCameraProps,
+  environment: WidgetEnvironment,
+) => {
+  "use no memo";
+  "widget";
+
+  const { gradientColors } = props.style;
+  const renderingMode = environment.widgetRenderingMode ?? "fullColor";
+  const isAccented =
+    renderingMode === "accented" || renderingMode === "vibrant";
+  const widgetGradient = {
+    colors: gradientColors,
+    startPoint: { x: 0, y: 0 },
+    endPoint: { x: 1, y: 1 },
+  };
+
+  return (
+    <ZStack modifiers={[widgetURL(props.captureUrl)]}>
+      {!isAccented ? (
+        <Rectangle
+          modifiers={[
+            frame({ maxWidth: 10_000, maxHeight: 10_000 }),
+            foregroundStyle({
+              type: "linearGradient",
+              colors: [...widgetGradient.colors],
+              startPoint: widgetGradient.startPoint,
+              endPoint: widgetGradient.endPoint,
+            }),
+          ]}
+        />
+      ) : null}
+      <VStack spacing={6}>
+        {isAccented ? (
+          <Image
+            systemName="camera.circle.fill"
+            size={52}
+            modifiers={[widgetAccentedRenderingMode("accented")]}
+          />
+        ) : (
+          <Image systemName="camera.circle.fill" size={52} color="#FFFFFF" />
+        )}
+        <Text modifiers={[font({ weight: "semibold", size: 13 })]}>
+          Take a Glimt
+        </Text>
+      </VStack>
+    </ZStack>
+  );
+};
+
 export const FriendGlimtWidget = createWidget("FriendGlimt", FriendGlimt);
+export const FriendGlimtCameraWidget = createWidget(
+  "FriendGlimtCamera",
+  FriendGlimtCamera,
+);

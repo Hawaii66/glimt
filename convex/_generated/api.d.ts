@@ -22,6 +22,7 @@ import type * as lib_auth from "../lib/auth.js";
 import type * as lib_dates from "../lib/dates.js";
 import type * as lib_friendGroups from "../lib/friendGroups.js";
 import type * as lib_journalTimezone from "../lib/journalTimezone.js";
+import type * as lib_friends from "../lib/friends.js";
 import type * as lib_meetLock from "../lib/meetLock.js";
 import type * as lib_random from "../lib/random.js";
 import type * as lib_requireEnv from "../lib/requireEnv.js";
@@ -51,6 +52,7 @@ declare const fullApi: ApiFromModules<{
   "lib/dates": typeof lib_dates;
   "lib/friendGroups": typeof lib_friendGroups;
   "lib/journalTimezone": typeof lib_journalTimezone;
+  "lib/friends": typeof lib_friends;
   "lib/meetLock": typeof lib_meetLock;
   "lib/random": typeof lib_random;
   "lib/requireEnv": typeof lib_requireEnv;
