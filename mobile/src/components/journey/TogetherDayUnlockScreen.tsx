@@ -1,5 +1,5 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -20,7 +20,9 @@ import { useFriendProfile } from "@/hooks/useFriendProfile";
 import { useJournalContext } from "@/hooks/useJournalContext";
 import { formatJourneyDate } from "@/lib/format-journey-date";
 import { MEET_DAY_UNLOCK_SCREEN_TITLE } from "@/lib/meet-day";
+import { appFriendJourneyDay } from "@/lib/routes";
 import { useAppColors } from "@/lib/theme";
+import type { Id } from "convex/_generated/dataModel";
 
 type Mode = "choose" | "show" | "scan" | "success";
 
@@ -43,6 +45,15 @@ export function TogetherDayUnlockScreen({
   const startSession = useMutation(api.meetUnlock.startMeetUnlockSession);
   const refreshSession = useMutation(api.meetUnlock.refreshMeetUnlockSession);
   const completeUnlock = useMutation(api.meetUnlock.completeMeetUnlock);
+  const apiDay = useQuery(
+    api.journals.getDayForFriend,
+    friendId && date
+      ? {
+          friendUserId: friendId as Id<"users">,
+          date,
+        }
+      : "skip",
+  );
 
   const [mode, setMode] = useState<Mode>("choose");
   const [infoVisible, setInfoVisible] = useState(false);
@@ -51,6 +62,7 @@ export function TogetherDayUnlockScreen({
   const [error, setError] = useState<string | null>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const scannedRef = useRef(false);
+  const finishedRef = useRef(false);
 
   const friendFirstName = friend?.displayName.split(" ")[0] ?? "friend";
   const formattedDate = journalToday
@@ -58,9 +70,25 @@ export function TogetherDayUnlockScreen({
     : date;
 
   const finishUnlock = useCallback(() => {
+    if (finishedRef.current) {
+      return;
+    }
+    finishedRef.current = true;
     setMode("success");
-    setTimeout(() => router.back(), 1200);
-  }, [router]);
+    setTimeout(() => {
+      router.replace(appFriendJourneyDay(friendId, date));
+    }, 1200);
+  }, [date, friendId, router]);
+
+  useEffect(() => {
+    if (!apiDay?.togetherUnlockedAt) {
+      return;
+    }
+    if (mode !== "show" && mode !== "success") {
+      return;
+    }
+    finishUnlock();
+  }, [apiDay?.togetherUnlockedAt, finishUnlock, mode]);
 
   useEffect(() => {
     if (mode !== "show" || !sessionId) {
@@ -129,14 +157,14 @@ export function TogetherDayUnlockScreen({
             scannedRef.current = false;
             return;
           }
-          finishUnlock();
+          setMode("success");
         })
         .catch(() => {
           setError("That code didn't work. Ask your friend to show a fresh code.");
           scannedRef.current = false;
         });
     },
-    [completeUnlock, date, finishUnlock],
+    [completeUnlock, date],
   );
 
   if (!friend) {
