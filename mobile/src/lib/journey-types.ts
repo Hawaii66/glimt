@@ -8,12 +8,6 @@ export type JourneyDay = {
   date: string;
   yours?: JourneyGlimt[];
   theirs?: JourneyGlimt[];
-  meetLock?: boolean;
+  meetLocked?: boolean;
   unlockedAt?: number;
 };
-
-/** @deprecated Use JourneyGlimt */
-export type DailyJourneyGlimt = JourneyGlimt;
-
-/** @deprecated Use JourneyDay */
-export type DailyJourney = JourneyDay;

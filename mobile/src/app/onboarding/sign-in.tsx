@@ -22,14 +22,17 @@ export default function SignInScreen() {
   const [error, setError] = useState<string | null>(null);
   const [awaitingUser, setAwaitingUser] = useState(false);
 
-  console.log(user, error, awaitingUser, isAuthenticated, authLoading);
-
   useEffect(() => {
-    if (!isAuthenticated || user === undefined || user === null) {
+    if (!isAuthenticated) {
+      return;
+    }
+
+    if (user === undefined) {
       return;
     }
 
     if (user === null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- show error when auth succeeded but user row is missing
       setAwaitingUser(false);
       setError(
         "We couldn't finish setting up your account. Please sign in again.",
@@ -79,7 +82,7 @@ export default function SignInScreen() {
             Welcome to Glimt
           </Text>
           <Text style={[styles.body, { color: colors.textMuted }]}>
-            Sign in to see glimts from your friends' lives and collect your
+            Sign in to see glimts from your friends’ lives and collect your
             journals together.
           </Text>
         </>

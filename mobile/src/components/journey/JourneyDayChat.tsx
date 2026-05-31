@@ -15,7 +15,7 @@ import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
 import { getAccentTheme, type AccentThemeId } from "@/lib/accent-themes";
 import { formatGlimtSentTime } from "@/lib/format-glimt-time";
 import { formatJourneyDate } from "@/lib/format-journey-date";
-import type { DailyJourneyGlimt } from "@/lib/journey-types";
+import type { JourneyGlimt } from "@/lib/journey-types";
 import {
   buildJourneyChatMessages,
   getFirstChatMessage,
@@ -32,8 +32,8 @@ const BUBBLE_MAX_WIDTH_RATIO = 0.72;
 type JourneyDayChatProps = {
   date: string;
   journalToday: string;
-  yours?: DailyJourneyGlimt[];
-  theirs?: DailyJourneyGlimt[];
+  yours?: JourneyGlimt[];
+  theirs?: JourneyGlimt[];
   friendDisplayName: string;
   friendAvatarUrl: string;
   friendAccentId: AccentThemeId;
