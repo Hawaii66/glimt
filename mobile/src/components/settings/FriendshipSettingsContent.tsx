@@ -13,6 +13,7 @@ import {
 } from "react-native";
 
 import { ProfilePreview } from "@/components/onboarding/ProfilePreview";
+import { JournalTimezoneSettings } from "@/components/settings/JournalTimezoneSettings";
 import { useFriendProfile } from "@/hooks/useFriendProfile";
 import {
   DEFAULT_ACCENT_THEME_ID,
@@ -125,6 +126,15 @@ export function FriendshipSettingsContent({
 
       <View style={styles.section}>
         <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+          Timezones
+        </Text>
+        <View style={styles.sectionContent}>
+          <JournalTimezoneSettings friendUserId={friendId} />
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
           Friendship
         </Text>
         <Text style={[styles.sectionBody, { color: colors.textMuted }]}>
@@ -195,6 +205,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textTransform: "uppercase",
     letterSpacing: 0.6,
+  },
+  sectionContent: {
+    paddingLeft: 16,
   },
   sectionBody: {
     fontSize: 15,

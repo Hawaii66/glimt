@@ -2,13 +2,12 @@ import Constants from "expo-constants";
 import { Directory, File, Paths } from "expo-file-system";
 
 import { Asset } from "expo-asset";
-import { Alert } from "react-native";
 import {
   getAccentTheme,
   resolveAccentThemeId,
   type AccentThemeId,
 } from "./accent-themes";
-import { MOCK_FRIEND_GLIMTS } from "./glimt-mock-data";
+import { convex } from "./convex";
 import {
   AVATAR_OFFSET,
   AVATAR_SIZE,
@@ -24,6 +23,7 @@ import {
   WidgetGlimtItem,
   type WidgetTileStyle,
 } from "./widget";
+import { api } from "convex/_generated/api";
 
 function getWidgetTileStyle(accentThemeId?: AccentThemeId): WidgetTileStyle {
   const gradientColors = getAccentTheme(
@@ -81,6 +81,7 @@ async function cacheImageToAppGroup(
   url: string,
   filename: string,
   copy: boolean,
+  overwrite = false,
 ): Promise<string | null> {
   const cacheDir = getWidgetCacheDirectory();
   if (!cacheDir) {
@@ -88,7 +89,7 @@ async function cacheImageToAppGroup(
   }
 
   const destination = new File(cacheDir, filename);
-  if (destination.exists) {
+  if (destination.exists && !overwrite) {
     return destination.uri;
   }
 
@@ -109,12 +110,31 @@ async function cacheImageToAppGroup(
   }
 }
 
-async function buildMockWidgetGlimts(): Promise<WidgetGlimtItem[]> {
+async function buildWidgetGlimts(): Promise<WidgetGlimtItem[]> {
+  if (!convex) {
+    console.warn("[FriendGlimt] no Convex client; skipping widget refresh");
+    return [];
+  }
+
+  const rows = await convex.query(api.journals.listWidgetGlimts, {
+    limit: 4,
+  });
+
   const glimts = await Promise.all(
-    MOCK_FRIEND_GLIMTS.map(async ({ photoUrl, avatarUrl }, index) => {
+    rows.map(async ({ friendUserId, photoUrl, avatarUrl }) => {
       const [photoUri, avatarUri] = await Promise.all([
-        cacheImageToAppGroup(photoUrl, `photo-${index}.jpg`, false),
-        cacheImageToAppGroup(avatarUrl, `avatar-${index}.jpg`, false),
+        cacheImageToAppGroup(
+          photoUrl,
+          `photo-${friendUserId}.jpg`,
+          false,
+          true,
+        ),
+        cacheImageToAppGroup(
+          avatarUrl,
+          `avatar-${friendUserId}.jpg`,
+          false,
+          true,
+        ),
       ]);
 
       if (!photoUri) {
@@ -134,7 +154,7 @@ async function buildMockWidgetGlimts(): Promise<WidgetGlimtItem[]> {
 export async function refreshFriendGlimtWidget(
   accentThemeId?: AccentThemeId,
 ): Promise<void> {
-  const glimts = await buildMockWidgetGlimts();
+  const glimts = await buildWidgetGlimts();
 
   if (glimts.length === 0) {
     console.warn("[FriendGlimt] no widget images cached; skipping update");
@@ -143,12 +163,13 @@ export async function refreshFriendGlimtWidget(
 
   const whiteUrl = await getWhiteImageAssetUri();
   if (!whiteUrl) {
-    Alert.alert("No white");
+    console.warn("[FriendGlimt] failed to resolve white.png asset");
     return;
   }
+
   const whiteUri = await cacheImageToAppGroup(whiteUrl, "white.png", true);
   if (!whiteUri) {
-    Alert.alert("No white uri");
+    console.warn("[FriendGlimt] failed to cache white.png");
     return;
   }
 

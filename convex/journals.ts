@@ -54,6 +54,17 @@ type HomeFriendTile = UserProfile & {
   groupToday: string;
 };
 
+type TodayFriendGlimtTile = HomeFriendTile & {
+  sentAt: number;
+};
+
+type WidgetGlimt = {
+  friendUserId: Id<"users">;
+  photoUrl: string;
+  avatarUrl: string;
+  sentAt: number;
+};
+
 async function prepareGroupJournalDay(
   ctx: Parameters<typeof prepareJournalTimezoneForMutation>[0],
   groupId: Id<"friendGroups">,
@@ -325,9 +336,19 @@ export const getJournalTimezoneForFriend = query({
       memberUserIds,
     );
 
+    const viewerIndex = memberUserIds.indexOf(userId);
+    const friendIndex = memberUserIds.indexOf(friendUserId);
+    const viewerTimezone =
+      context.memberTimezones[viewerIndex >= 0 ? viewerIndex : 0]!;
+    const friendTimezone =
+      context.memberTimezones[friendIndex >= 0 ? friendIndex : 1]!;
+
     return {
       groupId,
+      viewerTimezone,
+      friendTimezone,
       effectiveTimezone: context.effectiveTimezone,
+      timezonesDiffer: context.timezonesDiffer,
       memberTimezones: context.memberTimezones,
       canChangeJournalTimezone: context.canChangeJournalTimezone,
       scheduledChange: context.scheduledChange ?? null,
@@ -457,72 +478,107 @@ export const getDayForFriend = query({
   },
 });
 
+async function listTodayFriendGlimtTiles(
+  ctx: QueryCtx,
+  userId: Id<"users">,
+  now = Date.now(),
+): Promise<{ tiles: TodayFriendGlimtTile[]; totalFriendCount: number }> {
+  const friendships = await ctx.db
+    .query("friendships")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .collect();
+
+  const tiles: TodayFriendGlimtTile[] = [];
+
+  for (const friendship of friendships) {
+    const friendUserId = friendship.friendUserId;
+    const groupId = await findGroupForUsers(ctx, userId, friendUserId);
+    if (!groupId) {
+      continue;
+    }
+
+    const memberUserIds = await listGroupMemberIds(ctx, groupId);
+    const context = await getJournalTimezoneContext(
+      ctx,
+      groupId,
+      memberUserIds,
+      now,
+    );
+    const groupToday = todayIsoDate(now, context.effectiveTimezone);
+
+    const entries = await ctx.db
+      .query("journalEntries")
+      .withIndex("by_group_and_day", (q) =>
+        q.eq("groupId", groupId).eq("dayDate", groupToday),
+      )
+      .collect();
+
+    const theirs = entries.filter(
+      (entry) => entry.authorUserId === friendUserId,
+    );
+    if (theirs.length === 0) {
+      continue;
+    }
+
+    theirs.sort((a, b) => b.sentAt - a.sentAt);
+    const latestEntry = theirs[0];
+    const previewPhotoUrl =
+      (await ctx.storage.getUrl(latestEntry.photoStorageId)) ?? "";
+
+    const profile = await getUserProfile(ctx, friendUserId);
+    if (!profile) {
+      continue;
+    }
+
+    tiles.push({
+      ...profile,
+      previewPhotoUrl,
+      groupToday,
+      sentAt: latestEntry.sentAt,
+    });
+  }
+
+  return {
+    tiles,
+    totalFriendCount: friendships.length,
+  };
+}
+
 export const listHomeFriends = query({
   args: {},
   handler: async (
     ctx,
   ): Promise<{ tiles: HomeFriendTile[]; totalFriendCount: number }> => {
     const userId = await requireAuthUserId(ctx);
-    const now = Date.now();
-
-    const friendships = await ctx.db
-      .query("friendships")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
-
-    const tiles: HomeFriendTile[] = [];
-
-    for (const friendship of friendships) {
-      const friendUserId = friendship.friendUserId;
-      const groupId = await findGroupForUsers(ctx, userId, friendUserId);
-      if (!groupId) {
-        continue;
-      }
-
-      const memberUserIds = await listGroupMemberIds(ctx, groupId);
-      const context = await getJournalTimezoneContext(
-        ctx,
-        groupId,
-        memberUserIds,
-        now,
-      );
-      const groupToday = todayIsoDate(now, context.effectiveTimezone);
-
-      const entries = await ctx.db
-        .query("journalEntries")
-        .withIndex("by_group_and_day", (q) =>
-          q.eq("groupId", groupId).eq("dayDate", groupToday),
-        )
-        .collect();
-
-      const theirs = entries.filter(
-        (entry) => entry.authorUserId === friendUserId,
-      );
-      if (theirs.length === 0) {
-        continue;
-      }
-
-      theirs.sort((a, b) => b.sentAt - a.sentAt);
-      const latestEntry = theirs[0];
-      const previewPhotoUrl =
-        (await ctx.storage.getUrl(latestEntry.photoStorageId)) ?? "";
-
-      const profile = await getUserProfile(ctx, friendUserId);
-      if (!profile) {
-        continue;
-      }
-
-      tiles.push({
-        ...profile,
-        previewPhotoUrl,
-        groupToday,
-      });
-    }
+    const { tiles, totalFriendCount } = await listTodayFriendGlimtTiles(
+      ctx,
+      userId,
+    );
 
     return {
       tiles,
-      totalFriendCount: friendships.length,
+      totalFriendCount,
     };
+  },
+});
+
+export const listWidgetGlimts = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { limit = 4 }): Promise<WidgetGlimt[]> => {
+    const userId = await requireAuthUserId(ctx);
+    const { tiles } = await listTodayFriendGlimtTiles(ctx, userId);
+
+    return tiles
+      .sort((a, b) => b.sentAt - a.sentAt)
+      .slice(0, limit)
+      .map(({ id, previewPhotoUrl, avatarUrl, sentAt }) => ({
+        friendUserId: id,
+        photoUrl: previewPhotoUrl,
+        avatarUrl,
+        sentAt,
+      }));
   },
 });
 

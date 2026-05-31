@@ -4,12 +4,12 @@ import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { requireAuthUserId, validateUsername } from "./lib/auth";
 import { createFriendGroup, findGroupForUsers, listGroupMemberIds } from "./lib/friendGroups";
-import { todayIsoDate } from "./lib/dates";
+import { resolveUserTimezone, todayIsoDate } from "./lib/dates";
 import {
   ensureJournalTimezoneDefault,
   prepareJournalTimezoneForMutation,
 } from "./lib/journalTimezone";
-import { prepareTodayMeetLockForGroup, todayIsoDate } from "./lib/meetLock";
+import { prepareTodayMeetLockForGroup } from "./lib/meetLock";
 import {
   deleteAllRequestsBetween,
   deleteFriendshipsBetween,
@@ -23,6 +23,7 @@ type UserProfile = {
   username: string;
   avatarUrl: string;
   accentTheme?: string;
+  timezone: string;
 };
 
 type FriendRequestWithProfile = UserProfile & {
@@ -116,6 +117,7 @@ async function getUserProfile(
     username: user.username ?? "",
     avatarUrl,
     accentTheme: user.accentTheme,
+    timezone: resolveUserTimezone(user.timezone),
   };
 }
 
@@ -353,8 +355,7 @@ export const acceptRequest = mutation({
         friendUserId: request.fromUserId,
         createdAt: now,
       });
-      const groupId = await getOrCreateFriendGroupForUsers(
-        ctx,
+      const groupId = await createFriendGroup(ctx, [
         request.fromUserId,
         request.toUserId,
       ]);

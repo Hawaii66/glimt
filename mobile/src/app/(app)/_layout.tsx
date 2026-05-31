@@ -15,7 +15,6 @@ import {
 import { useAppColors } from "@/lib/theme";
 import {
   refreshCameraWidget,
-  refreshFriendGlimtWidget,
 } from "@/lib/widget-refresh";
 import { api } from "convex/_generated/api";
 
@@ -32,8 +31,7 @@ export default function AppLayout() {
       return;
     }
 
-    void refreshFriendGlimtWidget(accentTheme);
-    refreshCameraWidget(accentTheme);
+    void refreshCameraWidget(accentTheme);
   }, [accentTheme, isAuthenticated, user]);
 
   if (authLoading || (isAuthenticated && user === undefined)) {
