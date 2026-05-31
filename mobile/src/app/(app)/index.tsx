@@ -3,7 +3,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { useQuery } from "convex/react";
+import { useState } from "react";
 import {
+  ActivityIndicator,
   Pressable,
   StyleSheet,
   Text,
@@ -20,6 +22,7 @@ import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
 import { getAccentTheme } from "@/lib/accent-themes";
 import { todayIsoDate } from "@/lib/format-journey-date";
 import { APP_CAPTURE, APP_SETTINGS, appFriendJourney } from "@/lib/routes";
+import { refreshFriendGlimtWidget } from "@/lib/widget-refresh";
 import { api } from "convex/_generated/api";
 
 const HORIZONTAL_PADDING = 24;
@@ -30,6 +33,7 @@ const BOTTOM_BAR_PADDING = 24;
 
 export default function HomeScreen() {
   const router = useRouter();
+  const [refreshingWidget, setRefreshingWidget] = useState(false);
   const today = todayIsoDate();
   const homeData = useQuery(api.journals.listHomeFriends, { dayDate: today });
   const todayMeetLocks = useQuery(api.journals.getTodayMeetLocksForFriends);
@@ -49,6 +53,19 @@ export default function HomeScreen() {
   const hasNoFriends = homeData?.totalFriendCount === 0;
   const hasFriendsButNothingToday =
     showEmptyState && (homeData?.totalFriendCount ?? 0) > 0;
+
+  async function handleRefreshWidget() {
+    if (refreshingWidget) {
+      return;
+    }
+
+    setRefreshingWidget(true);
+    try {
+      await refreshFriendGlimtWidget(accentTheme);
+    } finally {
+      setRefreshingWidget(false);
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -82,6 +99,23 @@ export default function HomeScreen() {
           <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
             <Text style={styles.title}>Glimt</Text>
             <Text style={styles.tagline}>Small everyday moments</Text>
+            {__DEV__ ? (
+              <Pressable
+                style={styles.widgetRefreshButton}
+                onPress={() => void handleRefreshWidget()}
+                disabled={refreshingWidget}
+                accessibilityRole="button"
+                accessibilityLabel="Refresh home screen widget"
+              >
+                {refreshingWidget ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.widgetRefreshButtonText}>
+                    Refresh widget
+                  </Text>
+                )}
+              </Pressable>
+            ) : null}
           </View>
         }
         ListEmptyComponent={
@@ -174,6 +208,21 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     marginTop: 4,
+  },
+  widgetRefreshButton: {
+    alignSelf: "flex-start",
+    marginTop: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: "rgba(0, 0, 0, 0.25)",
+    minHeight: 36,
+    justifyContent: "center",
+  },
+  widgetRefreshButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
   },
   listItem: {
     marginBottom: TILE_VERTICAL_GAP,

@@ -49,6 +49,17 @@ type HomeFriendTile = UserProfile & {
   previewPhotoUrl: string;
 };
 
+type TodayFriendGlimtTile = HomeFriendTile & {
+  sentAt: number;
+};
+
+type WidgetGlimt = {
+  friendUserId: Id<"users">;
+  photoUrl: string;
+  avatarUrl: string;
+  sentAt: number;
+};
+
 function dayDateFromTimestamp(timestamp: number) {
   return new Date(timestamp).toISOString().slice(0, 10);
 }
@@ -326,6 +337,62 @@ export const getDayForFriend = query({
   },
 });
 
+async function listTodayFriendGlimtTiles(
+  ctx: QueryCtx,
+  userId: Id<"users">,
+  normalizedDayDate: string,
+): Promise<{ tiles: TodayFriendGlimtTile[]; totalFriendCount: number }> {
+  const friendships = await ctx.db
+    .query("friendships")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .collect();
+
+  const tiles: TodayFriendGlimtTile[] = [];
+
+  for (const friendship of friendships) {
+    const friendUserId = friendship.friendUserId;
+    const groupId = await findGroupForUsers(ctx, userId, friendUserId);
+    if (!groupId) {
+      continue;
+    }
+
+    const entries = await ctx.db
+      .query("journalEntries")
+      .withIndex("by_group_and_day", (q) =>
+        q.eq("groupId", groupId).eq("dayDate", normalizedDayDate),
+      )
+      .collect();
+
+    const theirs = entries.filter(
+      (entry) => entry.authorUserId === friendUserId,
+    );
+    if (theirs.length === 0) {
+      continue;
+    }
+
+    theirs.sort((a, b) => b.sentAt - a.sentAt);
+    const latestEntry = theirs[0];
+    const previewPhotoUrl =
+      (await ctx.storage.getUrl(latestEntry.photoStorageId)) ?? "";
+
+    const profile = await getUserProfile(ctx, friendUserId);
+    if (!profile) {
+      continue;
+    }
+
+    tiles.push({
+      ...profile,
+      previewPhotoUrl,
+      sentAt: latestEntry.sentAt,
+    });
+  }
+
+  return {
+    tiles,
+    totalFriendCount: friendships.length,
+  };
+}
+
 export const listHomeFriends = query({
   args: { dayDate: v.string() },
   handler: async (
@@ -334,55 +401,42 @@ export const listHomeFriends = query({
   ): Promise<{ tiles: HomeFriendTile[]; totalFriendCount: number }> => {
     const userId = await requireAuthUserId(ctx);
     const normalizedDayDate = validateDayDate(dayDate);
-
-    const friendships = await ctx.db
-      .query("friendships")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
-
-    const tiles: HomeFriendTile[] = [];
-
-    for (const friendship of friendships) {
-      const friendUserId = friendship.friendUserId;
-      const groupId = await findGroupForUsers(ctx, userId, friendUserId);
-      if (!groupId) {
-        continue;
-      }
-
-      const entries = await ctx.db
-        .query("journalEntries")
-        .withIndex("by_group_and_day", (q) =>
-          q.eq("groupId", groupId).eq("dayDate", normalizedDayDate),
-        )
-        .collect();
-
-      const theirs = entries.filter(
-        (entry) => entry.authorUserId === friendUserId,
-      );
-      if (theirs.length === 0) {
-        continue;
-      }
-
-      theirs.sort((a, b) => b.sentAt - a.sentAt);
-      const latestEntry = theirs[0];
-      const previewPhotoUrl =
-        (await ctx.storage.getUrl(latestEntry.photoStorageId)) ?? "";
-
-      const profile = await getUserProfile(ctx, friendUserId);
-      if (!profile) {
-        continue;
-      }
-
-      tiles.push({
-        ...profile,
-        previewPhotoUrl,
-      });
-    }
+    const { tiles, totalFriendCount } = await listTodayFriendGlimtTiles(
+      ctx,
+      userId,
+      normalizedDayDate,
+    );
 
     return {
       tiles,
-      totalFriendCount: friendships.length,
+      totalFriendCount,
     };
+  },
+});
+
+export const listWidgetGlimts = query({
+  args: {
+    dayDate: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { dayDate, limit = 4 }): Promise<WidgetGlimt[]> => {
+    const userId = await requireAuthUserId(ctx);
+    const normalizedDayDate = validateDayDate(dayDate);
+    const { tiles } = await listTodayFriendGlimtTiles(
+      ctx,
+      userId,
+      normalizedDayDate,
+    );
+
+    return tiles
+      .sort((a, b) => b.sentAt - a.sentAt)
+      .slice(0, limit)
+      .map(({ id, previewPhotoUrl, avatarUrl, sentAt }) => ({
+        friendUserId: id,
+        photoUrl: previewPhotoUrl,
+        avatarUrl,
+        sentAt,
+      }));
   },
 });
 
