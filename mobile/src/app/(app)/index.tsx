@@ -20,7 +20,6 @@ import {
 import { GlimtTile } from "@/components/glimt/GlimtTile";
 import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
 import { getAccentTheme } from "@/lib/accent-themes";
-import { todayIsoDate } from "@/lib/format-journey-date";
 import { APP_CAPTURE, APP_SETTINGS, appFriendJourney } from "@/lib/routes";
 import { refreshFriendGlimtWidget } from "@/lib/widget-refresh";
 import { api } from "convex/_generated/api";
@@ -34,8 +33,7 @@ const BOTTOM_BAR_PADDING = 24;
 export default function HomeScreen() {
   const router = useRouter();
   const [refreshingWidget, setRefreshingWidget] = useState(false);
-  const today = todayIsoDate();
-  const homeData = useQuery(api.journals.listHomeFriends, { dayDate: today });
+  const homeData = useQuery(api.journals.listHomeFriends);
   const todayMeetLocks = useQuery(api.journals.getTodayMeetLocksForFriends);
   const meetLockedByFriendId = new Map(
     (todayMeetLocks ?? []).map((row) => [row.friendUserId, row.meetLocked]),

@@ -11,12 +11,16 @@ import {
   validateDayDate,
   validateEmoji,
 } from "./lib/friendGroups";
+import { dayDateFromTimestamp, isDayEnded, resolveUserTimezone, todayIsoDate } from "./lib/dates";
+import {
+  getJournalTimezoneContext,
+  prepareJournalTimezoneForMutation,
+  setJournalTimezoneForGroup,
+} from "./lib/journalTimezone";
 import {
   isDayComplete,
-  isDayEnded,
   prepareTodayMeetLocksForUser,
   syncMeetLocksForGroup as syncMeetLocksForGroupInternal,
-  todayIsoDate,
 } from "./lib/meetLock";
 import { userError } from "./lib/userError";
 
@@ -47,6 +51,7 @@ type UserProfile = {
 
 type HomeFriendTile = UserProfile & {
   previewPhotoUrl: string;
+  groupToday: string;
 };
 
 type TodayFriendGlimtTile = HomeFriendTile & {
@@ -60,8 +65,22 @@ type WidgetGlimt = {
   sentAt: number;
 };
 
-function dayDateFromTimestamp(timestamp: number) {
-  return new Date(timestamp).toISOString().slice(0, 10);
+async function prepareGroupJournalDay(
+  ctx: Parameters<typeof prepareJournalTimezoneForMutation>[0],
+  groupId: Id<"friendGroups">,
+  memberUserIds: Id<"users">[],
+  now = Date.now(),
+) {
+  const context = await prepareJournalTimezoneForMutation(
+    ctx,
+    groupId,
+    memberUserIds,
+    now,
+  );
+  return {
+    date: todayIsoDate(now, context.effectiveTimezone),
+    timezone: context.effectiveTimezone,
+  };
 }
 
 function normalizeCaption(caption: string | undefined) {
@@ -230,8 +249,121 @@ export const prepareTodayMeetLocksOnAppOpen = mutation({
   args: {},
   handler: async (ctx) => {
     const userId = await requireAuthUserId(ctx);
-    const results = await prepareTodayMeetLocksForUser(ctx, userId);
-    return { today: todayIsoDate(), results };
+    const now = Date.now();
+    const results = await prepareTodayMeetLocksForUser(
+      ctx,
+      userId,
+      async (groupId, memberUserIds) =>
+        prepareGroupJournalDay(ctx, groupId, memberUserIds, now),
+      now,
+    );
+    return { results };
+  },
+});
+
+export const getJournalContext = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await requireAuthUserId(ctx);
+    const user = await ctx.db.get(userId);
+    const viewerTimezone = resolveUserTimezone(user?.timezone);
+    const now = Date.now();
+
+    const friendships = await ctx.db
+      .query("friendships")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+
+    const todayByGroup: Array<{
+      groupId: Id<"friendGroups">;
+      friendUserId: Id<"users">;
+      journalTimezone: string;
+      today: string;
+      canChangeJournalTimezone: boolean;
+      scheduledJournalTimezone?: string;
+      scheduledJournalTimezoneFrom?: string;
+    }> = [];
+
+    for (const friendship of friendships) {
+      const groupId = await findGroupForUsers(
+        ctx,
+        userId,
+        friendship.friendUserId,
+      );
+      if (!groupId) {
+        continue;
+      }
+
+      const memberUserIds = await listGroupMemberIds(ctx, groupId);
+      const context = await getJournalTimezoneContext(
+        ctx,
+        groupId,
+        memberUserIds,
+        now,
+      );
+
+      todayByGroup.push({
+        groupId,
+        friendUserId: friendship.friendUserId,
+        journalTimezone: context.effectiveTimezone,
+        today: todayIsoDate(now, context.effectiveTimezone),
+        canChangeJournalTimezone: context.canChangeJournalTimezone,
+        scheduledJournalTimezone: context.scheduledChange?.timezone,
+        scheduledJournalTimezoneFrom: context.scheduledChange?.effectiveFrom,
+      });
+    }
+
+    return {
+      viewerTimezone,
+      todayByGroup,
+    };
+  },
+});
+
+export const getJournalTimezoneForFriend = query({
+  args: { friendUserId: v.id("users") },
+  handler: async (ctx, { friendUserId }) => {
+    const userId = await requireAuthUserId(ctx);
+    const groupId = await findGroupForUsers(ctx, userId, friendUserId);
+    if (!groupId) {
+      return null;
+    }
+
+    const memberUserIds = await listGroupMemberIds(ctx, groupId);
+    const context = await getJournalTimezoneContext(
+      ctx,
+      groupId,
+      memberUserIds,
+    );
+
+    const viewerIndex = memberUserIds.indexOf(userId);
+    const friendIndex = memberUserIds.indexOf(friendUserId);
+    const viewerTimezone =
+      context.memberTimezones[viewerIndex >= 0 ? viewerIndex : 0]!;
+    const friendTimezone =
+      context.memberTimezones[friendIndex >= 0 ? friendIndex : 1]!;
+
+    return {
+      groupId,
+      viewerTimezone,
+      friendTimezone,
+      effectiveTimezone: context.effectiveTimezone,
+      timezonesDiffer: context.timezonesDiffer,
+      memberTimezones: context.memberTimezones,
+      canChangeJournalTimezone: context.canChangeJournalTimezone,
+      scheduledChange: context.scheduledChange ?? null,
+    };
+  },
+});
+
+export const setJournalTimezone = mutation({
+  args: {
+    groupId: v.id("friendGroups"),
+    timezone: v.string(),
+  },
+  handler: async (ctx, { groupId, timezone }) => {
+    const userId = await requireAuthUserId(ctx);
+    return await setJournalTimezoneForGroup(ctx, groupId, userId, timezone);
   },
 });
 
@@ -239,7 +371,7 @@ export const getTodayMeetLocksForFriends = query({
   args: {},
   handler: async (ctx) => {
     const userId = await requireAuthUserId(ctx);
-    const today = todayIsoDate();
+    const now = Date.now();
 
     const friendships = await ctx.db
       .query("friendships")
@@ -265,12 +397,21 @@ export const getTodayMeetLocksForFriends = query({
         results.push({
           friendUserId: friendship.friendUserId,
           groupId: null,
-          date: today,
+          date: "",
           meetLocked: false,
           rolled: false,
         });
         continue;
       }
+
+      const memberUserIds = await listGroupMemberIds(ctx, groupId);
+      const context = await getJournalTimezoneContext(
+        ctx,
+        groupId,
+        memberUserIds,
+        now,
+      );
+      const today = todayIsoDate(now, context.effectiveTimezone);
 
       const day = await ctx.db
         .query("journalDays")
@@ -340,7 +481,7 @@ export const getDayForFriend = query({
 async function listTodayFriendGlimtTiles(
   ctx: QueryCtx,
   userId: Id<"users">,
-  normalizedDayDate: string,
+  now = Date.now(),
 ): Promise<{ tiles: TodayFriendGlimtTile[]; totalFriendCount: number }> {
   const friendships = await ctx.db
     .query("friendships")
@@ -356,10 +497,19 @@ async function listTodayFriendGlimtTiles(
       continue;
     }
 
+    const memberUserIds = await listGroupMemberIds(ctx, groupId);
+    const context = await getJournalTimezoneContext(
+      ctx,
+      groupId,
+      memberUserIds,
+      now,
+    );
+    const groupToday = todayIsoDate(now, context.effectiveTimezone);
+
     const entries = await ctx.db
       .query("journalEntries")
       .withIndex("by_group_and_day", (q) =>
-        q.eq("groupId", groupId).eq("dayDate", normalizedDayDate),
+        q.eq("groupId", groupId).eq("dayDate", groupToday),
       )
       .collect();
 
@@ -383,6 +533,7 @@ async function listTodayFriendGlimtTiles(
     tiles.push({
       ...profile,
       previewPhotoUrl,
+      groupToday,
       sentAt: latestEntry.sentAt,
     });
   }
@@ -394,17 +545,14 @@ async function listTodayFriendGlimtTiles(
 }
 
 export const listHomeFriends = query({
-  args: { dayDate: v.string() },
+  args: {},
   handler: async (
     ctx,
-    { dayDate },
   ): Promise<{ tiles: HomeFriendTile[]; totalFriendCount: number }> => {
     const userId = await requireAuthUserId(ctx);
-    const normalizedDayDate = validateDayDate(dayDate);
     const { tiles, totalFriendCount } = await listTodayFriendGlimtTiles(
       ctx,
       userId,
-      normalizedDayDate,
     );
 
     return {
@@ -416,17 +564,11 @@ export const listHomeFriends = query({
 
 export const listWidgetGlimts = query({
   args: {
-    dayDate: v.string(),
     limit: v.optional(v.number()),
   },
-  handler: async (ctx, { dayDate, limit = 4 }): Promise<WidgetGlimt[]> => {
+  handler: async (ctx, { limit = 4 }): Promise<WidgetGlimt[]> => {
     const userId = await requireAuthUserId(ctx);
-    const normalizedDayDate = validateDayDate(dayDate);
-    const { tiles } = await listTodayFriendGlimtTiles(
-      ctx,
-      userId,
-      normalizedDayDate,
-    );
+    const { tiles } = await listTodayFriendGlimtTiles(ctx, userId);
 
     return tiles
       .sort((a, b) => b.sentAt - a.sentAt)
@@ -468,10 +610,19 @@ export const syncMeetLocksForGroup = mutation({
     await requireGroupMember(ctx, groupId, userId);
 
     const memberUserIds = await listGroupMemberIds(ctx, groupId);
+    const now = Date.now();
+    const { timezone } = await prepareGroupJournalDay(
+      ctx,
+      groupId,
+      memberUserIds,
+      now,
+    );
     const rolledCount = await syncMeetLocksForGroupInternal(
       ctx,
       groupId,
       memberUserIds,
+      timezone,
+      now,
     );
 
     return { rolledCount };
@@ -483,18 +634,22 @@ export const addEntry = mutation({
     groupId: v.id("friendGroups"),
     photoStorageId: v.id("_storage"),
     caption: v.optional(v.string()),
-    dayDate: v.optional(v.string()),
   },
-  handler: async (ctx, { groupId, photoStorageId, caption, dayDate }) => {
+  handler: async (ctx, { groupId, photoStorageId, caption }) => {
     const userId = await requireAuthUserId(ctx);
     await requireGroupMember(ctx, groupId, userId);
 
     const normalizedCaption = normalizeCaption(caption);
 
     const sentAt = Date.now();
-    const normalizedDayDate = dayDate
-      ? validateDayDate(dayDate)
-      : dayDateFromTimestamp(sentAt);
+    const memberUserIds = await listGroupMemberIds(ctx, groupId);
+    const { timezone } = await prepareGroupJournalDay(
+      ctx,
+      groupId,
+      memberUserIds,
+      sentAt,
+    );
+    const normalizedDayDate = dayDateFromTimestamp(sentAt, timezone);
 
     return await ctx.db.insert("journalEntries", {
       groupId,
@@ -520,9 +675,8 @@ export const sendGlimt = mutation({
     photoStorageId: v.id("_storage"),
     caption: v.optional(v.string()),
     friendUserId: v.optional(v.id("users")),
-    dayDate: v.optional(v.string()),
   },
-  handler: async (ctx, { photoStorageId, caption, friendUserId, dayDate }) => {
+  handler: async (ctx, { photoStorageId, caption, friendUserId }) => {
     const userId = await requireAuthUserId(ctx);
     const normalizedCaption = normalizeCaption(caption);
 
@@ -561,9 +715,6 @@ export const sendGlimt = mutation({
     }
 
     const sentAt = Date.now();
-    const normalizedDayDate = dayDate
-      ? validateDayDate(dayDate)
-      : dayDateFromTimestamp(sentAt);
     const entryIds: Id<"journalEntries">[] = [];
 
     for (const targetFriendId of targetFriendIds) {
@@ -572,6 +723,14 @@ export const sendGlimt = mutation({
         userId,
         targetFriendId,
       );
+      const memberUserIds = await listGroupMemberIds(ctx, groupId);
+      const { timezone } = await prepareGroupJournalDay(
+        ctx,
+        groupId,
+        memberUserIds,
+        sentAt,
+      );
+      const normalizedDayDate = dayDateFromTimestamp(sentAt, timezone);
 
       const entryId = await ctx.db.insert("journalEntries", {
         groupId,
@@ -638,12 +797,17 @@ export const unlockTogetherDay = mutation({
 
     const normalizedDate = validateDayDate(date);
     const now = Date.now();
+    const memberUserIds = await listGroupMemberIds(ctx, groupId);
+    const { timezone } = await prepareGroupJournalDay(
+      ctx,
+      groupId,
+      memberUserIds,
+      now,
+    );
 
-    if (!isDayEnded(normalizedDate, now)) {
+    if (!isDayEnded(normalizedDate, now, timezone)) {
       userError("Today's glimts cannot be unlocked yet.");
     }
-
-    const memberUserIds = await listGroupMemberIds(ctx, groupId);
     const entries = await ctx.db
       .query("journalEntries")
       .withIndex("by_group_and_day", (q) =>

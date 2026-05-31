@@ -5,8 +5,10 @@ import { accentThemeValidator } from "./lib/accentTheme";
 import {
   normalizeUsername,
   requireAuthUserId,
+  requireExistingUser,
   validateUsername,
 } from "./lib/auth";
+import { validateIanaTimezone } from "./lib/dates";
 
 export const current = query({
   args: {},
@@ -61,8 +63,28 @@ export const generateAvatarUploadUrl = mutation({
 export const setAccentTheme = mutation({
   args: { accentTheme: accentThemeValidator },
   handler: async (ctx, { accentTheme }) => {
-    const userId = await requireAuthUserId(ctx);
+    const { userId } = await requireExistingUser(ctx);
     await ctx.db.patch(userId, { accentTheme });
+  },
+});
+
+export const syncTimezone = mutation({
+  args: { timezone: v.string() },
+  handler: async (ctx, { timezone }) => {
+    const { userId, user } = await requireExistingUser(ctx);
+    const normalizedTimezone = validateIanaTimezone(timezone);
+
+    if (user.timezone === normalizedTimezone) {
+      return { timezone: normalizedTimezone, updated: false };
+    }
+
+    const now = Date.now();
+    await ctx.db.patch(userId, {
+      timezone: normalizedTimezone,
+      timezoneUpdatedAt: now,
+    });
+
+    return { timezone: normalizedTimezone, updated: true };
   },
 });
 
@@ -74,7 +96,7 @@ export const completeOnboarding = mutation({
     accentTheme: accentThemeValidator,
   },
   handler: async (ctx, { name, username, avatarStorageId, accentTheme }) => {
-    const userId = await requireAuthUserId(ctx);
+    const { userId } = await requireExistingUser(ctx);
     const trimmedName = name.trim();
     if (!trimmedName) {
       throw new Error("Display name is required.");

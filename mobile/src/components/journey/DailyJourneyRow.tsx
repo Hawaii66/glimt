@@ -38,6 +38,7 @@ type DailyJourneyRowProps = {
   friendAvatarUrl: string;
   friendDisplayName: string;
   date: string;
+  journalToday: string;
   yours?: JourneyGlimt[];
   theirs?: JourneyGlimt[];
   meetLock?: boolean;
@@ -391,6 +392,7 @@ function JourneyRowContent({
   friendAvatarUrl,
   friendDisplayName,
   date,
+  journalToday,
   yours,
   theirs,
   tileSize,
@@ -407,6 +409,7 @@ function JourneyRowContent({
   friendAvatarUrl: string;
   friendDisplayName: string;
   date: string;
+  journalToday: string;
   yours?: JourneyGlimt[];
   theirs?: JourneyGlimt[];
   tileSize: number;
@@ -446,7 +449,7 @@ function JourneyRowContent({
         />
         <View style={styles.dateHeaderText}>
           <Text style={[styles.dateLabel, { color: colors.text }]}>
-            {formatJourneyDate(date)}
+            {formatJourneyDate(date, journalToday)}
           </Text>
           {!rowLocked ? (
             <Text style={[styles.friendName, { color: colors.textMuted }]}>
@@ -568,6 +571,7 @@ export function DailyJourneyRow({
   friendAvatarUrl,
   friendDisplayName,
   date,
+  journalToday,
   yours,
   theirs,
   meetLock,
@@ -588,7 +592,7 @@ export function DailyJourneyRow({
     rowLocked,
     canNavigateToDay,
     showUnlockButton,
-  } = resolveJourneyLockState(journey);
+  } = resolveJourneyLockState(journey, journalToday);
   const accentColor = getAccentTheme(friendAccentId).gradientColors[0];
   const [pressed, setPressed] = useState(false);
   const [zoomImageSize, setZoomImageSize] = useState<ImageSize | null>(null);
@@ -613,6 +617,7 @@ export function DailyJourneyRow({
       friendAvatarUrl={friendAvatarUrl}
       friendDisplayName={friendDisplayName}
       date={date}
+      journalToday={journalToday}
       yours={yours}
       theirs={theirs}
       tileSize={tileSize}

@@ -24,6 +24,10 @@ export default function Index() {
     return <Redirect href="/onboarding/sign-in" />;
   }
 
+  if (user === null) {
+    return <Redirect href="/onboarding/sign-in" />;
+  }
+
   if (!user?.onboardingComplete) {
     return <Redirect href="/onboarding/setup" />;
   }

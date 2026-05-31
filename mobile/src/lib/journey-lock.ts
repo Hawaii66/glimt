@@ -7,7 +7,7 @@ import type { JourneyDay } from "@/lib/journey-types";
 
 export function resolveJourneyLockState(
   journey: JourneyDay,
-  now = new Date(),
+  journalToday: string,
 ): {
   calendarLocked: boolean;
   meetLocked: boolean;
@@ -15,9 +15,9 @@ export function resolveJourneyLockState(
   canNavigateToDay: boolean;
   showUnlockButton: boolean;
 } {
-  const calendarLocked = isCalendarLocked(journey.date, now);
+  const calendarLocked = isCalendarLocked(journey.date, journalToday);
   const meetLocked = isMeetLocked(journey);
-  const rowLocked = isRowLocked(journey, journey.date, now);
+  const rowLocked = isRowLocked(journey, journey.date, journalToday);
 
   return {
     calendarLocked,

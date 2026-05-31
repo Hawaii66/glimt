@@ -17,6 +17,7 @@ import {
 import { UnlockQrCode } from "@/components/journey/UnlockQrCode";
 import { useFriendGroupId } from "@/hooks/useFriendGroupId";
 import { useFriendProfile } from "@/hooks/useFriendProfile";
+import { useJournalContext } from "@/hooks/useJournalContext";
 import { formatJourneyDate } from "@/lib/format-journey-date";
 import { MEET_DAY_UNLOCK_SCREEN_TITLE } from "@/lib/meet-day";
 import { useAppColors } from "@/lib/theme";
@@ -36,6 +37,8 @@ export function TogetherDayUnlockScreen({
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { friend } = useFriendProfile(friendId);
+  const { friendContext } = useJournalContext(friendId);
+  const journalToday = friendContext?.today ?? "";
   const { groupId } = useFriendGroupId(friendId);
   const startSession = useMutation(api.meetUnlock.startMeetUnlockSession);
   const refreshSession = useMutation(api.meetUnlock.refreshMeetUnlockSession);
@@ -50,7 +53,9 @@ export function TogetherDayUnlockScreen({
   const scannedRef = useRef(false);
 
   const friendFirstName = friend?.displayName.split(" ")[0] ?? "friend";
-  const formattedDate = formatJourneyDate(date);
+  const formattedDate = journalToday
+    ? formatJourneyDate(date, journalToday)
+    : date;
 
   const finishUnlock = useCallback(() => {
     setMode("success");

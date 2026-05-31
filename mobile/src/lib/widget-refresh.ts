@@ -16,7 +16,6 @@ import {
   TILE_CORNER_RADIUS,
   TILE_SCALE,
 } from "./glimt-tile-styles";
-import { todayIsoDate } from "./format-journey-date";
 import { getCaptureDeepLinkUrl } from "./routes";
 import {
   FriendGlimtCameraWidget,
@@ -118,7 +117,6 @@ async function buildWidgetGlimts(): Promise<WidgetGlimtItem[]> {
   }
 
   const rows = await convex.query(api.journals.listWidgetGlimts, {
-    dayDate: todayIsoDate(),
     limit: 4,
   });
 

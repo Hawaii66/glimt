@@ -31,6 +31,7 @@ const BUBBLE_MAX_WIDTH_RATIO = 0.72;
 
 type JourneyDayChatProps = {
   date: string;
+  journalToday: string;
   yours?: DailyJourneyGlimt[];
   theirs?: DailyJourneyGlimt[];
   friendDisplayName: string;
@@ -171,6 +172,7 @@ function ChatMessageBubble({
 
 export function JourneyDayChat({
   date,
+  journalToday,
   yours,
   theirs,
   friendDisplayName,
@@ -192,7 +194,7 @@ export function JourneyDayChat({
 
   const messages = buildJourneyChatMessages({ date, yours, theirs });
   const firstMessage = getFirstChatMessage({ date, yours, theirs });
-  const dateLabel = formatJourneyDate(date);
+  const dateLabel = formatJourneyDate(date, journalToday);
 
   return (
     <ScrollView

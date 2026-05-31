@@ -1,6 +1,6 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
-import type { DataModel } from "../_generated/dataModel";
+import type { DataModel, Doc, Id } from "../_generated/dataModel";
 import { userError } from "./userError";
 
 type AuthCtx = GenericQueryCtx<DataModel> | GenericMutationCtx<DataModel>;
@@ -11,6 +11,17 @@ export async function requireAuthUserId(ctx: AuthCtx) {
     throw new Error("Not authenticated");
   }
   return userId;
+}
+
+export async function requireExistingUser(
+  ctx: AuthCtx,
+): Promise<{ userId: Id<"users">; user: Doc<"users"> }> {
+  const userId = await requireAuthUserId(ctx);
+  const user = await ctx.db.get(userId);
+  if (!user) {
+    userError("Account not found. Please sign out and sign in again.");
+  }
+  return { userId, user: user as Doc<"users"> };
 }
 
 const USERNAME_PATTERN = /^[a-z0-9_]{3,20}$/;

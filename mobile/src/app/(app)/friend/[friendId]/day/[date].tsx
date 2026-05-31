@@ -10,6 +10,7 @@ import {
 
 import { JourneyDayChat } from "@/components/journey/JourneyDayChat";
 import { useFriendProfile } from "@/hooks/useFriendProfile";
+import { useJournalContext } from "@/hooks/useJournalContext";
 import { toJourneyDay } from "@/lib/journal-adapters";
 import { resolveJourneyLockState } from "@/lib/journey-lock";
 import { useAppColors } from "@/lib/theme";
@@ -26,6 +27,8 @@ export default function JourneyDayScreen() {
   }>();
 
   const { friend, isLoading: friendLoading } = useFriendProfile(friendId);
+  const { friendContext } = useJournalContext(friendId);
+  const journalToday = friendContext?.today ?? "";
   const apiDay = useQuery(
     api.journals.getDayForFriend,
     friendId && date
@@ -42,8 +45,8 @@ export default function JourneyDayScreen() {
   );
 
   const blocked =
-    journey && friendId && date
-      ? !resolveJourneyLockState(journey).canNavigateToDay
+    journey && friendId && date && journalToday
+      ? !resolveJourneyLockState(journey, journalToday).canNavigateToDay
       : true;
 
   useEffect(() => {
@@ -95,6 +98,7 @@ export default function JourneyDayScreen() {
 
       <JourneyDayChat
         date={date}
+        journalToday={journalToday}
         yours={journey.yours}
         theirs={journey.theirs}
         friendDisplayName={friend.displayName}

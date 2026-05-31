@@ -12,9 +12,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ProfilePreview } from "@/components/onboarding/ProfilePreview";
-import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
 import { getAccentTheme } from "@/lib/accent-themes";
 import { useAppColors } from "@/lib/theme";
+import { useOnboardingStore } from "@/stores/onboardingStore";
 
 type OnboardingScreenProps = {
   children: ReactNode;
@@ -36,7 +36,7 @@ export function OnboardingScreen({
   header,
 }: OnboardingScreenProps) {
   const colors = useAppColors();
-  const { accentTheme } = useCurrentUserAccentTheme();
+  const accentTheme = useOnboardingStore((state) => state.accentTheme);
   const gradientColors = getAccentTheme(accentTheme).gradientColors;
 
   return (

@@ -18,6 +18,8 @@ const authTables = {
     avatarStorageId: v.optional(v.id("_storage")),
     onboardingComplete: v.optional(v.boolean()),
     accentTheme: v.optional(accentThemeValidator),
+    timezone: v.optional(v.string()),
+    timezoneUpdatedAt: v.optional(v.number()),
   })
     .index("email", ["email"])
     .index("username", ["username"]),
@@ -54,6 +56,9 @@ export default defineSchema({
     .index("by_user_and_friend", ["userId", "friendUserId"]),
   friendGroups: defineTable({
     sharedEmoji: v.optional(v.string()),
+    journalTimezone: v.optional(v.string()),
+    scheduledJournalTimezone: v.optional(v.string()),
+    scheduledJournalTimezoneFrom: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }),
