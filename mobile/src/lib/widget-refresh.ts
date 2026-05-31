@@ -9,6 +9,7 @@ import {
   type AccentThemeId,
 } from "./accent-themes";
 import { convex } from "./convex";
+import { getInitials } from "./get-initials";
 import {
   AVATAR_OFFSET,
   AVATAR_SIZE,
@@ -145,7 +146,7 @@ async function buildWidgetGlimts(): Promise<WidgetGlimtItem[]> {
       return {
         photoUri,
         avatarUri,
-        displayName,
+        avatarInitials: getInitials(displayName),
       };
     }),
   );
@@ -175,6 +176,7 @@ export async function refreshFriendGlimtWidget(
     return;
   }
 
+  console.log("Upate", glimts, getWidgetTileStyle(accentThemeId), whiteUri);
   FriendGlimtWidget.updateSnapshot({
     glimts,
     style: getWidgetTileStyle(accentThemeId),

@@ -27,7 +27,7 @@ import { createWidget, type WidgetEnvironment } from "expo-widgets";
 export type WidgetGlimtItem = {
   photoUri: string;
   avatarUri: string;
-  displayName: string;
+  avatarInitials: string;
 };
 
 export type WidgetTileStyle = {
@@ -62,25 +62,6 @@ const FriendGlimt = (
     avatarOffset,
     tileScale,
   } = props.style;
-
-  function getInitials(displayName: string): string {
-    const trimmed = displayName.trim();
-    if (!trimmed) {
-      return "?";
-    }
-
-    const parts = trimmed.split(/\s+/).filter(Boolean);
-    if (parts.length >= 2) {
-      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-    }
-
-    const word = parts[0];
-    if (word.length >= 2) {
-      return word.slice(0, 2).toUpperCase();
-    }
-
-    return word[0].toUpperCase();
-  }
 
   function tileRotation(index: number): `${number}deg` {
     return `${Math.pow(-1, index + 1) * 2}deg`;
@@ -162,46 +143,10 @@ const FriendGlimt = (
     );
   }
 
-  function renderAvatarInitials(displayName: string, idx: number) {
-    const initials = getInitials(displayName);
-    const initialsFontSize = Math.max(10, Math.round(avatarSize * 0.36));
-
-    return (
-      <ZStack
-        modifiers={[
-          frame({ width: avatarSize, height: avatarSize }),
-          offset({ x: avatarOffset, y: avatarOffset }),
-          rotationEffect(parseFloat(tileRotation(idx))),
-          scaleEffect(tileScale),
-          shadow({ radius: 2, color: "#777" }),
-        ]}
-      >
-        <Rectangle
-          modifiers={[foregroundStyle(photoBorderColor), cornerRadius(999)]}
-        />
-        <Rectangle
-          modifiers={[
-            foregroundStyle("#F5F0EB"),
-            cornerRadius(999),
-            padding({ all: 1 }),
-          ]}
-        />
-        <Text
-          modifiers={[
-            font({ weight: "semibold", size: initialsFontSize }),
-            foregroundStyle("#6B6560"),
-          ]}
-        >
-          {initials}
-        </Text>
-      </ZStack>
-    );
-  }
-
   function renderGlimtImageTile(
     photoUri: string,
     avatarUri: string,
-    displayName: string,
+    avatarInitials: string,
     metrics: ReturnType<typeof tileMetricsForFamily>,
     tileModifiers: import("@expo/ui/swift-ui/modifiers").ViewModifier[] = [],
     idx: number,
@@ -266,7 +211,37 @@ const FriendGlimt = (
             />
           </ZStack>
         ) : (
-          renderAvatarInitials(displayName, idx)
+          <ZStack
+            modifiers={[
+              frame({ width: avatarSize, height: avatarSize }),
+              offset({ x: avatarOffset, y: avatarOffset }),
+              rotationEffect(parseFloat(tileRotation(idx))),
+              scaleEffect(tileScale),
+              shadow({ radius: 2, color: "#777" }),
+            ]}
+          >
+            <Rectangle
+              modifiers={[foregroundStyle(photoBorderColor), cornerRadius(999)]}
+            />
+            <Rectangle
+              modifiers={[
+                foregroundStyle("#F5F0EB"),
+                cornerRadius(999),
+                padding({ all: 1 }),
+              ]}
+            />
+            <Text
+              modifiers={[
+                font({
+                  weight: "semibold",
+                  size: Math.max(10, Math.round(avatarSize * 0.36)),
+                }),
+                foregroundStyle("#6B6560"),
+              ]}
+            >
+              {avatarInitials}
+            </Text>
+          </ZStack>
         )}
       </ZStack>
     );
@@ -283,7 +258,7 @@ const FriendGlimt = (
           renderGlimtImageTile(
             item.photoUri,
             item.avatarUri,
-            item.displayName,
+            item.avatarInitials,
             metrics,
             [
               containerRelativeFrame({
@@ -320,7 +295,7 @@ const FriendGlimt = (
           {renderGlimtImageTile(
             item.photoUri,
             item.avatarUri,
-            item.displayName,
+            item.avatarInitials,
             metrics,
             [containerRelativeFrame({ axes: "both" })],
             0,
