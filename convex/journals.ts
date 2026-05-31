@@ -62,6 +62,7 @@ type WidgetGlimt = {
   friendUserId: Id<"users">;
   photoUrl: string;
   avatarUrl: string;
+  displayName: string;
   sentAt: number;
 };
 
@@ -573,10 +574,11 @@ export const listWidgetGlimts = query({
     return tiles
       .sort((a, b) => b.sentAt - a.sentAt)
       .slice(0, limit)
-      .map(({ id, previewPhotoUrl, avatarUrl, sentAt }) => ({
+      .map(({ id, previewPhotoUrl, avatarUrl, displayName, sentAt }) => ({
         friendUserId: id,
         photoUrl: previewPhotoUrl,
         avatarUrl,
+        displayName,
         sentAt,
       }));
   },

@@ -1,6 +1,7 @@
 import Constants from "expo-constants";
 import { Directory, File, Paths } from "expo-file-system";
 
+import { api } from "convex/_generated/api";
 import { Asset } from "expo-asset";
 import {
   getAccentTheme,
@@ -23,7 +24,6 @@ import {
   WidgetGlimtItem,
   type WidgetTileStyle,
 } from "./widget";
-import { api } from "convex/_generated/api";
 
 function getWidgetTileStyle(accentThemeId?: AccentThemeId): WidgetTileStyle {
   const gradientColors = getAccentTheme(
@@ -121,29 +121,31 @@ async function buildWidgetGlimts(): Promise<WidgetGlimtItem[]> {
   });
 
   const glimts = await Promise.all(
-    rows.map(async ({ friendUserId, photoUrl, avatarUrl }) => {
-      const [photoUri, avatarUri] = await Promise.all([
-        cacheImageToAppGroup(
-          photoUrl,
-          `photo-${friendUserId}.jpg`,
-          false,
-          true,
-        ),
-        cacheImageToAppGroup(
-          avatarUrl,
-          `avatar-${friendUserId}.jpg`,
-          false,
-          true,
-        ),
-      ]);
+    rows.map(async ({ friendUserId, photoUrl, avatarUrl, displayName }) => {
+      const photoUri = await cacheImageToAppGroup(
+        photoUrl,
+        `photo-${friendUserId}.jpg`,
+        false,
+        true,
+      );
 
       if (!photoUri) {
         return null;
       }
 
+      const avatarUri = avatarUrl
+        ? ((await cacheImageToAppGroup(
+            avatarUrl,
+            `avatar-${friendUserId}.jpg`,
+            false,
+            true,
+          )) ?? "")
+        : "";
+
       return {
         photoUri,
-        avatarUri: avatarUri ?? "",
+        avatarUri,
+        displayName,
       };
     }),
   );
