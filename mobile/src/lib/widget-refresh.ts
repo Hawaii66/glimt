@@ -176,13 +176,11 @@ export async function refreshFriendGlimtWidget(
     return;
   }
 
-  console.log("Upate", glimts, getWidgetTileStyle(accentThemeId), whiteUri);
   FriendGlimtWidget.updateSnapshot({
     glimts,
     style: getWidgetTileStyle(accentThemeId),
     whiteUri,
   });
-  FriendGlimtWidget.reload();
 }
 
 export function refreshCameraWidget(accentThemeId?: AccentThemeId): void {
@@ -190,5 +188,4 @@ export function refreshCameraWidget(accentThemeId?: AccentThemeId): void {
     captureUrl: getCaptureDeepLinkUrl(),
     style: getWidgetTileStyle(accentThemeId),
   });
-  FriendGlimtCameraWidget.reload();
 }
