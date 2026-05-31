@@ -325,9 +325,19 @@ export const getJournalTimezoneForFriend = query({
       memberUserIds,
     );
 
+    const viewerIndex = memberUserIds.indexOf(userId);
+    const friendIndex = memberUserIds.indexOf(friendUserId);
+    const viewerTimezone =
+      context.memberTimezones[viewerIndex >= 0 ? viewerIndex : 0]!;
+    const friendTimezone =
+      context.memberTimezones[friendIndex >= 0 ? friendIndex : 1]!;
+
     return {
       groupId,
+      viewerTimezone,
+      friendTimezone,
       effectiveTimezone: context.effectiveTimezone,
+      timezonesDiffer: context.timezonesDiffer,
       memberTimezones: context.memberTimezones,
       canChangeJournalTimezone: context.canChangeJournalTimezone,
       scheduledChange: context.scheduledChange ?? null,

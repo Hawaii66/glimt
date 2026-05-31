@@ -16,7 +16,6 @@ import {
 
 import { DailyJourneyRow } from "@/components/journey/DailyJourneyRow";
 import { ProfilePreview } from "@/components/onboarding/ProfilePreview";
-import { JournalTimezoneSettings } from "@/components/settings/JournalTimezoneSettings";
 import { useFriendJourney } from "@/hooks/useFriendJourney";
 import { useFriendProfile } from "@/hooks/useFriendProfile";
 import { useJournalContext } from "@/hooks/useJournalContext";
@@ -146,9 +145,6 @@ export default function FriendJourneyScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {friendId ? (
-          <JournalTimezoneSettings friendUserId={friendId} />
-        ) : null}
         {journeysLoading || !journalToday ? null : journeys.length === 0 ? (
           <View
             style={[

@@ -2,7 +2,9 @@ import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
+import { TimezoneInfoRow } from "@/components/settings/TimezoneInfoRow";
 import { getConvexErrorMessage } from "@/lib/convexError";
+import { formatTimezoneLabel } from "@/lib/format-timezone";
 import { useAppColors } from "@/lib/theme";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
@@ -10,10 +12,6 @@ import type { Id } from "convex/_generated/dataModel";
 type JournalTimezoneSettingsProps = {
   friendUserId: string;
 };
-
-function formatTimezoneLabel(timezone: string): string {
-  return timezone.replace(/_/g, " ");
-}
 
 export function JournalTimezoneSettings({
   friendUserId,
@@ -25,11 +23,11 @@ export function JournalTimezoneSettings({
   const setJournalTimezone = useMutation(api.journals.setJournalTimezone);
   const [savingTimezone, setSavingTimezone] = useState<string | null>(null);
 
-  if (settings === undefined || settings === null) {
+  if (settings === undefined) {
     return null;
   }
 
-  if (!settings.canChangeJournalTimezone) {
+  if (settings === null) {
     return null;
   }
 
@@ -61,88 +59,117 @@ export function JournalTimezoneSettings({
   };
 
   return (
-    <View style={[styles.container, { borderColor: colors.surfaceBorder }]}>
-      <Text style={[styles.title, { color: colors.text }]}>
-        Shared journal day
-      </Text>
-      <Text style={[styles.body, { color: colors.textMuted }]}>
-        You and your friend are in different timezones. Choose which timezone
-        defines when a shared day starts and ends.
-      </Text>
-      {settings.scheduledChange ? (
-        <Text style={[styles.pending, { color: colors.textMuted }]}>
-          Changes to {formatTimezoneLabel(settings.scheduledChange.timezone)} on{" "}
-          {settings.scheduledChange.effectiveFrom}.
-        </Text>
-      ) : null}
-      <View style={styles.options}>
-        {options.map((timezone) => {
-          const isActive =
-            timezone === settings.effectiveTimezone &&
-            !settings.scheduledChange;
-          const isPending =
-            settings.scheduledChange?.timezone === timezone;
-          const isSaving = savingTimezone === timezone;
+    <View style={styles.container}>
+      <TimezoneInfoRow
+        label="Friend's timezone"
+        timezone={settings.friendTimezone}
+      />
 
-          return (
-            <Pressable
-              key={timezone}
-              style={[
-                styles.option,
-                {
-                  backgroundColor: isActive ? colors.fill : "transparent",
-                  borderColor: colors.surfaceBorder,
-                },
-              ]}
-              disabled={isSaving}
-              onPress={() => void handleSelect(timezone)}
-              accessibilityRole="button"
-              accessibilityLabel={`Use ${formatTimezoneLabel(timezone)} for shared journal days`}
-            >
-              <Text style={[styles.optionText, { color: colors.text }]}>
-                {formatTimezoneLabel(timezone)}
-              </Text>
-              {isActive ? (
-                <Text style={[styles.optionMeta, { color: colors.textMuted }]}>
-                  Current
-                </Text>
-              ) : null}
-              {isPending ? (
-                <Text style={[styles.optionMeta, { color: colors.textMuted }]}>
-                  Scheduled
-                </Text>
-              ) : null}
-              {isSaving ? (
-                <Text style={[styles.optionMeta, { color: colors.textMuted }]}>
-                  Saving...
-                </Text>
-              ) : null}
-            </Pressable>
-          );
-        })}
-      </View>
+      {settings.timezonesDiffer ? (
+        <>
+          <TimezoneInfoRow
+            label="Your timezone"
+            timezone={settings.viewerTimezone}
+          />
+          <TimezoneInfoRow
+            label="Shared journal day"
+            timezone={settings.effectiveTimezone}
+            hint={
+              settings.scheduledChange
+                ? `Changing to ${formatTimezoneLabel(settings.scheduledChange.timezone)} on ${settings.scheduledChange.effectiveFrom}.`
+                : "Defines when a shared day starts and ends for both of you."
+            }
+          />
+        </>
+      ) : (
+        <TimezoneInfoRow
+          label="Shared journal day"
+          timezone={settings.effectiveTimezone}
+          hint="You share the same timezone, so your journal day follows it automatically."
+        />
+      )}
+
+      {settings.canChangeJournalTimezone ? (
+        <View style={styles.pickerSection}>
+          <Text style={[styles.pickerTitle, { color: colors.text }]}>
+            Change shared journal day
+          </Text>
+          <Text style={[styles.pickerBody, { color: colors.textMuted }]}>
+            Choose which timezone defines your shared journal day. Changes apply
+            from the next calendar day.
+          </Text>
+          <View style={styles.options}>
+            {options.map((timezone) => {
+              const isActive =
+                timezone === settings.effectiveTimezone &&
+                !settings.scheduledChange;
+              const isPending =
+                settings.scheduledChange?.timezone === timezone;
+              const isSaving = savingTimezone === timezone;
+
+              return (
+                <Pressable
+                  key={timezone}
+                  style={[
+                    styles.option,
+                    {
+                      backgroundColor: isActive ? colors.fill : "transparent",
+                      borderColor: colors.surfaceBorder,
+                    },
+                  ]}
+                  disabled={isSaving}
+                  onPress={() => void handleSelect(timezone)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Use ${formatTimezoneLabel(timezone)} for shared journal days`}
+                >
+                  <Text style={[styles.optionText, { color: colors.text }]}>
+                    {formatTimezoneLabel(timezone)}
+                  </Text>
+                  {isActive ? (
+                    <Text
+                      style={[styles.optionMeta, { color: colors.textMuted }]}
+                    >
+                      Current
+                    </Text>
+                  ) : null}
+                  {isPending ? (
+                    <Text
+                      style={[styles.optionMeta, { color: colors.textMuted }]}
+                    >
+                      Scheduled
+                    </Text>
+                  ) : null}
+                  {isSaving ? (
+                    <Text
+                      style={[styles.optionMeta, { color: colors.textMuted }]}
+                    >
+                      Saving...
+                    </Text>
+                  ) : null}
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 16,
-    padding: 16,
+    gap: 16,
+  },
+  pickerSection: {
     gap: 10,
   },
-  title: {
+  pickerTitle: {
     fontSize: 17,
     fontWeight: "700",
   },
-  body: {
+  pickerBody: {
     fontSize: 14,
     lineHeight: 20,
-  },
-  pending: {
-    fontSize: 13,
-    lineHeight: 18,
   },
   options: {
     gap: 8,

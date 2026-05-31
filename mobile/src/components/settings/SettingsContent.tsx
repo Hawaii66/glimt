@@ -20,8 +20,10 @@ import {
 import { ProfilePreview } from "@/components/onboarding/ProfilePreview";
 import { UserAvatar } from "@/components/UserAvatar";
 import { AccentThemePicker } from "@/components/settings/AccentThemePicker";
+import { TimezoneInfoRow } from "@/components/settings/TimezoneInfoRow";
 import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
 import { getAccentTheme } from "@/lib/accent-themes";
+import { getDeviceTimezone } from "@/lib/format-timezone";
 import { getConvexErrorMessage } from "@/lib/convexError";
 import { appFriendJourney } from "@/lib/routes";
 import { useAppColors } from "@/lib/theme";
@@ -311,6 +313,18 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
           <AccentThemePicker
             selectedId={accentTheme}
             onSelect={setAccentTheme}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <TimezoneInfoRow
+            label="Your timezone"
+            timezone={user?.timezone ?? getDeviceTimezone()}
+            hint={
+              user?.timezone
+                ? "Used for notifications. Updates when you open the app."
+                : "Syncs from your device when you open the app."
+            }
           />
         </View>
 
