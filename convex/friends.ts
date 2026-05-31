@@ -3,8 +3,13 @@ import type { Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { requireAuthUserId, validateUsername } from "./lib/auth";
-import { createFriendGroup, findGroupForUsers } from "./lib/friendGroups";
-import { prepareTodayMeetLockForGroup, todayIsoDate } from "./lib/meetLock";
+import { createFriendGroup, findGroupForUsers, listGroupMemberIds } from "./lib/friendGroups";
+import { todayIsoDate } from "./lib/dates";
+import {
+  ensureJournalTimezoneDefault,
+  prepareJournalTimezoneForMutation,
+} from "./lib/journalTimezone";
+import { prepareTodayMeetLockForGroup } from "./lib/meetLock";
 import { userError } from "./lib/userError";
 
 type UserProfile = {
@@ -332,7 +337,6 @@ export const acceptRequest = mutation({
       respondedAt: now,
     });
 
-    const today = todayIsoDate(now);
     if (!(await areFriends(ctx, request.fromUserId, request.toUserId))) {
       await ctx.db.insert("friendships", {
         userId: request.fromUserId,
@@ -348,7 +352,22 @@ export const acceptRequest = mutation({
         request.fromUserId,
         request.toUserId,
       ]);
-      await prepareTodayMeetLockForGroup(ctx, groupId, today, now);
+      const memberUserIds = await listGroupMemberIds(ctx, groupId);
+      await ensureJournalTimezoneDefault(ctx, groupId, memberUserIds, now);
+      const context = await prepareJournalTimezoneForMutation(
+        ctx,
+        groupId,
+        memberUserIds,
+        now,
+      );
+      const today = todayIsoDate(now, context.effectiveTimezone);
+      await prepareTodayMeetLockForGroup(
+        ctx,
+        groupId,
+        today,
+        context.effectiveTimezone,
+        now,
+      );
     }
   },
 });

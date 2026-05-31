@@ -1,29 +1,15 @@
+import {
+  dayBeforeIsoDate,
+  isJourneyToday as isSameJournalDay,
+} from "@glimt/date";
+
 import type { JourneyDay, JourneyGlimt } from "@/lib/journey-types";
 
-function parseIsoDate(isoDate: string): Date {
-  const [year, month, day] = isoDate.split("-").map(Number);
-  return new Date(year, month - 1, day, 12, 0, 0, 0);
-}
-
-function startOfDay(date: Date): Date {
-  const copy = new Date(date);
-  copy.setHours(0, 0, 0, 0);
-  return copy;
-}
-
-export function todayIsoDate(now = new Date()): string {
-  const d = startOfDay(now);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-export function isJourneyToday(isoDate: string, now = new Date()): boolean {
-  const date = parseIsoDate(isoDate);
-  const today = startOfDay(now);
-  const target = startOfDay(date);
-  return today.getTime() === target.getTime();
+export function isJourneyToday(
+  isoDate: string,
+  journalToday: string,
+): boolean {
+  return isSameJournalDay(isoDate, journalToday);
 }
 
 export function isJourneyComplete(
@@ -33,8 +19,11 @@ export function isJourneyComplete(
   return Boolean(yours?.length && theirs?.length);
 }
 
-export function isCalendarLocked(isoDate: string, now = new Date()): boolean {
-  return isJourneyToday(isoDate, now);
+export function isCalendarLocked(
+  isoDate: string,
+  journalToday: string,
+): boolean {
+  return isJourneyToday(isoDate, journalToday);
 }
 
 export function isMeetLocked(
@@ -46,9 +35,9 @@ export function isMeetLocked(
 export function isRowLocked(
   journey: Pick<JourneyDay, "meetLock" | "unlockedAt">,
   isoDate: string,
-  now = new Date(),
+  journalToday: string,
 ): boolean {
-  if (isCalendarLocked(isoDate, now)) {
+  if (isCalendarLocked(isoDate, journalToday)) {
     return true;
   }
   return isMeetLocked(journey);
@@ -57,29 +46,26 @@ export function isRowLocked(
 /** @deprecated Use isRowLocked with journey metadata */
 export function isJourneyLocked(
   isoDate: string,
-  _yours?: JourneyGlimt[],
-  _theirs?: JourneyGlimt[],
-  now = new Date(),
+  journalToday: string,
 ): boolean {
-  return isCalendarLocked(isoDate, now);
+  return isCalendarLocked(isoDate, journalToday);
 }
 
-export function formatJourneyDate(isoDate: string, now = new Date()): string {
-  const date = parseIsoDate(isoDate);
-  const today = startOfDay(now);
-  const target = startOfDay(date);
-  const diffDays = Math.round(
-    (today.getTime() - target.getTime()) / (1000 * 60 * 60 * 24),
-  );
-
-  if (diffDays === 0) {
+export function formatJourneyDate(
+  isoDate: string,
+  journalToday: string,
+): string {
+  if (isoDate === journalToday) {
     return "Today";
   }
 
-  if (diffDays === 1) {
+  const yesterday = dayBeforeIsoDate(journalToday);
+  if (isoDate === yesterday) {
     return "Yesterday";
   }
 
+  const [year, month, day] = isoDate.split("-").map(Number);
+  const date = new Date(year, month - 1, day, 12, 0, 0, 0);
   return date.toLocaleDateString(undefined, {
     weekday: "short",
     month: "short",

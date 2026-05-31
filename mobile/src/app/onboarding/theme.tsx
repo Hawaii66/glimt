@@ -5,7 +5,6 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 import { OnboardingScreen } from "@/components/onboarding/OnboardingScreen";
 import { AccentThemePicker } from "@/components/settings/AccentThemePicker";
-import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
 import { APP_HOME } from "@/lib/routes";
 import { useAppColors } from "@/lib/theme";
 import { useOnboardingStore } from "@/stores/onboardingStore";
@@ -18,7 +17,8 @@ export default function ThemeScreen() {
   const user = useQuery(api.users.current);
   const displayName = useOnboardingStore((state) => state.displayName);
   const username = useOnboardingStore((state) => state.username);
-  const { accentTheme, setAccentTheme } = useCurrentUserAccentTheme();
+  const accentTheme = useOnboardingStore((state) => state.accentTheme);
+  const setAccentTheme = useOnboardingStore((state) => state.setAccentTheme);
 
   if (authLoading || (isAuthenticated && user === undefined)) {
     return (
@@ -29,6 +29,10 @@ export default function ThemeScreen() {
   }
 
   if (!isAuthenticated) {
+    return <Redirect href="/onboarding/sign-in" />;
+  }
+
+  if (user === null) {
     return <Redirect href="/onboarding/sign-in" />;
   }
 
