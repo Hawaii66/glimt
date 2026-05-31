@@ -45,7 +45,7 @@ export const ACCENT_THEMES: AccentTheme[] = [
   },
 ];
 
-export const DEFAULT_ACCENT_THEME_ID: AccentThemeId = "orange";
+export const DEFAULT_ACCENT_THEME_ID: AccentThemeId = "blue";
 
 export function resolveAccentThemeId(
   accentTheme?: AccentThemeId | null,
@@ -56,6 +56,7 @@ export function resolveAccentThemeId(
 export function getAccentTheme(id: AccentThemeId): AccentTheme {
   return (
     ACCENT_THEMES.find((theme) => theme.id === id) ??
+    ACCENT_THEMES.find((theme) => theme.id === DEFAULT_ACCENT_THEME_ID) ??
     ACCENT_THEMES[0]!
   );
 }

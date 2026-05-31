@@ -22,7 +22,7 @@ export default function SignInScreen() {
   const [error, setError] = useState<string | null>(null);
   const [awaitingUser, setAwaitingUser] = useState(false);
 
-  console.log(user, error, awaitingUser);
+  console.log(user, error, awaitingUser, isAuthenticated, authLoading);
 
   useEffect(() => {
     if (!isAuthenticated || user === undefined || user === null) {

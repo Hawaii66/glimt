@@ -14,12 +14,10 @@ export const current = query({
   args: {},
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
-    console.log(ctx, userId);
     if (!userId) {
       return null;
     }
     const user = await ctx.db.get(userId);
-    console.log(user);
     if (!user) {
       return null;
     }
