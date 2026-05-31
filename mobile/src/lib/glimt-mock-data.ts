@@ -59,7 +59,7 @@ export const MOCK_FRIEND_GLIMTS: FriendGlimt[] = [
     username: "samc",
     photoUrl: "https://picsum.photos/seed/glimt-widget-3/400/400",
     avatarUrl: "https://i.pravatar.cc/128?u=glimt-friend-3",
-    accentId: "teal",
+    accentId: "ocean",
   },
   {
     id: "friend-4",
