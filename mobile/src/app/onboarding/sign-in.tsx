@@ -1,4 +1,4 @@
-import { useConvexAuth } from "@convex-dev/auth/react";
+import { useAuthActions, useConvexAuth } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
 import { Redirect, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -14,6 +14,7 @@ import { api } from "convex/_generated/api";
 export default function SignInScreen() {
   const colors = useAppColors();
   const router = useRouter();
+  const { signOut } = useAuthActions();
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
   const user = useQuery(api.users.current);
   const seedFromUser = useOnboardingStore((state) => state.seedFromUser);
@@ -21,8 +22,19 @@ export default function SignInScreen() {
   const [error, setError] = useState<string | null>(null);
   const [awaitingUser, setAwaitingUser] = useState(false);
 
+  console.log(user, error, awaitingUser, isAuthenticated, authLoading);
+
   useEffect(() => {
-    if (!isAuthenticated || user === undefined) {
+    if (!isAuthenticated || user === undefined || user === null) {
+      return;
+    }
+
+    if (user === null) {
+      setAwaitingUser(false);
+      setError(
+        "We couldn't finish setting up your account. Please sign in again.",
+      );
+      void signOut();
       return;
     }
 
@@ -36,13 +48,9 @@ export default function SignInScreen() {
       seedFromUser(user);
       router.replace("/onboarding/setup");
     }
-  }, [isAuthenticated, user, seedFromUser, reset, router]);
+  }, [isAuthenticated, user, seedFromUser, reset, router, signOut]);
 
-  if (
-    authLoading ||
-    awaitingUser ||
-    (isAuthenticated && user === undefined)
-  ) {
+  if (authLoading || awaitingUser || (isAuthenticated && user === undefined)) {
     return (
       <View style={[styles.loading, { backgroundColor: colors.background }]}>
         <ActivityIndicator color={colors.text} />

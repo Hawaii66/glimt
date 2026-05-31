@@ -15,6 +15,9 @@ export function useCurrentUserAccentTheme() {
   );
 
   const setAccentTheme = (accentTheme: AccentThemeId) => {
+    if (!user) {
+      return;
+    }
     void setAccentThemeMutation({ accentTheme });
   };
 

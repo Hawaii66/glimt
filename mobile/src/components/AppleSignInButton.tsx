@@ -18,7 +18,10 @@ type AppleSignInButtonProps = {
   onSuccess?: () => void;
 };
 
-export function AppleSignInButton({ onError, onSuccess }: AppleSignInButtonProps) {
+export function AppleSignInButton({
+  onError,
+  onSuccess,
+}: AppleSignInButtonProps) {
   const colors = useAppColors();
   const { signIn } = useAuthActions();
   const initSignIn = useMutation(api.auth.providers.apple.initSignIn);

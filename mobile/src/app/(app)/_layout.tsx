@@ -7,6 +7,7 @@ import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { FriendRequestNotification } from "@/components/FriendRequestNotification";
 import { Toast } from "@/components/Toast";
 import { usePrepareTodayMeetLocks } from "@/hooks/usePrepareTodayMeetLocks";
+import { useSyncTimezone } from "@/hooks/useSyncTimezone";
 import {
   resolveAccentThemeId,
   type AccentThemeId,
@@ -27,7 +28,7 @@ export default function AppLayout() {
   );
 
   useEffect(() => {
-    if (!isAuthenticated || user === undefined || !user.onboardingComplete) {
+    if (!isAuthenticated || user === undefined || !user?.onboardingComplete) {
       return;
     }
 
@@ -57,6 +58,7 @@ export default function AppLayout() {
 function AppShell() {
   const colors = useAppColors();
   usePrepareTodayMeetLocks(true);
+  useSyncTimezone(true);
 
   return (
     <View style={styles.appRoot}>

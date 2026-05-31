@@ -146,14 +146,11 @@ export async function refreshFriendGlimtWidget(
     Alert.alert("No white");
     return;
   }
-  console.log(whiteUrl, "url", glimts);
   const whiteUri = await cacheImageToAppGroup(whiteUrl, "white.png", true);
   if (!whiteUri) {
     Alert.alert("No white uri");
     return;
   }
-
-  console.log(whiteUri, "uri", glimts);
 
   FriendGlimtWidget.updateSnapshot({
     glimts,

@@ -5,7 +5,6 @@ import { useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 import { OnboardingScreen } from "@/components/onboarding/OnboardingScreen";
-import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
 import { uploadAvatarToStorage } from "@/lib/uploadAvatar";
 import { useAppColors } from "@/lib/theme";
 import { APP_HOME } from "@/lib/routes";
@@ -20,7 +19,7 @@ export default function ConfirmScreen() {
   const displayName = useOnboardingStore((state) => state.displayName);
   const username = useOnboardingStore((state) => state.username);
   const localAvatarUri = useOnboardingStore((state) => state.localAvatarUri);
-  const { accentTheme } = useCurrentUserAccentTheme();
+  const accentTheme = useOnboardingStore((state) => state.accentTheme);
   const reset = useOnboardingStore((state) => state.reset);
   const generateAvatarUploadUrl = useMutation(
     api.users.generateAvatarUploadUrl,
@@ -74,6 +73,10 @@ export default function ConfirmScreen() {
   }
 
   if (!isAuthenticated) {
+    return <Redirect href="/onboarding/sign-in" />;
+  }
+
+  if (user === null) {
     return <Redirect href="/onboarding/sign-in" />;
   }
 

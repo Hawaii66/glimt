@@ -2,7 +2,13 @@ import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { mutation } from "./_generated/server";
 import { requireAuthUserId } from "./lib/auth";
-import { requireGroupMember, validateDayDate } from "./lib/friendGroups";
+import {
+  listGroupMemberIds,
+  requireGroupMember,
+  validateDayDate,
+} from "./lib/friendGroups";
+import { isDayEnded } from "./lib/dates";
+import { getJournalTimezoneContext } from "./lib/journalTimezone";
 import { userError } from "./lib/userError";
 
 const TOKEN_PREFIX = "glimt-meet-unlock-v1:";
@@ -216,6 +222,17 @@ export const completeMeetUnlock = mutation({
     }
 
     const now = Date.now();
+    const memberUserIds = await listGroupMemberIds(ctx, payload.groupId);
+    const context = await getJournalTimezoneContext(
+      ctx,
+      payload.groupId,
+      memberUserIds,
+      now,
+    );
+
+    if (!isDayEnded(payload.date, now, context.effectiveTimezone)) {
+      userError("Today's glimts cannot be unlocked yet.");
+    }
 
     if (day) {
       await ctx.db.patch(day._id, {

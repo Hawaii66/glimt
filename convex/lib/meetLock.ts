@@ -1,20 +1,8 @@
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
+import { isDayEnded, todayIsoDate } from "./dates";
 
 export const MEET_LOCK_PROBABILITY = 1 / 7;
-
-export function dayDateFromTimestamp(timestamp: number) {
-  return new Date(timestamp).toISOString().slice(0, 10);
-}
-
-export function todayIsoDate(now = Date.now()): string {
-  return dayDateFromTimestamp(now);
-}
-
-export function isDayEnded(date: string, now = Date.now()): boolean {
-  const today = todayIsoDate(now);
-  return date < today;
-}
 
 export function isDayComplete(
   entries: Array<{ authorUserId: Id<"users"> }>,
@@ -41,9 +29,10 @@ type DayRecord = {
 export function isEligibleForTodayMeetLockRoll(
   date: string,
   dayRecord: DayRecord | null,
+  timezone: string,
   now = Date.now(),
 ): boolean {
-  if (date !== todayIsoDate(now)) {
+  if (date !== todayIsoDate(now, timezone)) {
     return false;
   }
 
@@ -63,11 +52,19 @@ export function isEligibleForMeetLockRoll(args: {
   entries: Array<{ authorUserId: Id<"users"> }>;
   memberUserIds: Id<"users">[];
   dayRecord: DayRecord | null;
+  timezone: string;
   now?: number;
 }): boolean {
-  const { date, entries, memberUserIds, dayRecord, now = Date.now() } = args;
+  const {
+    date,
+    entries,
+    memberUserIds,
+    dayRecord,
+    timezone,
+    now = Date.now(),
+  } = args;
 
-  if (!isDayEnded(date, now)) {
+  if (!isDayEnded(date, now, timezone)) {
     return false;
   }
 
@@ -90,6 +87,7 @@ export async function prepareTodayMeetLockForGroup(
   ctx: MutationCtx,
   groupId: Id<"friendGroups">,
   date: string,
+  timezone: string,
   now = Date.now(),
 ): Promise<{ created: boolean; meetLocked: boolean }> {
   const existingDay = await ctx.db
@@ -99,7 +97,7 @@ export async function prepareTodayMeetLockForGroup(
     )
     .unique();
 
-  if (!isEligibleForTodayMeetLockRoll(date, existingDay, now)) {
+  if (!isEligibleForTodayMeetLockRoll(date, existingDay, timezone, now)) {
     return {
       created: false,
       meetLocked: existingDay?.meetLocked ?? false,
@@ -128,6 +126,10 @@ export async function prepareTodayMeetLockForGroup(
 export async function prepareTodayMeetLocksForUser(
   ctx: MutationCtx,
   userId: Id<"users">,
+  prepareGroup: (
+    groupId: Id<"friendGroups">,
+    memberUserIds: Id<"users">[],
+  ) => Promise<{ date: string; timezone: string }>,
   now = Date.now(),
 ): Promise<
   Array<{
@@ -137,7 +139,6 @@ export async function prepareTodayMeetLocksForUser(
     created: boolean;
   }>
 > {
-  const today = todayIsoDate(now);
   const memberships = await ctx.db
     .query("friendGroupMembers")
     .withIndex("by_user", (q) => q.eq("userId", userId))
@@ -152,13 +153,21 @@ export async function prepareTodayMeetLocksForUser(
   }> = [];
 
   for (const groupId of groupIds) {
+    const memberUserIds = await ctx.db
+      .query("friendGroupMembers")
+      .withIndex("by_group", (q) => q.eq("groupId", groupId))
+      .collect()
+      .then((rows) => rows.map((row) => row.userId));
+
+    const { date, timezone } = await prepareGroup(groupId, memberUserIds);
     const { created, meetLocked } = await prepareTodayMeetLockForGroup(
       ctx,
       groupId,
-      today,
+      date,
+      timezone,
       now,
     );
-    results.push({ groupId, date: today, meetLocked, created });
+    results.push({ groupId, date, meetLocked, created });
   }
 
   return results;
@@ -170,6 +179,7 @@ export async function rollMeetLockForDayIfEligible(
   date: string,
   entries: Array<{ authorUserId: Id<"users"> }>,
   memberUserIds: Id<"users">[],
+  timezone: string,
   now = Date.now(),
 ): Promise<boolean | null> {
   const existingDay = await ctx.db
@@ -185,6 +195,7 @@ export async function rollMeetLockForDayIfEligible(
       entries,
       memberUserIds,
       dayRecord: existingDay,
+      timezone,
       now,
     })
   ) {
@@ -214,9 +225,10 @@ export async function syncMeetLocksForGroup(
   ctx: MutationCtx,
   groupId: Id<"friendGroups">,
   memberUserIds: Id<"users">[],
+  timezone: string,
   now = Date.now(),
 ): Promise<number> {
-  const today = todayIsoDate(now);
+  const today = todayIsoDate(now, timezone);
   const entries = await ctx.db
     .query("journalEntries")
     .withIndex("by_group", (q) => q.eq("groupId", groupId))
@@ -249,6 +261,7 @@ export async function syncMeetLocksForGroup(
         entries: dayEntries,
         memberUserIds,
         dayRecord: existingDay,
+        timezone,
         now,
       })
     ) {
@@ -261,6 +274,7 @@ export async function syncMeetLocksForGroup(
       date,
       dayEntries,
       memberUserIds,
+      timezone,
       now,
     );
     rolledCount += 1;
