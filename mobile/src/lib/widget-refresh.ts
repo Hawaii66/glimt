@@ -3,6 +3,7 @@ import { Directory, File, Paths } from "expo-file-system";
 
 import { api } from "convex/_generated/api";
 import { Asset } from "expo-asset";
+import * as ImageManipulator from "expo-image-manipulator";
 import {
   getAccentTheme,
   resolveAccentThemeId,
@@ -123,8 +124,20 @@ async function buildWidgetGlimts(): Promise<WidgetGlimtItem[]> {
 
   const glimts = await Promise.all(
     rows.map(async ({ friendUserId, photoUrl, avatarUrl, displayName }) => {
+      const test = ImageManipulator.ImageManipulator;
+
+      const context = test.manipulate(photoUrl);
+      context.resize({
+        height: 50,
+        width: 50,
+      });
+      const testRendered = await context.renderAsync();
+      const result = await testRendered.saveAsync({
+        format: ImageManipulator.SaveFormat.JPEG,
+      });
+
       const photoUri = await cacheImageToAppGroup(
-        photoUrl,
+        result.uri,
         `photo-${friendUserId}.jpg`,
         false,
         true,
@@ -175,6 +188,8 @@ export async function refreshFriendGlimtWidget(
     console.warn("[FriendGlimt] failed to cache white.png");
     return;
   }
+
+  console.log(whiteUrl, whiteUri, glimts);
 
   FriendGlimtWidget.updateSnapshot({
     glimts,
