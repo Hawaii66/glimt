@@ -13,7 +13,7 @@
       "env": {
         "MOBILE_ENVIRONMENT": "dev",
         "EAS_PROJECT_ID": "b92605ee-1590-47dd-a260-11dc4b24b3bf",
-        "EAS_SKIP_AUTO_FINGERPRINT": "1",
+        "EXPO_NO_DOTENV": "1",
         "EXPO_PUBLIC_CONVEX_URL_DEV": "${EXPO_PUBLIC_CONVEX_URL_DEV}"
       },
     },
@@ -25,7 +25,7 @@
       "env": {
         "MOBILE_ENVIRONMENT": "stage",
         "EAS_PROJECT_ID": "b92605ee-1590-47dd-a260-11dc4b24b3bf",
-        "EAS_SKIP_AUTO_FINGERPRINT": "1",
+        "EXPO_NO_DOTENV": "1",
         "EXPO_PUBLIC_CONVEX_URL_STAGE": "${EXPO_PUBLIC_CONVEX_URL_STAGE}"
       }
     },
@@ -37,7 +37,7 @@
       "env": {
         "MOBILE_ENVIRONMENT": "prod",
         "EAS_PROJECT_ID": "b92605ee-1590-47dd-a260-11dc4b24b3bf",
-        "EAS_SKIP_AUTO_FINGERPRINT": "1",
+        "EXPO_NO_DOTENV": "1",
         "EXPO_PUBLIC_CONVEX_URL_PROD": "${EXPO_PUBLIC_CONVEX_URL_PROD}"
       }
     }

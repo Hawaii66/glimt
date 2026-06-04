@@ -10,11 +10,15 @@
 ios/**
 android/**
 
-# Monorepo siblings (outside the mobile app)
+# Monorepo siblings (outside the Expo app)
 ../convex/**
 ../.convex/**
+../packages/date/node_modules/**
 
-# Tooling / IDE
+# Tooling / IDE at repo root
 ../.git/**
 ../.vscode/**
+../.agents/**
+../.claude/**
+../agent-tools/**
 **/.DS_Store

@@ -8,7 +8,7 @@ usage() {
   echo "  $0 dev convex              # convex dev (watcher)"
   echo "  $0 stage convex deploy"
   echo "  $0 dev expo"
-  echo "  $0 dev build ios           # EAS build, skip fingerprint"
+  echo "  $0 dev build ios           # EAS build"
   echo "  $0 stage build ios --clear-cache"
   echo "  $0 prod build android"
 }
@@ -34,6 +34,35 @@ fi
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MOBILE_DIR="$ROOT_DIR/mobile"
+
+# Git Bash on Windows often resolves `pnpm` to AppData\Local\pnpm\pnpm (not runnable).
+# Prefer pnpm.cmd from `npm install -g pnpm`.
+glimt_pnpm() {
+  if [[ -n "${MSYSTEM:-}" ]] && command -v pnpm.cmd >/dev/null 2>&1; then
+    pnpm.cmd "$@"
+    return
+  fi
+  if command -v pnpm >/dev/null 2>&1; then
+    local pnpm_bin
+    pnpm_bin="$(command -v pnpm)"
+    case "$pnpm_bin" in
+      *[\\/]AppData[\\/]Local[\\/]pnpm[\\/]pnpm)
+        if command -v pnpm.cmd >/dev/null 2>&1; then
+          pnpm.cmd "$@"
+        else
+          npx pnpm@10.12.4 "$@"
+        fi
+        ;;
+      *) pnpm "$@" ;;
+    esac
+    return
+  fi
+  if command -v pnpm.cmd >/dev/null 2>&1; then
+    pnpm.cmd "$@"
+    return
+  fi
+  npx pnpm@10.12.4 "$@"
+}
 
 ENV_PRIMARY="$ROOT_DIR/.env.${ENVIRONMENT}.local"
 ENV_FALLBACK="$ROOT_DIR/.env.${ENVIRONMENT}"
@@ -100,14 +129,14 @@ start_convex() {
   fi
 
   echo "[glimt] convex deployment=${CONVEX_DEPLOYMENT} env=${ENVIRONMENT}"
-  (cd "$ROOT_DIR" && npx convex "${args[@]}") &
+  (cd "$ROOT_DIR" && glimt_pnpm exec convex "${args[@]}") &
   CONVEX_PID="$!"
 }
 
 start_expo() {
   local script="start:${ENVIRONMENT}"
   echo "[glimt] expo env=${ENVIRONMENT}"
-  (cd "$MOBILE_DIR" && npm run "$script") &
+  (cd "$MOBILE_DIR" && glimt_pnpm run "$script") &
   EXPO_PID="$!"
 }
 
@@ -123,16 +152,18 @@ run_eas_build() {
   local eas_profile
   eas_profile="$(eas_profile_for_env)"
 
-  export EAS_SKIP_AUTO_FINGERPRINT=1
-
   local eas_args=(build --profile "$eas_profile" --platform "$platform")
   for arg in "$@"; do
     eas_args+=("$arg")
   done
 
   echo "[glimt] eas build profile=${eas_profile} platform=${platform} env=${ENVIRONMENT}"
+  echo "[glimt] upload excludes node_modules via ${ROOT_DIR}/.easignore"
   cd "$MOBILE_DIR"
-  npx eas "${eas_args[@]}"
+  export EXPO_NO_DOTENV=1
+  export MOBILE_ENVIRONMENT="$ENVIRONMENT"
+  export EAS_PROJECT_ID="${EAS_PROJECT_ID:-b92605ee-1590-47dd-a260-11dc4b24b3bf}"
+  glimt_pnpm exec eas "${eas_args[@]}"
 }
 
 if [ "$SERVICE" = "convex" ]; then
