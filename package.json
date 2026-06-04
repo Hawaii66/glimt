@@ -1,10 +1,7 @@
 {
   "name": "glimt",
   "private": true,
-  "workspaces": [
-    "mobile",
-    "packages/*"
-  ],
+  "packageManager": "pnpm@10.12.4",
   "scripts": {
     "glimt:dev": "bash ./glimt.sh dev expo",
     "glimt:stage": "bash ./glimt.sh stage expo",
@@ -14,11 +11,11 @@
     "convex:prod": "bash ./glimt.sh prod convex dev",
     "convex:deploy:stage": "bash ./glimt.sh stage convex deploy",
     "convex:deploy:prod": "bash ./glimt.sh prod convex deploy",
-    "start": "npm run start:dev -w mobile",
-    "android": "npm run android -w mobile",
-    "ios": "npm run ios -w mobile",
-    "web": "npm run web -w mobile",
-    "lint": "npm run lint -w mobile",
+    "start": "pnpm --filter glimt-mobile start:dev",
+    "android": "pnpm --filter glimt-mobile android",
+    "ios": "pnpm --filter glimt-mobile ios",
+    "web": "pnpm --filter glimt-mobile web",
+    "lint": "pnpm --filter glimt-mobile lint",
     "eas:build:dev": "bash ./glimt.sh dev build ios",
     "eas:build:stage": "bash ./glimt.sh stage build ios",
     "eas:build:prod": "bash ./glimt.sh prod build ios",
@@ -35,7 +32,7 @@
   "dependencies": {
     "@auth/core": "^0.37.0",
     "@convex-dev/auth": "^0.0.92",
-    "@glimt/date": "*",
+    "@glimt/date": "workspace:*",
     "jose": "^6.2.3",
     "zod": "^4.4.3"
   }

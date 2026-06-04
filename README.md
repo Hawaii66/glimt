@@ -7,7 +7,7 @@ Minimal social app: one photo + short caption. No feed, likes, or comments — j
 ## Project layout
 
 ```
-glimt/                    # npm workspaces monorepo (Expo + Convex)
+glimt/                    # pnpm workspaces monorepo (Expo + Convex)
   convex/                 # Backend schema & functions (run CLI from repo root)
   mobile/                 # Expo React Native app (EAS project root)
   packages/
@@ -17,14 +17,68 @@ glimt/                    # npm workspaces monorepo (Expo + Convex)
 ## Prerequisites
 
 - Node.js **^20.19.4**, **^22.13.0**, or newer
-- npm
+- [pnpm](https://pnpm.io/) 10.x
 
 ## Setup
 
 From the **repo root**:
 
 ```bash
-npm install
+npm install -g pnpm@10.12.4
+pnpm.cmd install
+```
+
+### Windows: `PNPM_HOME` / broken `pnpm` in Git Bash
+
+Running `pnpm setup` (or the standalone installer) adds:
+
+```text
+PNPM_HOME=C:\Users\hawai\AppData\Local\pnpm
+```
+
+and puts that folder on **PATH**. In Git Bash that often breaks with  
+`'...\AppData\Local\pnpm\pnpm' is not recognized` because the shim there is not a normal Windows executable.
+
+**Recommended for this repo:** use the **npm global** CLI instead of the standalone install.
+
+1. Remove the standalone setup (Windows → Environment Variables → User):
+   - Delete variable **`PNPM_HOME`**
+   - Remove **`C:\Users\hawai\AppData\Local\pnpm`** from **Path**
+   - Ensure **npm’s global bin folder** is on Path (see below)
+2. Install via npm (once):
+
+   ```bash
+   npm install -g pnpm@10.12.4
+   ```
+
+3. In Git Bash, either use `pnpm.cmd` explicitly, or source the project helper:
+
+   ```bash
+   source scripts/pnpm-git-bash.sh
+   pnpm install
+   ```
+
+`./glimt.sh` already calls `pnpm.cmd` on Git Bash when needed.
+
+**Where is npm’s global folder?** It is usually **Roaming**, not Local:
+
+| What you might look for | Actual path on this machine |
+|-------------------------|-----------------------------|
+| `AppData\Local\npm` | ❌ not used for npm globals |
+| `%APPDATA%\npm` | ✅ `C:\Users\hawai\AppData\Roaming\npm` |
+
+`%APPDATA%` is an environment variable (→ `...\AppData\Roaming`). You will not see a folder literally named `%APPDATA%` in Explorer. Check yours:
+
+```powershell
+npm config get prefix
+# e.g. C:\Users\hawai\AppData\Roaming\npm
+```
+
+Add **that** path to user **Path** if `pnpm.cmd` is not found in a new terminal. After `npm install -g pnpm`, confirm:
+
+```powershell
+Test-Path "$env:APPDATA\npm\pnpm.cmd"   # should be True
+where.exe pnpm.cmd
 ```
 
 ### Convex backend (cloud per environment)
@@ -42,25 +96,25 @@ Glimt uses **three Convex cloud deployments** aligned with `MOBILE_ENVIRONMENT`:
 3. Run the backend for the environment you are working on:
 
 ```bash
-npm run convex:dev          # uses .env.dev.local
-npm run convex:dev:stage    # uses .env.stage.local
-npm run convex:dev:prod     # uses .env.prod.local
+pnpm run convex:dev          # uses .env.dev.local
+pnpm run convex:stage      # uses .env.stage.local
+pnpm run convex:prod       # uses .env.prod.local
 ```
 
 Deploy backend code to stage/prod:
 
 ```bash
-npm run convex:deploy:stage
-npm run convex:deploy:prod
+pnpm run convex:deploy:stage
+pnpm run convex:deploy:prod
 ```
 
 Set Convex Auth / Apple secrets **per deployment** (repeat for each env):
 
 ```bash
-npm run convex:dev -- env set AUTH_APPLE_ID app.glimt.mobile.dev
+pnpm run convex:dev -- env set AUTH_APPLE_ID app.glimt.mobile.dev
 ```
 
-(`npm run convex:dev --` forwards extra args to the Convex CLI.)
+(`pnpm run convex:dev --` forwards extra args to the Convex CLI.)
 
 `MOBILE_ENVIRONMENT=dev|stage|prod` selects app name, icons, bundle id, scheme, and which Convex URL the mobile app uses.
 
@@ -69,37 +123,39 @@ npm run convex:dev -- env set AUTH_APPLE_ID app.glimt.mobile.dev
 In a second terminal, from the repo root:
 
 ```bash
-npm start
+pnpm start
 ```
 
 Or from `mobile/`:
 
 ```bash
 cd mobile
-npm start
+pnpm start
 ```
 
 ## Scripts (repo root)
 
 | Command | Description |
 |--------|-------------|
-| `npm run convex:dev` | Convex dev → **dev** cloud deployment |
-| `npm run convex:dev:stage` / `convex:dev:prod` | Convex dev → stage / prod deployment |
-| `npm run convex:deploy:stage` / `convex:deploy:prod` | Push backend to stage / prod |
-| `npm start` | Expo + **dev** Convex URL (`.env.dev.local`) |
-| `npm run start:dev` / `start:stage` / `start:prod` | Expo with matching Convex URL (in `mobile/`) |
-| `npm run android` / `ios` / `web` | Platform shortcuts |
+| `pnpm run convex:dev` | Convex dev → **dev** cloud deployment |
+| `pnpm run convex:stage` / `convex:prod` | Convex dev → stage / prod deployment |
+| `pnpm run convex:deploy:stage` / `convex:deploy:prod` | Push backend to stage / prod |
+| `pnpm start` | Expo + **dev** Convex URL (`.env.dev.local`) |
+| `pnpm --filter glimt-mobile run start:stage` / `start:prod` | Expo with matching Convex URL |
+| `pnpm run android` / `ios` / `web` | Platform shortcuts |
 
 ## EAS Update (OTA)
 
 Three channels: **development**, **staging**, **production** (see `mobile/eas.json`).
 
+EAS detects **pnpm** from `pnpm-lock.yaml` at the repo root and runs `pnpm install` on the build worker.
+
 1. From `mobile/`, link EAS and configure updates:
 
    ```bash
-   eas login
-   eas init
-   eas update:configure
+   pnpm exec eas login
+   pnpm exec eas init
+   pnpm exec eas update:configure
    ```
 
    Add `EAS_PROJECT_ID` to `mobile/.env.local` (or let `eas init` write it into the config).
@@ -112,22 +168,22 @@ Three channels: **development**, **staging**, **production** (see `mobile/eas.js
    ./glimt.sh prod build ios
    ```
 
-   Same via npm: `npm run eas:build:dev`, `eas:build:stage`, `eas:build:prod`. Extra EAS flags go after the platform, e.g. `./glimt.sh dev build ios --clear-cache`.
+   Same via pnpm: `pnpm run eas:build:dev`, `eas:build:stage`, `eas:build:prod`. Extra EAS flags go after the platform, e.g. `./glimt.sh dev build ios --clear-cache`.
 
-   Or from `mobile/`: `npm run build:ios:development` (no env files from root).
+   Or from `mobile/`: `pnpm run build:ios:development` (no env files from root).
 
    Verify fingerprint locally before building:
 
    ```bash
    cd mobile
-   npm run fingerprint
+   pnpm run fingerprint
    ```
 
    EAS upload rules live in the **repo root** `.easignore` (not `mobile/`). If a build hangs on “Compressing project files”, check the archive size:
 
    ```bash
    cd mobile
-   npx eas-cli build:inspect --platform ios --stage archive --output %TEMP%\eas-inspect --profile development
+   pnpm exec eas-cli build:inspect --platform ios --stage archive --output %TEMP%\eas-inspect --profile development
    ```
 
    It should be a few MB without `node_modules/`. Projects on OneDrive can also slow compression — pause sync or move the repo off OneDrive if uploads stay stuck.
@@ -135,9 +191,9 @@ Three channels: **development**, **staging**, **production** (see `mobile/eas.js
 3. Publish JS updates:
 
    ```bash
-   npm run update:development -- --message "your message"
-   npm run update:staging -- --message "your message"
-   npm run update:production -- --message "your message"
+   pnpm --filter glimt-mobile run update:development -- --message "your message"
+   pnpm --filter glimt-mobile run update:staging -- --message "your message"
+   pnpm --filter glimt-mobile run update:production -- --message "your message"
    ```
 
    Staging builds use the **preview** EAS environment for secrets; the OTA channel is still `staging`.
@@ -148,9 +204,9 @@ EAS builds read the URL for the active `MOBILE_ENVIRONMENT` (`EXPO_PUBLIC_CONVEX
 
 ```bash
 cd mobile
-eas env:create --name EXPO_PUBLIC_CONVEX_URL_DEV --value "https://YOUR-DEV.convex.cloud" --environment development
-eas env:create --name EXPO_PUBLIC_CONVEX_URL_STAGE --value "https://YOUR-STAGE.convex.cloud" --environment preview
-eas env:create --name EXPO_PUBLIC_CONVEX_URL_PROD --value "https://YOUR-PROD.convex.cloud" --environment production
+pnpm exec eas env:create --name EXPO_PUBLIC_CONVEX_URL_DEV --value "https://YOUR-DEV.convex.cloud" --environment development
+pnpm exec eas env:create --name EXPO_PUBLIC_CONVEX_URL_STAGE --value "https://YOUR-STAGE.convex.cloud" --environment preview
+pnpm exec eas env:create --name EXPO_PUBLIC_CONVEX_URL_PROD --value "https://YOUR-PROD.convex.cloud" --environment production
 ```
 
 Without the correct variable, the app shows a configuration screen.
@@ -170,7 +226,7 @@ Copy the output into your Convex deployment environment variables: `JWT_PRIVATE_
 Also set:
 
 ```bash
-npx convex env set SITE_URL exp://127.0.0.1:8081
+pnpm exec convex env set SITE_URL exp://127.0.0.1:8081
 ```
 
 Adjust the port if Metro uses another one. For production builds, use your app scheme (for example `glimt-dev://`).
@@ -182,8 +238,8 @@ For **native iOS** sign-in, `AUTH_APPLE_ID` must be your **App ID / bundle ident
 Create a Sign in with Apple key in [Apple Developer](https://developer.apple.com/account/resources/authkeys/list), then generate the client secret JWT (see [Convex Auth Apple docs](https://labs.convex.dev/auth/config/oauth/apple)).
 
 ```bash
-npx convex env set AUTH_APPLE_ID app.glimt.mobile.dev
-npx convex env set AUTH_APPLE_SECRET "<generated-jwt-secret>"
+pnpm exec convex env set AUTH_APPLE_ID app.glimt.mobile.dev
+pnpm exec convex env set AUTH_APPLE_SECRET "<generated-jwt-secret>"
 ```
 
 ### 3. Run locally
@@ -191,14 +247,14 @@ npx convex env set AUTH_APPLE_SECRET "<generated-jwt-secret>"
 Terminal 1:
 
 ```bash
-npm run convex:dev
+pnpm run convex:dev
 ```
 
 Terminal 2:
 
 ```bash
 cd mobile
-npm start
+pnpm start
 ```
 
 Open the **development client** build on a physical iPhone (Sign in with Apple does not work fully in Expo Go for production-like flows).
@@ -207,7 +263,7 @@ After changing native config (`expo-apple-authentication` plugin), rebuild the d
 
 ```bash
 cd mobile
-npm run build:ios:development
+pnpm run build:ios:development
 ```
 
 ## MVP (not implemented yet)
@@ -219,5 +275,6 @@ npm run build:ios:development
 ## Docs
 
 - [Expo SDK 56](https://docs.expo.dev/versions/v56.0.0/)
+- [Expo monorepos](https://docs.expo.dev/guides/monorepos/)
 - [Using Convex with Expo](https://docs.expo.dev/guides/using-convex/)
 - [Convex React Native quickstart](https://docs.convex.dev/quickstart/react-native)

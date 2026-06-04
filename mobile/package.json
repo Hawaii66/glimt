@@ -5,7 +5,7 @@
   "dependencies": {
     "@convex-dev/auth": "^0.0.92",
     "@expo/ui": "~56.0.13",
-    "@glimt/date": "*",
+    "@glimt/date": "workspace:*",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@shopify/flash-list": "2.0.2",
     "convex": "^1.39.1",
@@ -65,7 +65,7 @@
     "typescript": "~6.0.3"
   },
   "scripts": {
-    "start": "npm run start:dev",
+    "start": "pnpm run start:dev",
     "start:dev": "dotenv -e ../.env.dev.local -- cross-env MOBILE_ENVIRONMENT=dev expo start",
     "start:stage": "dotenv -e ../.env.stage.local -- cross-env MOBILE_ENVIRONMENT=stage expo start",
     "start:prod": "dotenv -e ../.env.prod.local -- cross-env MOBILE_ENVIRONMENT=prod expo start",
@@ -80,8 +80,8 @@
     "build:ios:development": "eas build --profile development --platform ios --clear-cache",
     "build:ios:staging": "eas build --profile staging --platform ios --clear-cache",
     "build:ios:production": "eas build --profile production --platform ios --clear-cache",
-    "fingerprint": "npx @expo/fingerprint fingerprint:generate",
-    "fingerprint:diff": "npx @expo/fingerprint fingerprint:diff"
+    "fingerprint": "pnpm exec @expo/fingerprint fingerprint:generate",
+    "fingerprint:diff": "pnpm exec @expo/fingerprint fingerprint:diff"
   },
   "private": true
 }
