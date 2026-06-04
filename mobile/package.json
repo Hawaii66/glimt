@@ -57,6 +57,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@expo/fingerprint": "^0.19.3",
     "@types/react": "~19.2.2",
     "cross-env": "^10.1.0",
     "eslint": "^9.0.0",
@@ -68,18 +69,19 @@
     "start:dev": "dotenv -e ../.env.dev.local -- cross-env MOBILE_ENVIRONMENT=dev expo start",
     "start:stage": "dotenv -e ../.env.stage.local -- cross-env MOBILE_ENVIRONMENT=stage expo start",
     "start:prod": "dotenv -e ../.env.prod.local -- cross-env MOBILE_ENVIRONMENT=prod expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
     "update:development": "eas update --channel development --environment development",
     "update:staging": "eas update --channel staging --environment preview",
     "update:production": "eas update --channel production --environment production",
-    "eas:build": "cross-env EAS_SKIP_AUTO_FINGERPRINT=1 eas build",
-    "build:ios:development": "cross-env EAS_SKIP_AUTO_FINGERPRINT=1 eas build --profile development --platform ios --clear-cache",
-    "build:ios:staging": "cross-env EAS_SKIP_AUTO_FINGERPRINT=1 eas build --profile staging --platform ios --clear-cache",
-    "build:ios:production": "cross-env EAS_SKIP_AUTO_FINGERPRINT=1 eas build --profile production --platform ios --clear-cache",
-    "fingerprint": "npx @expo/fingerprint"
+    "eas:build": "eas build",
+    "build:ios:development": "eas build --profile development --platform ios --clear-cache",
+    "build:ios:staging": "eas build --profile staging --platform ios --clear-cache",
+    "build:ios:production": "eas build --profile production --platform ios --clear-cache",
+    "fingerprint": "npx @expo/fingerprint fingerprint:generate",
+    "fingerprint:diff": "npx @expo/fingerprint fingerprint:diff"
   },
   "private": true
 }

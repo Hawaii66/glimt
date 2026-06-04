@@ -7,9 +7,11 @@ Minimal social app: one photo + short caption. No feed, likes, or comments — j
 ## Project layout
 
 ```
-glimt/
-  convex/       # Backend schema & functions (run CLI from repo root)
-  mobile/       # Expo React Native app
+glimt/                    # npm workspaces monorepo (Expo + Convex)
+  convex/                 # Backend schema & functions (run CLI from repo root)
+  mobile/                 # Expo React Native app (EAS project root)
+  packages/
+    date/                 # Shared @glimt/date package (mobile + convex)
 ```
 
 ## Prerequisites
@@ -102,7 +104,7 @@ Three channels: **development**, **staging**, **production** (see `mobile/eas.js
 
    Add `EAS_PROJECT_ID` to `mobile/.env.local` (or let `eas init` write it into the config).
 
-2. Build per channel (fingerprint skipped — see `mobile/package.json`):
+2. Build per channel (from `mobile/`):
 
    ```bash
    cd mobile
@@ -113,10 +115,11 @@ Three channels: **development**, **staging**, **production** (see `mobile/eas.js
 
    Or any profile: `npm run eas:build -- --profile development --platform ios --clear-cache`
 
-   One-off without npm scripts (PowerShell):
+   Verify fingerprint locally before building:
 
-   ```powershell
-   $env:EAS_SKIP_AUTO_FINGERPRINT="1"; eas build --profile development --platform ios --clear-cache
+   ```bash
+   cd mobile
+   npm run fingerprint
    ```
 
 3. Publish JS updates:

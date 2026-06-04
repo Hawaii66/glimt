@@ -8,7 +8,7 @@ usage() {
   echo "  $0 dev convex              # convex dev (watcher)"
   echo "  $0 stage convex deploy"
   echo "  $0 dev expo"
-  echo "  $0 dev build ios           # EAS build, skip fingerprint"
+  echo "  $0 dev build ios           # EAS build"
   echo "  $0 stage build ios --clear-cache"
   echo "  $0 prod build android"
 }
@@ -122,8 +122,6 @@ run_eas_build() {
 
   local eas_profile
   eas_profile="$(eas_profile_for_env)"
-
-  export EAS_SKIP_AUTO_FINGERPRINT=1
 
   local eas_args=(build --profile "$eas_profile" --platform "$platform")
   for arg in "$@"; do

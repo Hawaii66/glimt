@@ -3,7 +3,7 @@
   "private": true,
   "workspaces": [
     "mobile",
-    "packages/date"
+    "packages/*"
   ],
   "scripts": {
     "glimt:dev": "bash ./glimt.sh dev expo",
