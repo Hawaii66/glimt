@@ -1,9 +1,0 @@
-# Convex backend — not needed for native/JS app builds
-../convex/**
-../.convex/**
-
-# Repo tooling (keep packages/date for workspace install)
-../.agents/**
-../.claude/**
-../agent-tools/**
-../glimt.sh

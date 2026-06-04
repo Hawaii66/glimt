@@ -129,6 +129,7 @@ run_eas_build() {
   done
 
   echo "[glimt] eas build profile=${eas_profile} platform=${platform} env=${ENVIRONMENT}"
+  echo "[glimt] upload excludes node_modules via ${ROOT_DIR}/.easignore"
   cd "$MOBILE_DIR"
   npx eas "${eas_args[@]}"
 }

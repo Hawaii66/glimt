@@ -104,16 +104,17 @@ Three channels: **development**, **staging**, **production** (see `mobile/eas.js
 
    Add `EAS_PROJECT_ID` to `mobile/.env.local` (or let `eas init` write it into the config).
 
-2. Build per channel (from `mobile/`):
+2. Build per channel (from **repo root** — loads `.env.<env>.local` and sets `MOBILE_ENVIRONMENT`):
 
    ```bash
-   cd mobile
-   npm run build:ios:development
-   npm run build:ios:staging
-   npm run build:ios:production
+   ./glimt.sh dev build ios
+   ./glimt.sh stage build ios
+   ./glimt.sh prod build ios
    ```
 
-   Or any profile: `npm run eas:build -- --profile development --platform ios --clear-cache`
+   Same via npm: `npm run eas:build:dev`, `eas:build:stage`, `eas:build:prod`. Extra EAS flags go after the platform, e.g. `./glimt.sh dev build ios --clear-cache`.
+
+   Or from `mobile/`: `npm run build:ios:development` (no env files from root).
 
    Verify fingerprint locally before building:
 
@@ -121,6 +122,15 @@ Three channels: **development**, **staging**, **production** (see `mobile/eas.js
    cd mobile
    npm run fingerprint
    ```
+
+   EAS upload rules live in the **repo root** `.easignore` (not `mobile/`). If a build hangs on “Compressing project files”, check the archive size:
+
+   ```bash
+   cd mobile
+   npx eas-cli build:inspect --platform ios --stage archive --output %TEMP%\eas-inspect --profile development
+   ```
+
+   It should be a few MB without `node_modules/`. Projects on OneDrive can also slow compression — pause sync or move the repo off OneDrive if uploads stay stuck.
 
 3. Publish JS updates:
 

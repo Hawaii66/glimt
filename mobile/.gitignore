@@ -1,3 +1,6 @@
+# Dependencies (hoisted to repo root; nested install may exist locally)
+node_modules/
+
 # Expo
 .expo/
 dist/
