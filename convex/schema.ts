@@ -22,6 +22,7 @@ const authTables = {
     widgetDisplayPreferences: v.optional(widgetDisplayPreferencesValidator),
     timezone: v.optional(v.string()),
     timezoneUpdatedAt: v.optional(v.number()),
+    lastDailyReminderDate: v.optional(v.string()),
   })
     .index("email", ["email"])
     .index("username", ["username"]),
@@ -81,7 +82,8 @@ export default defineSchema({
     dayDate: v.string(),
   })
     .index("by_group", ["groupId"])
-    .index("by_group_and_day", ["groupId", "dayDate"]),
+    .index("by_group_and_day", ["groupId", "dayDate"])
+    .index("by_author_and_sentAt", ["authorUserId", "sentAt"]),
   journalDays: defineTable({
     groupId: v.id("friendGroups"),
     date: v.string(),

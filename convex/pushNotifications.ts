@@ -98,6 +98,7 @@ export const sendToUser = internalAction({
       body,
       data,
       sound: "default" as const,
+      _contentAvailable: true,
     }));
 
     const response = await fetch(EXPO_PUSH_URL, {

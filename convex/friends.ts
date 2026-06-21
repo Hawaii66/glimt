@@ -16,6 +16,7 @@ import {
   deleteFriendshipsBetween,
   deleteMeetUnlockSessionsForGroup,
 } from "./lib/friends";
+import { scheduleFriendRequestAcceptedPush } from "./lib/pushScheduling";
 import { userError } from "./lib/userError";
 
 type UserProfile = {
@@ -401,6 +402,8 @@ export const acceptRequest = mutation({
         now,
       );
     }
+
+    await scheduleFriendRequestAcceptedPush(ctx, request.fromUserId, userId);
   },
 });
 

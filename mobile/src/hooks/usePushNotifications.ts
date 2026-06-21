@@ -8,7 +8,7 @@ import {
   parsePushNotificationData,
   registerForPushNotificationsAsync,
 } from "@/lib/push-notifications";
-import { APP_SETTINGS } from "@/lib/routes";
+import { APP_HOME, APP_SETTINGS } from "@/lib/routes";
 import { usePushTokenStore } from "@/stores/pushTokenStore";
 import { useSettingsFocusStore } from "@/stores/settingsFocusStore";
 import { registerWidgetPushNotificationTask } from "@/tasks/widget-push-notification-task";
@@ -22,6 +22,15 @@ function handleNotificationNavigation(
   if (data.type === "friend_request") {
     requestFriendRequestsFocus();
     router.push(APP_SETTINGS);
+    return;
+  }
+
+  if (
+    data.type === "glimt_received" ||
+    data.type === "friend_request_accepted" ||
+    data.type === "daily_reminder"
+  ) {
+    router.push(APP_HOME);
   }
 }
 

@@ -4,10 +4,18 @@ import { internal } from "./_generated/api";
 
 const crons = cronJobs();
 
-crons.hourly(
+crons.interval(
   "refresh home screen widgets",
-  { minuteUTC: 0 },
+  { hours: 1 },
   internal.pushWidgets.sendHourlyWidgetRefreshes,
+  {},
+);
+
+crons.interval(
+  "daily glimt reminders",
+  { minutes: 15 },
+  internal.pushReminders.runDailyReminderChecks,
+  {},
 );
 
 export default crons;

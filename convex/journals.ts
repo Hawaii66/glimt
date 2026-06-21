@@ -39,6 +39,7 @@ import {
   listTodayWidgetGlimtCandidates,
   selectWidgetGlimts,
 } from "./lib/widgetGlimts";
+import { scheduleGlimtReceivedPush } from "./lib/pushScheduling";
 import { userError } from "./lib/userError";
 
 export const prepareTodayMeetLocksOnAppOpen = mutation({
@@ -555,6 +556,8 @@ export const sendGlimt = mutation({
           seed: `${widgetRotationSeed}`,
         },
       });
+
+      await scheduleGlimtReceivedPush(ctx, targetFriendId, userId);
     }
 
     return {

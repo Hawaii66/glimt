@@ -1,5 +1,5 @@
 import { addDays } from "date-fns";
-import { formatInTimeZone, toZonedTime } from "date-fns-tz";
+import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 
 export const FALLBACK_TIMEZONE = "UTC";
 
@@ -55,6 +55,19 @@ export function isJourneyToday(
 export function localHour(now = Date.now(), timezone: string): number {
   validateIanaTimezone(timezone);
   return Number(formatInTimeZone(new Date(now), timezone, "H"));
+}
+
+export function localMinute(now = Date.now(), timezone: string): number {
+  validateIanaTimezone(timezone);
+  return Number(formatInTimeZone(new Date(now), timezone, "m"));
+}
+
+export function startOfLocalDayTimestamp(
+  isoDate: string,
+  timezone: string,
+): number {
+  validateIanaTimezone(timezone);
+  return fromZonedTime(`${isoDate}T00:00:00`, timezone).getTime();
 }
 
 export function dayBeforeIsoDate(isoDate: string): string {

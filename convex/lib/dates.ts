@@ -5,8 +5,11 @@ export {
   isDayEnded,
   isJourneyToday,
   localHour,
+  localMinute,
   resolveUserTimezone,
+  startOfLocalDayTimestamp,
   todayIsoDate,
   tomorrowIsoDate,
-  validateIanaTimezone,
+  validateIanaTimezone
 } from "@glimt/date";
+

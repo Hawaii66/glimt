@@ -36,7 +36,12 @@ Notifications.setNotificationHandler({
 });
 
 export type PushNotificationData = {
-  type?: "friend_request" | "widget_refresh";
+  type?:
+    | "friend_request"
+    | "friend_request_accepted"
+    | "glimt_received"
+    | "daily_reminder"
+    | "widget_refresh";
   friendUserId?: string;
   photoId?: string;
   seed?: string;
@@ -109,7 +114,13 @@ export function parsePushNotificationData(
 
   return {
     type:
-      type === "friend_request" || type === "widget_refresh" ? type : undefined,
+      type === "friend_request" ||
+      type === "friend_request_accepted" ||
+      type === "glimt_received" ||
+      type === "daily_reminder" ||
+      type === "widget_refresh"
+        ? type
+        : undefined,
     friendUserId: typeof friendUserId === "string" ? friendUserId : undefined,
     photoId: typeof photoId === "string" ? photoId : undefined,
     seed: typeof seed === "string" ? seed : undefined,

@@ -116,8 +116,8 @@ export default function NotificationsScreen() {
             Stay in the loop
           </Text>
           <Text style={[styles.body, { color: colors.textMuted }]}>
-            Glimt uses notifications to let you know when someone sends a friend
-            request and to keep your home screen widgets up to date.
+            Glimt uses notifications for friend requests, new glimts, daily
+            reminders, and to keep your home screen widgets up to date.
           </Text>
         </>
       }
