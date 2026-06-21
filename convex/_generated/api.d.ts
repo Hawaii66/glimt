@@ -34,6 +34,7 @@ import type * as pushNotifications from "../pushNotifications.js";
 import type * as pushTokens from "../pushTokens.js";
 import type * as pushWidgets from "../pushWidgets.js";
 import type * as users from "../users.js";
+import type * as widgetLogs from "../widgetLogs.js";
 
 import type {
   ApiFromModules,
@@ -68,6 +69,7 @@ declare const fullApi: ApiFromModules<{
   pushTokens: typeof pushTokens;
   pushWidgets: typeof pushWidgets;
   users: typeof users;
+  widgetLogs: typeof widgetLogs;
 }>;
 
 /**

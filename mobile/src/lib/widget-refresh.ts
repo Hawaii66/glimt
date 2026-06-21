@@ -39,7 +39,36 @@ const WIDGET_AVATAR_SIZE = 100;
 export type WidgetRefreshOptions = {
   seed?: number;
   pinnedPhotoId?: Id<"journalEntries">;
+  source?: string;
 };
+
+function detailsFromRecord(
+  details: Record<string, string | number | boolean | null | undefined>,
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(details)
+      .filter(([, value]) => value !== undefined && value !== null)
+      .map(([key, value]) => [key, String(value)]),
+  );
+}
+
+async function logWidgetRefreshEvent(
+  event: string,
+  details?: Record<string, string | number | boolean | null | undefined>,
+): Promise<void> {
+  if (!convex) {
+    return;
+  }
+
+  try {
+    await convex.mutation(api.widgetLogs.logWidgetRefresh, {
+      event,
+      details: details ? detailsFromRecord(details) : undefined,
+    });
+  } catch (error) {
+    console.warn("[FriendGlimt] failed to log widget refresh to Convex:", error);
+  }
+}
 
 export function getHourlyWidgetSeed(now = Date.now()): number {
   return Math.floor(now / (60 * 60 * 1000));
@@ -157,14 +186,30 @@ async function buildWidgetGlimts(
   refreshOptions?: WidgetRefreshOptions,
 ): Promise<WidgetGlimtItem[]> {
   if (!convex) {
-    console.warn("[FriendGlimt] no Convex client; skipping widget refresh");
+    await logWidgetRefreshEvent("build_skipped_no_convex", {
+      source: refreshOptions?.source,
+    });
     return [];
   }
 
+  const seed = refreshOptions?.seed ?? getHourlyWidgetSeed();
+  await logWidgetRefreshEvent("list_widget_glimts_start", {
+    source: refreshOptions?.source,
+    seed,
+    pinnedPhotoId: refreshOptions?.pinnedPhotoId,
+  });
+
   const rows = await convex.query(api.journals.listWidgetGlimts, {
     limit: 4,
-    seed: refreshOptions?.seed ?? getHourlyWidgetSeed(),
+    seed,
     pinnedPhotoId: refreshOptions?.pinnedPhotoId,
+  });
+
+  await logWidgetRefreshEvent("list_widget_glimts_done", {
+    source: refreshOptions?.source,
+    rowCount: rows.length,
+    photoIds: rows.map((row) => row.photoId).join(","),
+    friendUserIds: rows.map((row) => row.friendUserId).join(","),
   });
 
   const glimts = await Promise.all(
@@ -219,7 +264,14 @@ async function buildWidgetGlimts(
     }),
   );
 
-  return glimts.filter((item): item is WidgetGlimtItem => item !== null);
+  const built = glimts.filter((item): item is WidgetGlimtItem => item !== null);
+  await logWidgetRefreshEvent("build_widget_glimts_done", {
+    source: refreshOptions?.source,
+    builtCount: built.length,
+    requestedCount: rows.length,
+  });
+
+  return built;
 }
 
 export async function refreshFriendGlimtWidget(
@@ -227,13 +279,27 @@ export async function refreshFriendGlimtWidget(
   displayPreferencesInput?: WidgetDisplayPreferences,
   refreshOptions?: WidgetRefreshOptions,
 ): Promise<void> {
+  const source = refreshOptions?.source ?? "unknown";
+  const appGroupAvailable = getAppGroupDirectory() !== null;
+
+  await logWidgetRefreshEvent("refresh_start", {
+    source,
+    seed: refreshOptions?.seed ?? getHourlyWidgetSeed(),
+    pinnedPhotoId: refreshOptions?.pinnedPhotoId,
+    appGroupAvailable,
+    accentThemeId,
+  });
+
   const displayPreferences = resolveWidgetDisplayPreferences(
     displayPreferencesInput,
   );
-  const glimts = await buildWidgetGlimts(displayPreferences, refreshOptions);
+  const glimts = await buildWidgetGlimts(displayPreferences, {
+    ...refreshOptions,
+    source,
+  });
 
   if (glimts.length === 0) {
-    console.warn("[FriendGlimt] no widget images cached; skipping update");
+    await logWidgetRefreshEvent("refresh_skipped_no_glimts", { source });
     return;
   }
 
@@ -241,25 +307,41 @@ export async function refreshFriendGlimtWidget(
   if (displayPreferences.showWhiteBorder) {
     const whiteUrl = await getWhiteImageAssetUri();
     if (!whiteUrl) {
-      console.warn("[FriendGlimt] failed to resolve white.png asset");
+      await logWidgetRefreshEvent("refresh_failed_white_asset", { source });
       return;
     }
 
     const cachedWhiteUri = await cacheImageToAppGroup(whiteUrl, "white.png", true);
     if (!cachedWhiteUri) {
-      console.warn("[FriendGlimt] failed to cache white.png");
+      await logWidgetRefreshEvent("refresh_failed_white_cache", { source });
       return;
     }
 
     whiteUri = cachedWhiteUri;
   }
 
-  FriendGlimtWidget.updateSnapshot({
-    glimts,
-    style: getWidgetTileStyle(accentThemeId),
-    whiteUri,
-    display: displayPreferences,
-  });
+  try {
+    FriendGlimtWidget.updateSnapshot({
+      glimts,
+      style: getWidgetTileStyle(accentThemeId),
+      whiteUri,
+      display: displayPreferences,
+    });
+    FriendGlimtWidget.reload();
+    await logWidgetRefreshEvent("refresh_update_snapshot_done", {
+      source,
+      glimtCount: glimts.length,
+      showWhiteBorder: displayPreferences.showWhiteBorder,
+      photoUris: glimts.map((glimt) => glimt.photoUri).join("|"),
+      reloaded: true,
+    });
+  } catch (error) {
+    await logWidgetRefreshEvent("refresh_update_snapshot_failed", {
+      source,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw error;
+  }
 }
 
 export function refreshCameraWidget(accentThemeId?: AccentThemeId): void {
@@ -267,6 +349,7 @@ export function refreshCameraWidget(accentThemeId?: AccentThemeId): void {
     captureUrl: getCaptureDeepLinkUrl(),
     style: getWidgetTileStyle(accentThemeId),
   });
+  FriendGlimtCameraWidget.reload();
 }
 
 export async function refreshFriendGlimtWidgetFromPush(data?: {
@@ -294,5 +377,6 @@ export async function refreshFriendGlimtWidgetFromPush(data?: {
   await refreshFriendGlimtWidget(accentTheme, displayPreferences, {
     seed: Number.isFinite(seed) ? seed : getHourlyWidgetSeed(),
     pinnedPhotoId,
+    source: "push",
   });
 }

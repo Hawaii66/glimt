@@ -61,7 +61,9 @@ export default function HomeScreen() {
 
     setRefreshingWidget(true);
     try {
-      await refreshFriendGlimtWidget(accentTheme, widgetDisplayPreferences);
+      await refreshFriendGlimtWidget(accentTheme, widgetDisplayPreferences, {
+        source: "manual_dev_button",
+      });
     } finally {
       setRefreshingWidget(false);
     }

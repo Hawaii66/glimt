@@ -42,6 +42,7 @@ export default function AppLayout() {
     void refreshCameraWidget(accentTheme);
     void refreshFriendGlimtWidget(accentTheme, displayPreferences, {
       seed: getHourlyWidgetSeed(),
+      source: "app_layout",
     });
   }, [accentTheme, isAuthenticated, user]);
 
