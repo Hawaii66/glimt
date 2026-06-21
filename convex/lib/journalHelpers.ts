@@ -37,11 +37,13 @@ export type HomeFriendTile = UserProfile & {
 };
 
 export type TodayFriendGlimtTile = HomeFriendTile & {
+  photoId: Id<"journalEntries">;
   sentAt: number;
 };
 
 export type WidgetGlimt = {
   friendUserId: Id<"users">;
+  photoId: Id<"journalEntries">;
   photoUrl: string;
   avatarUrl: string;
   displayName: string;

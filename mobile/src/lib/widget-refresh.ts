@@ -28,6 +28,9 @@ import {
   type WidgetTileStyle,
 } from "./widget";
 
+const WIDGET_PHOTO_SIZE = 250;
+const WIDGET_AVATAR_SIZE = 100;
+
 function getWidgetTileStyle(accentThemeId?: AccentThemeId): WidgetTileStyle {
   const gradientColors = getAccentTheme(
     resolveAccentThemeId(accentThemeId),
@@ -81,6 +84,26 @@ async function getWhiteImageAssetUri(): Promise<string | null> {
   }
 }
 
+async function resizeWidgetImage(
+  sourceUri: string,
+  width: number,
+  height: number,
+): Promise<string | null> {
+  try {
+    const context = ImageManipulator.ImageManipulator.manipulate(sourceUri);
+    context.resize({ width, height });
+    const rendered = await context.renderAsync();
+    const result = await rendered.saveAsync({
+      format: ImageManipulator.SaveFormat.JPEG,
+    });
+
+    return result.uri;
+  } catch (error) {
+    console.warn(`[FriendGlimt] failed to resize image ${sourceUri}:`, error);
+    return null;
+  }
+}
+
 async function cacheImageToAppGroup(
   url: string,
   filename: string,
@@ -126,22 +149,19 @@ async function buildWidgetGlimts(): Promise<WidgetGlimtItem[]> {
   });
 
   const glimts = await Promise.all(
-    rows.map(async ({ friendUserId, photoUrl, avatarUrl, displayName }, index) => {
-      const test = ImageManipulator.ImageManipulator;
-
-      const context = test.manipulate(photoUrl);
-      context.resize({
-        height: 250,
-        width: 250,
-      });
-      const testRendered = await context.renderAsync();
-      const result = await testRendered.saveAsync({
-        format: ImageManipulator.SaveFormat.JPEG,
-      });
+    rows.map(async ({ friendUserId, photoId, photoUrl, avatarUrl, displayName }, index) => {
+      const resizedPhotoUri = await resizeWidgetImage(
+        photoUrl,
+        WIDGET_PHOTO_SIZE,
+        WIDGET_PHOTO_SIZE,
+      );
+      if (!resizedPhotoUri) {
+        return null;
+      }
 
       const photoUri = await cacheImageToAppGroup(
-        result.uri,
-        `photo-${friendUserId}.jpg`,
+        resizedPhotoUri,
+        `photo-${friendUserId}-${photoId}.jpg`,
         true,
         true,
       );
@@ -150,14 +170,23 @@ async function buildWidgetGlimts(): Promise<WidgetGlimtItem[]> {
         return null;
       }
 
-      const avatarUri = avatarUrl
-        ? ((await cacheImageToAppGroup(
-            avatarUrl,
-            `avatar-${friendUserId}.jpg`,
-            false,
-            true,
-          )) ?? "")
-        : "";
+      let avatarUri = "";
+      if (avatarUrl) {
+        const resizedAvatarUri = await resizeWidgetImage(
+          avatarUrl,
+          WIDGET_AVATAR_SIZE,
+          WIDGET_AVATAR_SIZE,
+        );
+        if (resizedAvatarUri) {
+          avatarUri =
+            (await cacheImageToAppGroup(
+              resizedAvatarUri,
+              `avatar-${friendUserId}.jpg`,
+              true,
+              true,
+            )) ?? "";
+        }
+      }
 
       return {
         photoUri,
