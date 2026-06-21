@@ -379,16 +379,6 @@ export const listWidgetGlimts = query({
       pinnedPhotoId,
     );
 
-    console.log("[widget-refresh] listWidgetGlimts", {
-      userId,
-      candidateCount: candidates.length,
-      selectedCount: selected.length,
-      seed: rotationSeed,
-      pinnedPhotoId: pinnedPhotoId ?? null,
-      selectedPhotoIds: selected.map((glimt) => glimt.photoId),
-      selectedFriendUserIds: selected.map((glimt) => glimt.friendUserId),
-    });
-
     return selected;
   },
 });

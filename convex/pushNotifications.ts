@@ -1,5 +1,4 @@
 import { v } from "convex/values";
-import type { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { internalAction } from "./_generated/server";
 
@@ -16,46 +15,6 @@ type ExpoPushResponse = {
   data?: ExpoPushTicket | ExpoPushTicket[];
 };
 
-type PushLogContext = {
-  kind: "silent" | "alert";
-  toUserId: Id<"users">;
-  fromUserId?: Id<"users">;
-  source?: string;
-  title?: string;
-  body?: string;
-  data?: Record<string, string>;
-  tokenCount: number;
-};
-
-function logPushNotification(context: PushLogContext) {
-  const from = context.fromUserId ?? context.source ?? "system";
-  console.log("[push]", {
-    kind: context.kind,
-    from,
-    to: context.toUserId,
-    title: context.title,
-    body: context.body,
-    data: context.data,
-    tokenCount: context.tokenCount,
-  });
-}
-
-function logPushSkipped(
-  kind: PushLogContext["kind"],
-  toUserId: Id<"users">,
-  fromUserId: Id<"users"> | undefined,
-  source: string | undefined,
-  data?: Record<string, string>,
-) {
-  const from = fromUserId ?? source ?? "system";
-  console.log("[push] skipped (no tokens)", {
-    kind,
-    from,
-    to: toUserId,
-    data,
-  });
-}
-
 export const sendSilentToUser = internalAction({
   args: {
     userId: v.id("users"),
@@ -63,24 +22,14 @@ export const sendSilentToUser = internalAction({
     source: v.optional(v.string()),
     data: v.record(v.string(), v.string()),
   },
-  handler: async (ctx, { userId, fromUserId, source, data }) => {
+  handler: async (ctx, { userId, data }) => {
     const tokens = await ctx.runQuery(internal.pushTokens.listForUser, {
       userId,
     });
 
     if (tokens.length === 0) {
-      logPushSkipped("silent", userId, fromUserId, source, data);
       return;
     }
-
-    logPushNotification({
-      kind: "silent",
-      toUserId: userId,
-      fromUserId,
-      source,
-      data,
-      tokenCount: tokens.length,
-    });
 
     const messages = tokens.map(({ token }) => ({
       to: token,
@@ -134,26 +83,14 @@ export const sendToUser = internalAction({
     body: v.string(),
     data: v.optional(v.record(v.string(), v.string())),
   },
-  handler: async (ctx, { userId, fromUserId, source, title, body, data }) => {
+  handler: async (ctx, { userId, title, body, data }) => {
     const tokens = await ctx.runQuery(internal.pushTokens.listForUser, {
       userId,
     });
 
     if (tokens.length === 0) {
-      logPushSkipped("alert", userId, fromUserId, source, data);
       return;
     }
-
-    logPushNotification({
-      kind: "alert",
-      toUserId: userId,
-      fromUserId,
-      source,
-      title,
-      body,
-      data,
-      tokenCount: tokens.length,
-    });
 
     const messages = tokens.map(({ token }) => ({
       to: token,

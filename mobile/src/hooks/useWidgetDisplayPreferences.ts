@@ -34,7 +34,6 @@ export function useWidgetDisplayPreferences() {
     void setPreferencesMutation({ preferences: next });
     void refreshFriendGlimtWidget(accentTheme, next, {
       seed: getHourlyWidgetSeed(),
-      source: "widget_preferences",
     });
   };
 
