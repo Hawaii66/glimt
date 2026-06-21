@@ -18,6 +18,7 @@ import {
 } from "react-native-safe-area-context";
 
 import { GlimtTile } from "@/components/glimt/GlimtTile";
+import { UserAvatar } from "@/components/UserAvatar";
 import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
 import { useWidgetDisplayPreferences } from "@/hooks/useWidgetDisplayPreferences";
 import { getAccentTheme } from "@/lib/accent-themes";
@@ -37,6 +38,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const [refreshingWidget, setRefreshingWidget] = useState(false);
   const homeData = useQuery(api.journals.listHomeFriends);
+  const friends = useQuery(api.friends.listFriends);
   const todayMeetLocks = useQuery(api.journals.getTodayMeetLocksForFriends);
   const meetLockedByFriendId = new Map(
     (todayMeetLocks ?? []).map((row) => [row.friendUserId, row.meetLocked]),
@@ -157,6 +159,48 @@ export default function HomeScreen() {
             />
           </Pressable>
         )}
+        ListFooterComponent={
+          friends !== undefined && friends.length > 0 ? (
+            <View style={styles.friendsSection}>
+              <Text style={styles.friendsSectionLabel}>Friends</Text>
+              <View style={styles.friendsList}>
+                {friends.map((friend, index) => (
+                  <Pressable
+                    key={friend.id}
+                    onPress={() => router.push(appFriendJourney(friend.id))}
+                    style={({ pressed }) => [
+                      styles.friendRow,
+                      index < friends.length - 1 && styles.friendRowBorder,
+                      pressed && styles.friendRowPressed,
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Open journey with ${friend.displayName}`}
+                  >
+                    <UserAvatar
+                      imageUri={friend.avatarUrl || null}
+                      displayName={friend.displayName}
+                      size={44}
+                      style={styles.friendAvatar}
+                      backgroundColor="rgba(255, 255, 255, 0.2)"
+                      borderColor="rgba(255, 255, 255, 0.35)"
+                      borderWidth={StyleSheet.hairlineWidth}
+                      initialsColor="rgba(255, 255, 255, 0.9)"
+                    />
+                    <Text style={styles.friendName} numberOfLines={1}>
+                      {friend.displayName}
+                    </Text>
+                    <SymbolView
+                      name="chevron.right"
+                      size={14}
+                      tintColor="rgba(255, 255, 255, 0.55)"
+                      weight="semibold"
+                    />
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          ) : null
+        }
       />
 
       <SafeAreaView
@@ -250,6 +294,48 @@ const styles = StyleSheet.create({
     fontSize: 15,
     textAlign: "center",
     lineHeight: 22,
+  },
+  friendsSection: {
+    marginTop: 8,
+    paddingTop: 24,
+    gap: 12,
+  },
+  friendsSectionLabel: {
+    color: "rgba(255, 255, 255, 0.75)",
+    fontSize: 13,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
+  friendsList: {
+    borderRadius: 14,
+    overflow: "hidden",
+    backgroundColor: "rgba(0, 0, 0, 0.18)",
+  },
+  friendRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  friendRowBorder: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(255, 255, 255, 0.15)",
+  },
+  friendRowPressed: {
+    opacity: 0.7,
+  },
+  friendAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  friendName: {
+    flex: 1,
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
   },
   bottomBar: {
     position: "absolute",
