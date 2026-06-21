@@ -100,22 +100,21 @@ export async function listTodayWidgetGlimtCandidates(
       continue;
     }
 
-    for (const entry of friendEntries) {
-      const photoUrl =
-        (await ctx.storage.getUrl(entry.photoStorageId)) ?? "";
-      if (!photoUrl) {
-        continue;
-      }
-
-      candidates.push({
-        friendUserId: profile.id,
-        photoId: entry._id,
-        photoUrl,
-        avatarUrl: profile.avatarUrl,
-        displayName: profile.displayName,
-        sentAt: entry.sentAt,
-      });
+    const latestEntry = friendEntries[0]!;
+    const photoUrl =
+      (await ctx.storage.getUrl(latestEntry.photoStorageId)) ?? "";
+    if (!photoUrl) {
+      continue;
     }
+
+    candidates.push({
+      friendUserId: profile.id,
+      photoId: latestEntry._id,
+      photoUrl,
+      avatarUrl: profile.avatarUrl,
+      displayName: profile.displayName,
+      sentAt: latestEntry.sentAt,
+    });
   }
 
   return candidates;
