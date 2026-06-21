@@ -1,9 +1,13 @@
 import { cronJobs } from "convex/server";
 
-/**
- * Future local-time push notifications (9 / 15 / 21) should scan users with
- * `users.timezone` set and use `localHour(now, timezone)` from `@glimt/date`.
- */
+import { internal } from "./_generated/api";
+
 const crons = cronJobs();
+
+crons.hourly(
+  "refresh home screen widgets",
+  { minuteUTC: 0 },
+  internal.pushWidgets.sendHourlyWidgetRefreshes,
+);
 
 export default crons;

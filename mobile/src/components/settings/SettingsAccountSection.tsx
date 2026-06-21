@@ -1,13 +1,19 @@
 import { useAuthActions } from "@convex-dev/auth/react";
+import { useMutation } from "convex/react";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text } from "react-native";
 
 import { useOnboardingStore } from "@/stores/onboardingStore";
+import { usePushTokenStore } from "@/stores/pushTokenStore";
+import { api } from "convex/_generated/api";
 
 export function SettingsSignOutButton() {
   const router = useRouter();
   const { signOut } = useAuthActions();
+  const unregisterPushToken = useMutation(api.pushTokens.unregisterPushToken);
+  const pushToken = usePushTokenStore((state) => state.token);
+  const setPushToken = usePushTokenStore((state) => state.setToken);
   const resetOnboarding = useOnboardingStore((state) => state.reset);
   const [signingOut, setSigningOut] = useState(false);
 
@@ -17,6 +23,10 @@ export function SettingsSignOutButton() {
     }
     setSigningOut(true);
     try {
+      if (pushToken) {
+        await unregisterPushToken({ token: pushToken }).catch(() => {});
+        setPushToken(null);
+      }
       await signOut();
       resetOnboarding();
       router.replace("/onboarding/sign-in");

@@ -103,4 +103,12 @@ export default defineSchema({
   })
     .index("by_session", ["sessionId"])
     .index("by_group_and_date", ["groupId", "date"]),
+  pushTokens: defineTable({
+    userId: v.id("users"),
+    token: v.string(),
+    platform: v.union(v.literal("ios"), v.literal("android")),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_token", ["token"]),
 });
