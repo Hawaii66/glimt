@@ -11,10 +11,8 @@ import {
 } from "react-native";
 
 import { AccentThemePicker } from "@/components/settings/AccentThemePicker";
-import {
-  SettingsAccountProfile,
-  SettingsSignOutButton,
-} from "@/components/settings/SettingsAccountSection";
+import { SettingsSignOutButton } from "@/components/settings/SettingsAccountSection";
+import { SettingsProfileSection } from "@/components/settings/SettingsProfileSection";
 import { SettingsAddFriendSection } from "@/components/settings/SettingsAddFriendSection";
 import { SettingsFriendRequestsSection } from "@/components/settings/SettingsFriendRequestsSection";
 import { SettingsFriendsListSection } from "@/components/settings/SettingsFriendsListSection";
@@ -134,7 +132,7 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
       >
         <Text style={[styles.pageTitle, { color: colors.text }]}>Settings</Text>
 
-        <SettingsAccountProfile />
+        <SettingsProfileSection />
 
         <SettingsAddFriendSection
           onLayout={(event) => {

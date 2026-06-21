@@ -1,8 +1,6 @@
 import { useConvexAuth } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
-import * as ImagePicker from "expo-image-picker";
 import { Redirect, useRouter } from "expo-router";
-import { useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -12,6 +10,7 @@ import {
 } from "react-native";
 
 import { OnboardingScreen } from "@/components/onboarding/OnboardingScreen";
+import { useAvatarPicker } from "@/hooks/useAvatarPicker";
 import { useAppColors } from "@/lib/theme";
 import { APP_HOME } from "@/lib/routes";
 import { useOnboardingStore } from "@/stores/onboardingStore";
@@ -28,39 +27,12 @@ export default function PhotoScreen() {
   const setLocalAvatarUri = useOnboardingStore(
     (state) => state.setLocalAvatarUri,
   );
-  const [error, setError] = useState<string | null>(null);
+  const { pickImage, error } = useAvatarPicker();
 
-  const pickImage = async (useCamera: boolean) => {
-    setError(null);
-
-    const permission = useCamera
-      ? await ImagePicker.requestCameraPermissionsAsync()
-      : await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (!permission.granted) {
-      setError(
-        useCamera
-          ? "Camera permission is required to take a photo."
-          : "Photo library permission is required to choose a photo.",
-      );
-      return;
-    }
-
-    const result = useCamera
-      ? await ImagePicker.launchCameraAsync({
-          allowsEditing: true,
-          aspect: [1, 1],
-          quality: 0.8,
-        })
-      : await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ["images"],
-          allowsEditing: true,
-          aspect: [1, 1],
-          quality: 0.8,
-        });
-
-    if (!result.canceled && result.assets[0]?.uri) {
-      setLocalAvatarUri(result.assets[0].uri);
+  const pickAndSetImage = async (useCamera: boolean) => {
+    const uri = await pickImage(useCamera);
+    if (uri) {
+      setLocalAvatarUri(uri);
     }
   };
 
@@ -102,7 +74,7 @@ export default function PhotoScreen() {
       <Pressable
         style={[styles.actionButton, { borderColor: colors.textMuted }]}
         onPress={() => {
-          void pickImage(false);
+          void pickAndSetImage(false);
         }}
       >
         <Text style={[styles.actionText, { color: colors.text }]}>
@@ -113,7 +85,7 @@ export default function PhotoScreen() {
       <Pressable
         style={[styles.actionButton, { borderColor: colors.textMuted }]}
         onPress={() => {
-          void pickImage(true);
+          void pickAndSetImage(true);
         }}
       >
         <Text style={[styles.actionText, { color: colors.text }]}>
