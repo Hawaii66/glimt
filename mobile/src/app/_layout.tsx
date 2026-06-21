@@ -1,4 +1,5 @@
 import "react-native-gesture-handler";
+import "@/tasks/widget-push-notification-task";
 
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { Stack } from "expo-router";
