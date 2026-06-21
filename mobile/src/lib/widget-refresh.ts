@@ -41,6 +41,7 @@ function getWidgetTileStyle(accentThemeId?: AccentThemeId): WidgetTileStyle {
     avatarSize: AVATAR_SIZE,
     avatarOffset: AVATAR_OFFSET,
     tileScale: TILE_SCALE,
+    systemSmallTileScale: TILE_SCALE * 0.85,
   };
 }
 
@@ -130,8 +131,8 @@ async function buildWidgetGlimts(): Promise<WidgetGlimtItem[]> {
 
       const context = test.manipulate(photoUrl);
       context.resize({
-        height: 50,
-        width: 50,
+        height: 250,
+        width: 250,
       });
       const testRendered = await context.renderAsync();
       const result = await testRendered.saveAsync({

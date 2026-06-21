@@ -40,6 +40,7 @@ export type WidgetTileStyle = {
   avatarSize: number;
   avatarOffset: number;
   tileScale: number;
+  systemSmallTileScale: number;
 };
 
 export type FriendGlimtProps = {
@@ -62,6 +63,7 @@ const FriendGlimt = (
     avatarSize,
     avatarOffset,
     tileScale,
+    systemSmallTileScale,
   } = props.style;
 
   const widgetGradient = {
@@ -93,6 +95,7 @@ const FriendGlimt = (
           avatarSize,
           tileGap: 0,
           avatarOffset,
+          tileScale: systemSmallTileScale,
         };
       case "systemMedium":
         return {
@@ -102,6 +105,7 @@ const FriendGlimt = (
           avatarSize,
           tileGap: 12,
           avatarOffset,
+          tileScale,
         };
       case "systemLarge":
         return {
@@ -111,6 +115,7 @@ const FriendGlimt = (
           avatarSize,
           tileGap: 8,
           avatarOffset,
+          tileScale,
         };
       default:
         return {
@@ -120,6 +125,7 @@ const FriendGlimt = (
           avatarSize: 0,
           tileGap: 0,
           avatarOffset: 0,
+          tileScale: 1,
         };
     }
   }
@@ -221,7 +227,7 @@ const FriendGlimt = (
           aspectRatio({ contentMode: "fit", ratio: 1 }),
           cornerRadius(metrics.cornerRadius),
           rotationEffect(item.rotationDegrees),
-          scaleEffect(tileScale),
+          scaleEffect(metrics.tileScale),
           ...frameModifiers,
         ]}
       >
