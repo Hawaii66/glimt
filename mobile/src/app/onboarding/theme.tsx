@@ -51,7 +51,7 @@ export default function ThemeScreen() {
   return (
     <OnboardingScreen
       onNext={() => {
-        router.push("/onboarding/confirm");
+        router.push("/onboarding/notifications");
       }}
     >
       <Text style={[styles.label, { color: colors.text }]}>Choose your theme</Text>
