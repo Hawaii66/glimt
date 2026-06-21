@@ -2,6 +2,7 @@ import Constants from "expo-constants";
 import { Directory, File, Paths } from "expo-file-system";
 
 import { api } from "convex/_generated/api";
+import type { Id } from "convex/_generated/dataModel";
 import { Asset } from "expo-asset";
 import * as ImageManipulator from "expo-image-manipulator";
 import {
@@ -34,6 +35,15 @@ import {
 
 const WIDGET_PHOTO_SIZE = 250;
 const WIDGET_AVATAR_SIZE = 100;
+
+export type WidgetRefreshOptions = {
+  seed?: number;
+  pinnedPhotoId?: Id<"journalEntries">;
+};
+
+export function getHourlyWidgetSeed(now = Date.now()): number {
+  return Math.floor(now / (60 * 60 * 1000));
+}
 
 function getWidgetTileStyle(accentThemeId?: AccentThemeId): WidgetTileStyle {
   const gradientColors = getAccentTheme(
@@ -144,6 +154,7 @@ async function cacheImageToAppGroup(
 
 async function buildWidgetGlimts(
   displayPreferences: WidgetDisplayPreferences,
+  refreshOptions?: WidgetRefreshOptions,
 ): Promise<WidgetGlimtItem[]> {
   if (!convex) {
     console.warn("[FriendGlimt] no Convex client; skipping widget refresh");
@@ -152,6 +163,8 @@ async function buildWidgetGlimts(
 
   const rows = await convex.query(api.journals.listWidgetGlimts, {
     limit: 4,
+    seed: refreshOptions?.seed ?? getHourlyWidgetSeed(),
+    pinnedPhotoId: refreshOptions?.pinnedPhotoId,
   });
 
   const glimts = await Promise.all(
@@ -212,11 +225,12 @@ async function buildWidgetGlimts(
 export async function refreshFriendGlimtWidget(
   accentThemeId?: AccentThemeId,
   displayPreferencesInput?: WidgetDisplayPreferences,
+  refreshOptions?: WidgetRefreshOptions,
 ): Promise<void> {
   const displayPreferences = resolveWidgetDisplayPreferences(
     displayPreferencesInput,
   );
-  const glimts = await buildWidgetGlimts(displayPreferences);
+  const glimts = await buildWidgetGlimts(displayPreferences, refreshOptions);
 
   if (glimts.length === 0) {
     console.warn("[FriendGlimt] no widget images cached; skipping update");
@@ -252,5 +266,33 @@ export function refreshCameraWidget(accentThemeId?: AccentThemeId): void {
   FriendGlimtCameraWidget.updateSnapshot({
     captureUrl: getCaptureDeepLinkUrl(),
     style: getWidgetTileStyle(accentThemeId),
+  });
+}
+
+export async function refreshFriendGlimtWidgetFromPush(data?: {
+  seed?: string;
+  photoId?: string;
+}): Promise<void> {
+  if (!convex) {
+    return;
+  }
+
+  const user = await convex.query(api.users.current);
+  if (!user) {
+    return;
+  }
+
+  const accentTheme = resolveAccentThemeId(
+    user.accentTheme as AccentThemeId | undefined,
+  );
+  const displayPreferences = resolveWidgetDisplayPreferences(
+    user.widgetDisplayPreferences,
+  );
+  const seed = data?.seed ? Number(data.seed) : getHourlyWidgetSeed();
+  const pinnedPhotoId = data?.photoId as Id<"journalEntries"> | undefined;
+
+  await refreshFriendGlimtWidget(accentTheme, displayPreferences, {
+    seed: Number.isFinite(seed) ? seed : getHourlyWidgetSeed(),
+    pinnedPhotoId,
   });
 }

@@ -34,6 +34,11 @@ import {
   type TodayFriendGlimtTile,
   type WidgetGlimt,
 } from "./lib/journalHelpers";
+import {
+  currentWidgetRotationSeed,
+  listTodayWidgetGlimtCandidates,
+  selectWidgetGlimts,
+} from "./lib/widgetGlimts";
 import { userError } from "./lib/userError";
 
 export const prepareTodayMeetLocksOnAppOpen = mutation({
@@ -357,22 +362,23 @@ export const listHomeFriends = query({
 export const listWidgetGlimts = query({
   args: {
     limit: v.optional(v.number()),
+    seed: v.optional(v.number()),
+    pinnedPhotoId: v.optional(v.id("journalEntries")),
   },
-  handler: async (ctx, { limit = 4 }): Promise<WidgetGlimt[]> => {
+  handler: async (
+    ctx,
+    { limit = 4, seed, pinnedPhotoId },
+  ): Promise<WidgetGlimt[]> => {
     const userId = await requireAuthUserId(ctx);
-    const { tiles } = await listTodayFriendGlimtTiles(ctx, userId);
+    const candidates = await listTodayWidgetGlimtCandidates(ctx, userId);
+    const rotationSeed = seed ?? currentWidgetRotationSeed();
 
-    return tiles
-      .sort((a, b) => b.sentAt - a.sentAt)
-      .slice(0, limit)
-      .map(({ id, photoId, previewPhotoUrl, avatarUrl, displayName, sentAt }) => ({
-        friendUserId: id,
-        photoId,
-        photoUrl: previewPhotoUrl,
-        avatarUrl,
-        displayName,
-        sentAt,
-      }));
+    return selectWidgetGlimts(
+      candidates,
+      limit,
+      rotationSeed,
+      pinnedPhotoId,
+    );
   },
 });
 
@@ -510,9 +516,7 @@ export const sendGlimt = mutation({
 
     const sentAt = Date.now();
     const entryIds: Id<"journalEntries">[] = [];
-    const senderProfile = await getUserProfile(ctx, userId);
-    const senderLabel =
-      senderProfile?.displayName || senderProfile?.username || "A friend";
+    const widgetRotationSeed = currentWidgetRotationSeed(sentAt);
 
     for (const targetFriendId of targetFriendIds) {
       const groupId = await getOrCreateFriendGroupForUsers(
@@ -540,13 +544,14 @@ export const sendGlimt = mutation({
 
       entryIds.push(entryId);
 
-      await ctx.scheduler.runAfter(0, internal.pushNotifications.sendToUser, {
+      await ctx.scheduler.runAfter(0, internal.pushNotifications.sendSilentToUser, {
         userId: targetFriendId,
-        title: "New glimt",
-        body: `${senderLabel} sent you a glimt`,
+        fromUserId: userId,
         data: {
-          type: "glimt",
+          type: "widget_refresh",
+          photoId: `${entryId}`,
           friendUserId: `${userId}`,
+          seed: `${widgetRotationSeed}`,
         },
       });
     }

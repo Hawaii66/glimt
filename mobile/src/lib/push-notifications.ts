@@ -3,17 +3,43 @@ import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 
+function isWidgetRefreshNotification(
+  data: Record<string, unknown> | undefined,
+): boolean {
+  return data?.type === "widget_refresh";
+}
+
 Notifications.setNotificationHandler({
-  shouldShowAlert: true,
-  shouldPlaySound: true,
-  shouldSetBadge: false,
-  shouldShowBanner: true,
-  shouldShowList: true,
+  handleNotification: async (notification) => {
+    const data = notification.request.content.data as
+      | Record<string, unknown>
+      | undefined;
+
+    if (isWidgetRefreshNotification(data)) {
+      return {
+        shouldShowAlert: false,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+        shouldShowBanner: false,
+        shouldShowList: false,
+      };
+    }
+
+    return {
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    };
+  },
 });
 
 export type PushNotificationData = {
-  type?: "friend_request" | "glimt";
+  type?: "friend_request" | "widget_refresh";
   friendUserId?: string;
+  photoId?: string;
+  seed?: string;
 };
 
 export function getPushPlatform(): "ios" | "android" | null {
@@ -78,10 +104,14 @@ export function parsePushNotificationData(
 
   const type = data.type;
   const friendUserId = data.friendUserId;
+  const photoId = data.photoId;
+  const seed = data.seed;
 
   return {
     type:
-      type === "friend_request" || type === "glimt" ? type : undefined,
+      type === "friend_request" || type === "widget_refresh" ? type : undefined,
     friendUserId: typeof friendUserId === "string" ? friendUserId : undefined,
+    photoId: typeof photoId === "string" ? photoId : undefined,
+    seed: typeof seed === "string" ? seed : undefined,
   };
 }

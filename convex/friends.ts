@@ -259,6 +259,7 @@ async function scheduleFriendRequestPush(
   const senderLabel = fromProfile.displayName || fromProfile.username || "Someone";
   await ctx.scheduler.runAfter(0, internal.pushNotifications.sendToUser, {
     userId: toUserId,
+    fromUserId,
     title: "Friend request",
     body: `${senderLabel} sent you a friend request`,
     data: { type: "friend_request" },

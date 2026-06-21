@@ -41,7 +41,12 @@ function buildPlugins(
       },
     ],
     "expo-updates",
-    "expo-notifications",
+    [
+      "expo-notifications",
+      {
+        enableBackgroundRemoteNotifications: true,
+      },
+    ],
     "expo-background-task",
     [
       "expo-camera",
@@ -149,6 +154,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       usesAppleSignIn: true,
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
+        UIBackgroundModes: ["remote-notification"],
       },
     },
     android: {

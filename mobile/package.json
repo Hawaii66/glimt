@@ -1,6 +1,6 @@
 {
   "name": "glimt-mobile",
-  "main": "expo-router/entry",
+  "main": "index.ts",
   "version": "0.0.1",
   "dependencies": {
     "@convex-dev/auth": "^0.0.92",

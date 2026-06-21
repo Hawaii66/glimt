@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "convex/react";
 
 import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
 import {
+  getHourlyWidgetSeed,
   refreshFriendGlimtWidget,
 } from "@/lib/widget-refresh";
 import {
@@ -31,7 +32,9 @@ export function useWidgetDisplayPreferences() {
 
     const next = { ...preferences, [key]: value };
     void setPreferencesMutation({ preferences: next });
-    void refreshFriendGlimtWidget(accentTheme, next);
+    void refreshFriendGlimtWidget(accentTheme, next, {
+      seed: getHourlyWidgetSeed(),
+    });
   };
 
   return { preferences, setPreference };

@@ -15,6 +15,7 @@ import {
 } from "@/lib/accent-themes";
 import { useAppColors } from "@/lib/theme";
 import {
+  getHourlyWidgetSeed,
   refreshCameraWidget,
   refreshFriendGlimtWidget,
 } from "@/lib/widget-refresh";
@@ -39,7 +40,9 @@ export default function AppLayout() {
     );
 
     void refreshCameraWidget(accentTheme);
-    void refreshFriendGlimtWidget(accentTheme, displayPreferences);
+    void refreshFriendGlimtWidget(accentTheme, displayPreferences, {
+      seed: getHourlyWidgetSeed(),
+    });
   }, [accentTheme, isAuthenticated, user]);
 
   if (authLoading || (isAuthenticated && user === undefined)) {

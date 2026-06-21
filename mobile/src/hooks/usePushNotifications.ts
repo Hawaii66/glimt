@@ -8,12 +8,10 @@ import {
   parsePushNotificationData,
   registerForPushNotificationsAsync,
 } from "@/lib/push-notifications";
-import {
-  APP_SETTINGS,
-  appFriendJourney,
-} from "@/lib/routes";
+import { APP_SETTINGS } from "@/lib/routes";
 import { usePushTokenStore } from "@/stores/pushTokenStore";
 import { useSettingsFocusStore } from "@/stores/settingsFocusStore";
+import { registerWidgetPushNotificationTask } from "@/tasks/widget-push-notification-task";
 import { api } from "convex/_generated/api";
 
 function handleNotificationNavigation(
@@ -24,11 +22,6 @@ function handleNotificationNavigation(
   if (data.type === "friend_request") {
     requestFriendRequestsFocus();
     router.push(APP_SETTINGS);
-    return;
-  }
-
-  if (data.type === "glimt" && data.friendUserId) {
-    router.push(appFriendJourney(data.friendUserId));
   }
 }
 
@@ -48,6 +41,10 @@ export function usePushNotifications(enabled: boolean) {
 
     let isMounted = true;
     let responseSubscription: Notifications.EventSubscription | undefined;
+
+    void registerWidgetPushNotificationTask().catch((error) => {
+      console.error("[push] failed to register background notification task:", error);
+    });
 
     const registerToken = async () => {
       const platform = getPushPlatform();
