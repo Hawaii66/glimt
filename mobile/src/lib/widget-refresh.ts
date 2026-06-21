@@ -2,6 +2,7 @@ import Constants from "expo-constants";
 import { Directory, File, Paths } from "expo-file-system";
 
 import { api } from "convex/_generated/api";
+import { Asset } from "expo-asset";
 import * as ImageManipulator from "expo-image-manipulator";
 import {
   getAccentTheme,
@@ -63,6 +64,19 @@ function getWidgetCacheDirectory(): Directory | null {
   }
 
   return cacheDir;
+}
+
+async function getWhiteImageAssetUri(): Promise<string | null> {
+  try {
+    const asset = Asset.fromModule(require("../../assets/white.png"));
+
+    await asset.downloadAsync();
+
+    return asset.localUri;
+  } catch (error) {
+    console.error("Failed to resolve white.png asset:", error);
+    return null;
+  }
 }
 
 async function cacheImageToAppGroup(
@@ -164,9 +178,22 @@ export async function refreshFriendGlimtWidget(
     return;
   }
 
+  const whiteUrl = await getWhiteImageAssetUri();
+  if (!whiteUrl) {
+    console.warn("[FriendGlimt] failed to resolve white.png asset");
+    return;
+  }
+
+  const whiteUri = await cacheImageToAppGroup(whiteUrl, "white.png", true);
+  if (!whiteUri) {
+    console.warn("[FriendGlimt] failed to cache white.png");
+    return;
+  }
+
   FriendGlimtWidget.updateSnapshot({
     glimts,
     style: getWidgetTileStyle(accentThemeId),
+    whiteUri,
   });
 }
 

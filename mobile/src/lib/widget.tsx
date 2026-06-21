@@ -42,6 +42,7 @@ export type WidgetTileStyle = {
 export type FriendGlimtProps = {
   glimts: WidgetGlimtItem[];
   style: WidgetTileStyle;
+  whiteUri: string;
 };
 
 const FriendGlimt = (
@@ -53,7 +54,6 @@ const FriendGlimt = (
 
   const {
     gradientColors,
-    photoBorderColor,
     tileCornerRadius,
     tileBorderWidth,
     avatarSize,
@@ -136,6 +136,16 @@ const FriendGlimt = (
     );
   }
 
+  function whiteBorderImageModifiers(radius: number) {
+    return [
+      resizable(),
+      aspectRatio({ contentMode: "fill", ratio: 1 }),
+      cornerRadius(radius),
+      widgetAccentedRenderingMode("fullColor"),
+      frame({ maxWidth: 10_000, maxHeight: 10_000 }),
+    ];
+  }
+
   function renderAvatar(avatarUri: string, avatarInitials: string) {
     const avatarModifiers = [
       frame({ width: avatarSize, height: avatarSize }),
@@ -146,8 +156,9 @@ const FriendGlimt = (
     if (avatarUri) {
       return (
         <ZStack modifiers={avatarModifiers}>
-          <Rectangle
-            modifiers={[foregroundStyle(photoBorderColor), cornerRadius(999)]}
+          <Image
+            uiImage={props.whiteUri}
+            modifiers={whiteBorderImageModifiers(999)}
           />
           <Image
             uiImage={avatarUri}
@@ -165,8 +176,9 @@ const FriendGlimt = (
 
     return (
       <ZStack modifiers={avatarModifiers}>
-        <Rectangle
-          modifiers={[foregroundStyle(photoBorderColor), cornerRadius(999)]}
+        <Image
+          uiImage={props.whiteUri}
+          modifiers={whiteBorderImageModifiers(999)}
         />
         <Rectangle
           modifiers={[
@@ -208,13 +220,9 @@ const FriendGlimt = (
         ]}
       >
         <ZStack modifiers={[cornerRadius(metrics.cornerRadius)]}>
-          <Rectangle
-            modifiers={[
-              resizable(),
-              aspectRatio({ contentMode: "fill", ratio: 1 }),
-              cornerRadius(innerRadius),
-              foregroundStyle(photoBorderColor),
-            ]}
+          <Image
+            uiImage={props.whiteUri}
+            modifiers={whiteBorderImageModifiers(innerRadius)}
           />
           <Image
             uiImage={item.photoUri}
