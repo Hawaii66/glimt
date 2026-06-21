@@ -18,6 +18,7 @@ import {
   TILE_BORDER_WIDTH,
   TILE_CORNER_RADIUS,
   TILE_SCALE,
+  tileRotation,
 } from "./glimt-tile-styles";
 import { getCaptureDeepLinkUrl } from "./routes";
 import {
@@ -124,7 +125,7 @@ async function buildWidgetGlimts(): Promise<WidgetGlimtItem[]> {
   });
 
   const glimts = await Promise.all(
-    rows.map(async ({ friendUserId, photoUrl, avatarUrl, displayName }) => {
+    rows.map(async ({ friendUserId, photoUrl, avatarUrl, displayName }, index) => {
       const test = ImageManipulator.ImageManipulator;
 
       const context = test.manipulate(photoUrl);
@@ -161,6 +162,7 @@ async function buildWidgetGlimts(): Promise<WidgetGlimtItem[]> {
         photoUri,
         avatarUri,
         avatarInitials: getInitials(displayName),
+        rotationDegrees: parseFloat(tileRotation(index)),
       };
     }),
   );

@@ -17,6 +17,8 @@ import {
   offset,
   padding,
   resizable,
+  rotationEffect,
+  scaleEffect,
   shadow,
   widgetAccentedRenderingMode,
   widgetURL,
@@ -27,6 +29,7 @@ export type WidgetGlimtItem = {
   photoUri: string;
   avatarUri: string;
   avatarInitials: string;
+  rotationDegrees: number;
 };
 
 export type WidgetTileStyle = {
@@ -58,6 +61,7 @@ const FriendGlimt = (
     tileBorderWidth,
     avatarSize,
     avatarOffset,
+    tileScale,
   } = props.style;
 
   const widgetGradient = {
@@ -216,6 +220,8 @@ const FriendGlimt = (
           resizable(),
           aspectRatio({ contentMode: "fit", ratio: 1 }),
           cornerRadius(metrics.cornerRadius),
+          rotationEffect(item.rotationDegrees),
+          scaleEffect(tileScale),
           ...frameModifiers,
         ]}
       >
