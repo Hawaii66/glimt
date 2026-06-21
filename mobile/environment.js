@@ -63,8 +63,8 @@ function envToInfo(env) {
         name: "Glimt Dev",
         icon: "./assets/images/icon-dev.png",
         iconAndroid: "./assets/images/icon-android-dev.png",
-        version: "0.0.9",
-        runtimeVersion: "0.0.9",
+        version: "0.0.10",
+        runtimeVersion: "0.0.10",
         scheme: "glimt-dev",
         bundleIdentifier: "com.hawaiidev.glimt.dev",
       };
