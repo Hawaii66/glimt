@@ -21,11 +21,13 @@ import { GlimtTile } from "@/components/glimt/GlimtTile";
 import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
 import { useWidgetDisplayPreferences } from "@/hooks/useWidgetDisplayPreferences";
 import { getAccentTheme } from "@/lib/accent-themes";
+import { getMobileEnvironment } from "@/lib/environment";
 import { APP_CAPTURE, APP_SETTINGS, appFriendJourney } from "@/lib/routes";
 import { refreshFriendGlimtWidget } from "@/lib/widget-refresh";
 import { api } from "convex/_generated/api";
 
 const HORIZONTAL_PADDING = 24;
+const showWidgetRefreshButton = getMobileEnvironment() !== "prod";
 const NUM_COLUMNS = 2;
 const TILE_HORIZONTAL_GAP = 16;
 const TILE_VERTICAL_GAP = 24;
@@ -99,7 +101,7 @@ export default function HomeScreen() {
           <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
             <Text style={styles.title}>Glimt</Text>
             <Text style={styles.tagline}>Small everyday moments</Text>
-            {__DEV__ ? (
+            {showWidgetRefreshButton ? (
               <Pressable
                 style={styles.widgetRefreshButton}
                 onPress={() => void handleRefreshWidget()}
