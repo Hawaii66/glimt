@@ -18,6 +18,7 @@ import {
 import { SettingsAddFriendSection } from "@/components/settings/SettingsAddFriendSection";
 import { SettingsFriendRequestsSection } from "@/components/settings/SettingsFriendRequestsSection";
 import { SettingsFriendsListSection } from "@/components/settings/SettingsFriendsListSection";
+import { SettingsWidgetSection } from "@/components/settings/SettingsWidgetSection";
 import { TimezoneInfoRow } from "@/components/settings/TimezoneInfoRow";
 import { useSettingsScrollFocus } from "@/components/settings/useSettingsScrollFocus";
 import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
@@ -163,6 +164,8 @@ export function SettingsContent({ scrollMaxHeight }: SettingsContentProps) {
             onSelect={setAccentTheme}
           />
         </View>
+
+        <SettingsWidgetSection />
 
         <View style={styles.section}>
           <TimezoneInfoRow

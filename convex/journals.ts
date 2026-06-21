@@ -322,6 +322,7 @@ async function listTodayFriendGlimtTiles(
 
     tiles.push({
       ...profile,
+      photoId: latestEntry._id,
       previewPhotoUrl,
       groupToday,
       sentAt: latestEntry.sentAt,
@@ -363,8 +364,9 @@ export const listWidgetGlimts = query({
     return tiles
       .sort((a, b) => b.sentAt - a.sentAt)
       .slice(0, limit)
-      .map(({ id, previewPhotoUrl, avatarUrl, displayName, sentAt }) => ({
+      .map(({ id, photoId, previewPhotoUrl, avatarUrl, displayName, sentAt }) => ({
         friendUserId: id,
+        photoId,
         photoUrl: previewPhotoUrl,
         avatarUrl,
         displayName,

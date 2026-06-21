@@ -15,7 +15,9 @@ import {
 import { useAppColors } from "@/lib/theme";
 import {
   refreshCameraWidget,
+  refreshFriendGlimtWidget,
 } from "@/lib/widget-refresh";
+import { resolveWidgetDisplayPreferences } from "convex/lib/widgetDisplayPreferences";
 import { api } from "convex/_generated/api";
 
 export default function AppLayout() {
@@ -31,7 +33,12 @@ export default function AppLayout() {
       return;
     }
 
+    const displayPreferences = resolveWidgetDisplayPreferences(
+      user.widgetDisplayPreferences,
+    );
+
     void refreshCameraWidget(accentTheme);
+    void refreshFriendGlimtWidget(accentTheme, displayPreferences);
   }, [accentTheme, isAuthenticated, user]);
 
   if (authLoading || (isAuthenticated && user === undefined)) {

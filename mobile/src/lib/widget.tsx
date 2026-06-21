@@ -40,12 +40,18 @@ export type WidgetTileStyle = {
   avatarSize: number;
   avatarOffset: number;
   tileScale: number;
+  systemSmallTileScale: number;
 };
 
 export type FriendGlimtProps = {
   glimts: WidgetGlimtItem[];
   style: WidgetTileStyle;
   whiteUri: string;
+  display: {
+    showWhiteBorder: boolean;
+    showRotation: boolean;
+    showAvatar: boolean;
+  };
 };
 
 const FriendGlimt = (
@@ -62,7 +68,10 @@ const FriendGlimt = (
     avatarSize,
     avatarOffset,
     tileScale,
+    systemSmallTileScale,
   } = props.style;
+  const { showWhiteBorder, showRotation, showAvatar } = props.display;
+  const borderWidth = showWhiteBorder ? tileBorderWidth : 0;
 
   const widgetGradient = {
     colors: gradientColors,
@@ -89,28 +98,31 @@ const FriendGlimt = (
         return {
           outerPadding: 6,
           cornerRadius: tileCornerRadius,
-          borderWidth: tileBorderWidth,
+          borderWidth,
           avatarSize,
           tileGap: 0,
           avatarOffset,
+          tileScale: systemSmallTileScale,
         };
       case "systemMedium":
         return {
           outerPadding: 6,
           cornerRadius: tileCornerRadius,
-          borderWidth: tileBorderWidth,
+          borderWidth,
           avatarSize,
           tileGap: 12,
           avatarOffset,
+          tileScale,
         };
       case "systemLarge":
         return {
-          outerPadding: 6,
+          outerPadding: 14,
           cornerRadius: tileCornerRadius,
-          borderWidth: tileBorderWidth,
+          borderWidth,
           avatarSize,
-          tileGap: 8,
+          tileGap: 10,
           avatarOffset,
+          tileScale,
         };
       default:
         return {
@@ -120,6 +132,7 @@ const FriendGlimt = (
           avatarSize: 0,
           tileGap: 0,
           avatarOffset: 0,
+          tileScale: 1,
         };
     }
   }
@@ -151,6 +164,10 @@ const FriendGlimt = (
   }
 
   function renderAvatar(avatarUri: string, avatarInitials: string) {
+    if (!showAvatar) {
+      return null;
+    }
+
     const avatarModifiers = [
       frame({ width: avatarSize, height: avatarSize }),
       offset({ x: avatarOffset, y: avatarOffset }),
@@ -160,17 +177,19 @@ const FriendGlimt = (
     if (avatarUri) {
       return (
         <ZStack modifiers={avatarModifiers}>
-          <Image
-            uiImage={props.whiteUri}
-            modifiers={whiteBorderImageModifiers(999)}
-          />
+          {showWhiteBorder ? (
+            <Image
+              uiImage={props.whiteUri}
+              modifiers={whiteBorderImageModifiers(999)}
+            />
+          ) : null}
           <Image
             uiImage={avatarUri}
             modifiers={[
               resizable(),
               aspectRatio({ contentMode: "fill", ratio: 1 }),
               cornerRadius(999),
-              padding({ all: 1 }),
+              ...(showWhiteBorder ? [padding({ all: 1 })] : []),
               widgetAccentedRenderingMode("fullColor"),
             ]}
           />
@@ -180,15 +199,17 @@ const FriendGlimt = (
 
     return (
       <ZStack modifiers={avatarModifiers}>
-        <Image
-          uiImage={props.whiteUri}
-          modifiers={whiteBorderImageModifiers(999)}
-        />
+        {showWhiteBorder ? (
+          <Image
+            uiImage={props.whiteUri}
+            modifiers={whiteBorderImageModifiers(999)}
+          />
+        ) : null}
         <Rectangle
           modifiers={[
             foregroundStyle("#F5F0EB"),
             cornerRadius(999),
-            padding({ all: 1 }),
+            ...(showWhiteBorder ? [padding({ all: 1 })] : []),
           ]}
         />
         <Text
@@ -212,6 +233,7 @@ const FriendGlimt = (
     frameModifiers: import("@expo/ui/swift-ui/modifiers").ViewModifier[] = [],
   ) {
     const innerRadius = metrics.cornerRadius - metrics.borderWidth;
+    const rotationDegrees = showRotation ? item.rotationDegrees : 0;
 
     return (
       <ZStack
@@ -220,27 +242,39 @@ const FriendGlimt = (
           resizable(),
           aspectRatio({ contentMode: "fit", ratio: 1 }),
           cornerRadius(metrics.cornerRadius),
-          rotationEffect(item.rotationDegrees),
-          scaleEffect(tileScale),
+          rotationEffect(rotationDegrees),
+          scaleEffect(metrics.tileScale),
           ...frameModifiers,
         ]}
       >
-        <ZStack modifiers={[cornerRadius(metrics.cornerRadius)]}>
-          <Image
-            uiImage={props.whiteUri}
-            modifiers={whiteBorderImageModifiers(innerRadius)}
-          />
+        {showWhiteBorder ? (
+          <ZStack modifiers={[cornerRadius(metrics.cornerRadius)]}>
+            <Image
+              uiImage={props.whiteUri}
+              modifiers={whiteBorderImageModifiers(innerRadius)}
+            />
+            <Image
+              uiImage={item.photoUri}
+              modifiers={[
+                resizable(),
+                aspectRatio({ contentMode: "fill", ratio: 1 }),
+                cornerRadius(innerRadius),
+                padding({ all: metrics.borderWidth }),
+                widgetAccentedRenderingMode("fullColor"),
+              ]}
+            />
+          </ZStack>
+        ) : (
           <Image
             uiImage={item.photoUri}
             modifiers={[
               resizable(),
               aspectRatio({ contentMode: "fill", ratio: 1 }),
-              cornerRadius(innerRadius),
-              padding({ all: metrics.borderWidth }),
+              cornerRadius(metrics.cornerRadius),
               widgetAccentedRenderingMode("fullColor"),
             ]}
           />
-        </ZStack>
+        )}
 
         {renderAvatar(item.avatarUri, item.avatarInitials)}
       </ZStack>
@@ -309,6 +343,16 @@ const FriendGlimt = (
 
     const topRow = items.slice(0, 2);
     const bottomRow = items.slice(2, 4);
+
+    if (bottomRow.length === 0) {
+      return (
+        <VStack spacing={metrics.tileGap}>
+          <Spacer />
+          {renderHorizontalRow(topRow, 2, metrics)}
+          <Spacer />
+        </VStack>
+      );
+    }
 
     return (
       <VStack spacing={metrics.tileGap}>
