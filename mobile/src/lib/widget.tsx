@@ -109,11 +109,11 @@ const FriendGlimt = (
         };
       case "systemLarge":
         return {
-          outerPadding: 6,
+          outerPadding: 14,
           cornerRadius: tileCornerRadius,
           borderWidth: tileBorderWidth,
           avatarSize,
-          tileGap: 8,
+          tileGap: 10,
           avatarOffset,
           tileScale,
         };
@@ -315,6 +315,16 @@ const FriendGlimt = (
 
     const topRow = items.slice(0, 2);
     const bottomRow = items.slice(2, 4);
+
+    if (bottomRow.length === 0) {
+      return (
+        <VStack spacing={metrics.tileGap}>
+          <Spacer />
+          {renderHorizontalRow(topRow, 2, metrics)}
+          <Spacer />
+        </VStack>
+      );
+    }
 
     return (
       <VStack spacing={metrics.tileGap}>
