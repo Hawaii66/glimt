@@ -27,17 +27,7 @@ export default function SignInScreen() {
       return;
     }
 
-    if (user === undefined) {
-      return;
-    }
-
-    if (user === null) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- show error when auth succeeded but user row is missing
-      setAwaitingUser(false);
-      setError(
-        "We couldn't finish setting up your account. Please sign in again.",
-      );
-      void signOut();
+    if (user === undefined  ||user===null) {
       return;
     }
 
