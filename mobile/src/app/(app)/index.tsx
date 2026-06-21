@@ -19,6 +19,7 @@ import {
 
 import { GlimtTile } from "@/components/glimt/GlimtTile";
 import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
+import { useWidgetDisplayPreferences } from "@/hooks/useWidgetDisplayPreferences";
 import { getAccentTheme } from "@/lib/accent-themes";
 import { APP_CAPTURE, APP_SETTINGS, appFriendJourney } from "@/lib/routes";
 import { refreshFriendGlimtWidget } from "@/lib/widget-refresh";
@@ -39,6 +40,7 @@ export default function HomeScreen() {
     (todayMeetLocks ?? []).map((row) => [row.friendUserId, row.meetLocked]),
   );
   const { accentTheme } = useCurrentUserAccentTheme();
+  const { preferences: widgetDisplayPreferences } = useWidgetDisplayPreferences();
   const gradientColors = getAccentTheme(accentTheme).gradientColors;
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
@@ -59,7 +61,7 @@ export default function HomeScreen() {
 
     setRefreshingWidget(true);
     try {
-      await refreshFriendGlimtWidget(accentTheme);
+      await refreshFriendGlimtWidget(accentTheme, widgetDisplayPreferences);
     } finally {
       setRefreshingWidget(false);
     }
@@ -149,6 +151,7 @@ export default function HomeScreen() {
               index={index}
               size={tileSize}
               showMeetDayBadge={meetLockedByFriendId.get(item.id) === true}
+              displayPreferences={widgetDisplayPreferences}
             />
           </Pressable>
         )}

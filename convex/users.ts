@@ -2,6 +2,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { accentThemeValidator } from "./lib/accentTheme";
+import { widgetDisplayPreferencesValidator } from "./lib/widgetDisplayPreferences";
 import {
   normalizeUsername,
   requireAuthUserId,
@@ -65,6 +66,16 @@ export const setAccentTheme = mutation({
   handler: async (ctx, { accentTheme }) => {
     const { userId } = await requireExistingUser(ctx);
     await ctx.db.patch(userId, { accentTheme });
+  },
+});
+
+export const setWidgetDisplayPreferences = mutation({
+  args: {
+    preferences: widgetDisplayPreferencesValidator,
+  },
+  handler: async (ctx, { preferences }) => {
+    const { userId } = await requireExistingUser(ctx);
+    await ctx.db.patch(userId, { widgetDisplayPreferences: preferences });
   },
 });
 

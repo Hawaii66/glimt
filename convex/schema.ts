@@ -3,6 +3,7 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 import { accentThemeValidator } from "./lib/accentTheme";
+import { widgetDisplayPreferencesValidator } from "./lib/widgetDisplayPreferences";
 
 const authTables = {
   ...defaultAuthTables,
@@ -18,6 +19,7 @@ const authTables = {
     avatarStorageId: v.optional(v.id("_storage")),
     onboardingComplete: v.optional(v.boolean()),
     accentTheme: v.optional(accentThemeValidator),
+    widgetDisplayPreferences: v.optional(widgetDisplayPreferencesValidator),
     timezone: v.optional(v.string()),
     timezoneUpdatedAt: v.optional(v.number()),
   })

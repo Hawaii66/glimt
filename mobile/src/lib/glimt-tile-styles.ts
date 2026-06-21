@@ -9,3 +9,14 @@ export const TILE_SCALE = 0.95;
 export function tileRotation(index: number): `${number}deg` {
   return `${Math.pow(-1, index + 1) * 2}deg`;
 }
+
+export function tileRotationDegrees(
+  index: number,
+  showRotation: boolean,
+): number {
+  if (!showRotation) {
+    return 0;
+  }
+
+  return Math.pow(-1, index + 1) * 2;
+}

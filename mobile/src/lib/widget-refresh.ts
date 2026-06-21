@@ -18,8 +18,12 @@ import {
   TILE_BORDER_WIDTH,
   TILE_CORNER_RADIUS,
   TILE_SCALE,
-  tileRotation,
+  tileRotationDegrees,
 } from "./glimt-tile-styles";
+import {
+  resolveWidgetDisplayPreferences,
+  type WidgetDisplayPreferences,
+} from "convex/lib/widgetDisplayPreferences";
 import { getCaptureDeepLinkUrl } from "./routes";
 import {
   FriendGlimtCameraWidget,
@@ -138,7 +142,9 @@ async function cacheImageToAppGroup(
   }
 }
 
-async function buildWidgetGlimts(): Promise<WidgetGlimtItem[]> {
+async function buildWidgetGlimts(
+  displayPreferences: WidgetDisplayPreferences,
+): Promise<WidgetGlimtItem[]> {
   if (!convex) {
     console.warn("[FriendGlimt] no Convex client; skipping widget refresh");
     return [];
@@ -192,7 +198,10 @@ async function buildWidgetGlimts(): Promise<WidgetGlimtItem[]> {
         photoUri,
         avatarUri,
         avatarInitials: getInitials(displayName),
-        rotationDegrees: parseFloat(tileRotation(index)),
+        rotationDegrees: tileRotationDegrees(
+          index,
+          displayPreferences.showRotation,
+        ),
       };
     }),
   );
@@ -202,30 +211,40 @@ async function buildWidgetGlimts(): Promise<WidgetGlimtItem[]> {
 
 export async function refreshFriendGlimtWidget(
   accentThemeId?: AccentThemeId,
+  displayPreferencesInput?: WidgetDisplayPreferences,
 ): Promise<void> {
-  const glimts = await buildWidgetGlimts();
+  const displayPreferences = resolveWidgetDisplayPreferences(
+    displayPreferencesInput,
+  );
+  const glimts = await buildWidgetGlimts(displayPreferences);
 
   if (glimts.length === 0) {
     console.warn("[FriendGlimt] no widget images cached; skipping update");
     return;
   }
 
-  const whiteUrl = await getWhiteImageAssetUri();
-  if (!whiteUrl) {
-    console.warn("[FriendGlimt] failed to resolve white.png asset");
-    return;
-  }
+  let whiteUri = "";
+  if (displayPreferences.showWhiteBorder) {
+    const whiteUrl = await getWhiteImageAssetUri();
+    if (!whiteUrl) {
+      console.warn("[FriendGlimt] failed to resolve white.png asset");
+      return;
+    }
 
-  const whiteUri = await cacheImageToAppGroup(whiteUrl, "white.png", true);
-  if (!whiteUri) {
-    console.warn("[FriendGlimt] failed to cache white.png");
-    return;
+    const cachedWhiteUri = await cacheImageToAppGroup(whiteUrl, "white.png", true);
+    if (!cachedWhiteUri) {
+      console.warn("[FriendGlimt] failed to cache white.png");
+      return;
+    }
+
+    whiteUri = cachedWhiteUri;
   }
 
   FriendGlimtWidget.updateSnapshot({
     glimts,
     style: getWidgetTileStyle(accentThemeId),
     whiteUri,
+    display: displayPreferences,
   });
 }
 

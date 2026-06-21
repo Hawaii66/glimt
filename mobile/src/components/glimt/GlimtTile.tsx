@@ -10,8 +10,12 @@ import {
   TILE_BORDER_WIDTH,
   TILE_CORNER_RADIUS,
   TILE_SCALE,
-  tileRotation,
+  tileRotationDegrees,
 } from "@/lib/glimt-tile-styles";
+import {
+  resolveWidgetDisplayPreferences,
+  type WidgetDisplayPreferences,
+} from "convex/lib/widgetDisplayPreferences";
 
 type GlimtTileProps = {
   photoUrl: string;
@@ -20,6 +24,7 @@ type GlimtTileProps = {
   index: number;
   size?: number;
   showMeetDayBadge?: boolean;
+  displayPreferences?: WidgetDisplayPreferences;
 };
 
 export function GlimtTile({
@@ -29,9 +34,13 @@ export function GlimtTile({
   index,
   size = 280,
   showMeetDayBadge = false,
+  displayPreferences,
 }: GlimtTileProps) {
-  const innerRadius = TILE_CORNER_RADIUS - TILE_BORDER_WIDTH;
-  const rotation = tileRotation(index);
+  const { showWhiteBorder, showRotation, showAvatar } =
+    resolveWidgetDisplayPreferences(displayPreferences);
+  const borderWidth = showWhiteBorder ? TILE_BORDER_WIDTH : 0;
+  const innerRadius = TILE_CORNER_RADIUS - borderWidth;
+  const rotation = `${tileRotationDegrees(index, showRotation)}deg`;
 
   return (
     <View
@@ -47,11 +56,12 @@ export function GlimtTile({
       <View
         style={[
           styles.border,
+          showWhiteBorder && styles.borderVisible,
           {
             width: size,
             height: size,
             borderRadius: TILE_CORNER_RADIUS,
-            padding: TILE_BORDER_WIDTH,
+            padding: borderWidth,
           },
         ]}
       >
@@ -60,8 +70,8 @@ export function GlimtTile({
           style={[
             styles.photo,
             {
-              width: size - TILE_BORDER_WIDTH * 2,
-              height: size - TILE_BORDER_WIDTH * 2,
+              width: size - borderWidth * 2,
+              height: size - borderWidth * 2,
               borderRadius: innerRadius,
             },
           ]}
@@ -69,26 +79,29 @@ export function GlimtTile({
         />
       </View>
 
-      <View
-        style={[
-          styles.avatarContainer,
-          {
-            width: AVATAR_SIZE,
-            height: AVATAR_SIZE,
-            right: -AVATAR_OFFSET,
-            bottom: -AVATAR_OFFSET,
-            borderRadius: AVATAR_SIZE / 2,
-          },
-        ]}
-      >
-        <UserAvatar
-          imageUri={avatarUrl}
-          displayName={displayName}
-          size={AVATAR_SIZE - 2}
-          backgroundColor="#F5F0EB"
-          initialsColor="#6B6560"
-        />
-      </View>
+      {showAvatar ? (
+        <View
+          style={[
+            styles.avatarContainer,
+            showWhiteBorder && styles.avatarBorderVisible,
+            {
+              width: AVATAR_SIZE,
+              height: AVATAR_SIZE,
+              right: -AVATAR_OFFSET,
+              bottom: -AVATAR_OFFSET,
+              borderRadius: AVATAR_SIZE / 2,
+            },
+          ]}
+        >
+          <UserAvatar
+            imageUri={avatarUrl}
+            displayName={displayName}
+            size={AVATAR_SIZE - (showWhiteBorder ? 2 : 0)}
+            backgroundColor="#F5F0EB"
+            initialsColor="#6B6560"
+          />
+        </View>
+      ) : null}
 
       {showMeetDayBadge ? (
         <View style={styles.meetBadge}>
@@ -105,8 +118,10 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   border: {
-    backgroundColor: PHOTO_BORDER_COLOR,
     overflow: "hidden",
+  },
+  borderVisible: {
+    backgroundColor: PHOTO_BORDER_COLOR,
   },
   photo: {
     overflow: "hidden",
@@ -130,8 +145,6 @@ const styles = StyleSheet.create({
   },
   avatarContainer: {
     position: "absolute",
-    backgroundColor: PHOTO_BORDER_COLOR,
-    padding: 1,
     overflow: "hidden",
     ...Platform.select({
       ios: {
@@ -145,5 +158,9 @@ const styles = StyleSheet.create({
       },
       default: {},
     }),
+  },
+  avatarBorderVisible: {
+    backgroundColor: PHOTO_BORDER_COLOR,
+    padding: 1,
   },
 });

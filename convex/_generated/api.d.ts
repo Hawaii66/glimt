@@ -27,6 +27,7 @@ import type * as lib_journalTimezone from "../lib/journalTimezone.js";
 import type * as lib_meetLock from "../lib/meetLock.js";
 import type * as lib_random from "../lib/random.js";
 import type * as lib_userError from "../lib/userError.js";
+import type * as lib_widgetDisplayPreferences from "../lib/widgetDisplayPreferences.js";
 import type * as meetUnlock from "../meetUnlock.js";
 import type * as users from "../users.js";
 
@@ -56,6 +57,7 @@ declare const fullApi: ApiFromModules<{
   "lib/meetLock": typeof lib_meetLock;
   "lib/random": typeof lib_random;
   "lib/userError": typeof lib_userError;
+  "lib/widgetDisplayPreferences": typeof lib_widgetDisplayPreferences;
   meetUnlock: typeof meetUnlock;
   users: typeof users;
 }>;
