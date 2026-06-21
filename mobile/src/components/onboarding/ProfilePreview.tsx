@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { SymbolView } from "expo-symbols";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { UserAvatar } from "@/components/UserAvatar";
 import { useOnboardingStore } from "@/stores/onboardingStore";
@@ -16,12 +17,16 @@ type ProfilePreviewProps = {
   embedded?: boolean;
   /** Light text and borders for accent gradient backgrounds. */
   onGradientBackground?: boolean;
+  onAvatarPress?: () => void;
+  showEditIcon?: boolean;
 };
 
 export function ProfilePreview({
   profile,
   embedded = false,
   onGradientBackground = false,
+  onAvatarPress,
+  showEditIcon = false,
 }: ProfilePreviewProps) {
   const colors = useAppColors();
   const storeDisplayName = useOnboardingStore((state) => state.displayName);
@@ -45,19 +50,55 @@ export function ProfilePreview({
   const avatarBorder = onGradientBackground ? "#FFFFFF" : colors.surfaceBorder;
   const avatarInitialsColor = onGradientBackground ? "#FFFFFF" : colors.textMuted;
   const avatarSize = embedded ? 88 : 96;
+  const editIconVisible = showEditIcon && onAvatarPress != null;
+
+  const avatarMarginBottom = embedded ? 4 : 8;
+
+  const avatar = (
+    <UserAvatar
+      imageUri={avatarUri}
+      displayName={displayName?.trim() ?? ""}
+      size={avatarSize}
+      style={onAvatarPress ? undefined : { marginBottom: avatarMarginBottom }}
+      backgroundColor={avatarBackground}
+      borderColor={avatarBorder}
+      borderWidth={1}
+      initialsColor={avatarInitialsColor}
+    />
+  );
 
   return (
     <View style={[styles.container, embedded && styles.containerEmbedded]}>
-      <UserAvatar
-        imageUri={avatarUri}
-        displayName={displayName?.trim() ?? ""}
-        size={avatarSize}
-        style={{ marginBottom: embedded ? 4 : 8 }}
-        backgroundColor={avatarBackground}
-        borderColor={avatarBorder}
-        borderWidth={1}
-        initialsColor={avatarInitialsColor}
-      />
+      {onAvatarPress ? (
+        <Pressable
+          onPress={onAvatarPress}
+          accessibilityRole="button"
+          accessibilityLabel="Edit profile"
+          style={[
+            styles.avatarPressable,
+            { marginBottom: avatarMarginBottom },
+          ]}
+        >
+          {avatar}
+          {editIconVisible ? (
+            <View
+              style={[
+                styles.editBadge,
+                { bottom: embedded ? 2 : 6 },
+              ]}
+            >
+              <SymbolView
+                name="pencil"
+                size={12}
+                tintColor="#FFFFFF"
+                weight="semibold"
+              />
+            </View>
+          ) : null}
+        </Pressable>
+      ) : (
+        avatar
+      )}
 
       <Text style={[styles.username, { color: usernameColor }]}>
         {showUsername
@@ -84,6 +125,21 @@ const styles = StyleSheet.create({
     flex: 0,
     paddingHorizontal: 0,
     paddingVertical: 4,
+  },
+  avatarPressable: {
+    position: "relative",
+  },
+  editBadge: {
+    position: "absolute",
+    right: -2,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "#000000",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
   },
   username: {
     fontSize: 15,

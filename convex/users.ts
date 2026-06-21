@@ -99,6 +99,31 @@ export const syncTimezone = mutation({
   },
 });
 
+export const updateName = mutation({
+  args: { name: v.string() },
+  handler: async (ctx, { name }) => {
+    const { userId } = await requireExistingUser(ctx);
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      throw new Error("Display name is required.");
+    }
+
+    await ctx.db.patch(userId, { name: trimmedName });
+  },
+});
+
+export const updateAvatar = mutation({
+  args: {
+    avatarStorageId: v.union(v.id("_storage"), v.null()),
+  },
+  handler: async (ctx, { avatarStorageId }) => {
+    const { userId } = await requireExistingUser(ctx);
+    await ctx.db.patch(userId, {
+      avatarStorageId: avatarStorageId ?? undefined,
+    });
+  },
+});
+
 export const completeOnboarding = mutation({
   args: {
     name: v.string(),
