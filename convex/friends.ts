@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { requireAuthUserId, validateUsername } from "./lib/auth";
 import { createFriendGroup, findGroupForUsers, listGroupMemberIds } from "./lib/friendGroups";
 import { resolveUserTimezone, todayIsoDate } from "./lib/dates";
@@ -245,6 +246,25 @@ export const getGroupForFriend = query({
   },
 });
 
+async function scheduleFriendRequestPush(
+  ctx: MutationCtx,
+  toUserId: Id<"users">,
+  fromUserId: Id<"users">,
+) {
+  const fromProfile = await getUserProfile(ctx, fromUserId);
+  if (!fromProfile) {
+    return;
+  }
+
+  const senderLabel = fromProfile.displayName || fromProfile.username || "Someone";
+  await ctx.scheduler.runAfter(0, internal.pushNotifications.sendToUser, {
+    userId: toUserId,
+    title: "Friend request",
+    body: `${senderLabel} sent you a friend request`,
+    data: { type: "friend_request" },
+  });
+}
+
 export const sendRequest = mutation({
   args: { username: v.string() },
   handler: async (ctx, { username }) => {
@@ -295,6 +315,7 @@ export const sendRequest = mutation({
         respondedAt: undefined,
       });
       await deleteRequestsBetweenUsers(ctx, toUserId, fromUserId);
+      await scheduleFriendRequestPush(ctx, toUserId, fromUserId);
       return outgoing._id;
     }
 
@@ -307,15 +328,18 @@ export const sendRequest = mutation({
         createdAt: now,
         respondedAt: undefined,
       });
+      await scheduleFriendRequestPush(ctx, toUserId, fromUserId);
       return incoming._id;
     }
 
-    return await ctx.db.insert("friendRequests", {
+    const requestId = await ctx.db.insert("friendRequests", {
       fromUserId,
       toUserId,
       status: "pending",
       createdAt: now,
     });
+    await scheduleFriendRequestPush(ctx, toUserId, fromUserId);
+    return requestId;
   },
 });
 

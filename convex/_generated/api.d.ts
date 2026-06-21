@@ -29,6 +29,8 @@ import type * as lib_random from "../lib/random.js";
 import type * as lib_userError from "../lib/userError.js";
 import type * as lib_widgetDisplayPreferences from "../lib/widgetDisplayPreferences.js";
 import type * as meetUnlock from "../meetUnlock.js";
+import type * as pushNotifications from "../pushNotifications.js";
+import type * as pushTokens from "../pushTokens.js";
 import type * as users from "../users.js";
 
 import type {
@@ -59,6 +61,8 @@ declare const fullApi: ApiFromModules<{
   "lib/userError": typeof lib_userError;
   "lib/widgetDisplayPreferences": typeof lib_widgetDisplayPreferences;
   meetUnlock: typeof meetUnlock;
+  pushNotifications: typeof pushNotifications;
+  pushTokens: typeof pushTokens;
   users: typeof users;
 }>;
 

@@ -7,6 +7,7 @@ import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { FriendRequestNotification } from "@/components/FriendRequestNotification";
 import { Toast } from "@/components/Toast";
 import { usePrepareTodayMeetLocks } from "@/hooks/usePrepareTodayMeetLocks";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useSyncTimezone } from "@/hooks/useSyncTimezone";
 import {
   resolveAccentThemeId,
@@ -64,6 +65,7 @@ function AppShell() {
   const colors = useAppColors();
   usePrepareTodayMeetLocks(true);
   useSyncTimezone(true);
+  usePushNotifications(true);
 
   return (
     <View style={styles.appRoot}>

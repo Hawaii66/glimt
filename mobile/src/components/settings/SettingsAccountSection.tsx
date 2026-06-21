@@ -1,5 +1,5 @@
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -9,6 +9,7 @@ import { ProfilePreview } from "@/components/onboarding/ProfilePreview";
 import { useCurrentUserAccentTheme } from "@/hooks/useCurrentUserAccentTheme";
 import { getAccentTheme } from "@/lib/accent-themes";
 import { useOnboardingStore } from "@/stores/onboardingStore";
+import { usePushTokenStore } from "@/stores/pushTokenStore";
 import { api } from "convex/_generated/api";
 
 export function SettingsAccountProfile() {
@@ -39,6 +40,9 @@ export function SettingsAccountProfile() {
 export function SettingsSignOutButton() {
   const router = useRouter();
   const { signOut } = useAuthActions();
+  const unregisterPushToken = useMutation(api.pushTokens.unregisterPushToken);
+  const pushToken = usePushTokenStore((state) => state.token);
+  const setPushToken = usePushTokenStore((state) => state.setToken);
   const resetOnboarding = useOnboardingStore((state) => state.reset);
   const [signingOut, setSigningOut] = useState(false);
 
@@ -48,6 +52,10 @@ export function SettingsSignOutButton() {
     }
     setSigningOut(true);
     try {
+      if (pushToken) {
+        await unregisterPushToken({ token: pushToken }).catch(() => {});
+        setPushToken(null);
+      }
       await signOut();
       resetOnboarding();
       router.replace("/onboarding/sign-in");

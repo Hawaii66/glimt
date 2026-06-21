@@ -41,6 +41,7 @@ function buildPlugins(
       },
     ],
     "expo-updates",
+    "expo-notifications",
     "expo-background-task",
     [
       "expo-camera",

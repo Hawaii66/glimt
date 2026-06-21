@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { requireAuthUserId } from "./lib/auth";
 import {
   findGroupForUsers,
@@ -509,6 +510,9 @@ export const sendGlimt = mutation({
 
     const sentAt = Date.now();
     const entryIds: Id<"journalEntries">[] = [];
+    const senderProfile = await getUserProfile(ctx, userId);
+    const senderLabel =
+      senderProfile?.displayName || senderProfile?.username || "A friend";
 
     for (const targetFriendId of targetFriendIds) {
       const groupId = await getOrCreateFriendGroupForUsers(
@@ -535,6 +539,16 @@ export const sendGlimt = mutation({
       });
 
       entryIds.push(entryId);
+
+      await ctx.scheduler.runAfter(0, internal.pushNotifications.sendToUser, {
+        userId: targetFriendId,
+        title: "New glimt",
+        body: `${senderLabel} sent you a glimt`,
+        data: {
+          type: "glimt",
+          friendUserId: `${userId}`,
+        },
+      });
     }
 
     return {
