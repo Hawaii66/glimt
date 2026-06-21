@@ -2,6 +2,7 @@ import {
   HStack,
   Image,
   Rectangle,
+  Spacer,
   Text,
   VStack,
   ZStack,
@@ -16,8 +17,6 @@ import {
   offset,
   padding,
   resizable,
-  rotationEffect,
-  scaleEffect,
   shadow,
   widgetAccentedRenderingMode,
   widgetURL,
@@ -43,7 +42,6 @@ export type WidgetTileStyle = {
 export type FriendGlimtProps = {
   glimts: WidgetGlimtItem[];
   style: WidgetTileStyle;
-  whiteUri: string;
 };
 
 const FriendGlimt = (
@@ -60,12 +58,7 @@ const FriendGlimt = (
     tileBorderWidth,
     avatarSize,
     avatarOffset,
-    tileScale,
   } = props.style;
-
-  function tileRotation(index: number): `${number}deg` {
-    return `${Math.pow(-1, index + 1) * 2}deg`;
-  }
 
   const widgetGradient = {
     colors: gradientColors,
@@ -103,7 +96,7 @@ const FriendGlimt = (
           cornerRadius: tileCornerRadius,
           borderWidth: tileBorderWidth,
           avatarSize,
-          tileGap: 30,
+          tileGap: 12,
           avatarOffset,
         };
       case "systemLarge":
@@ -112,7 +105,7 @@ const FriendGlimt = (
           cornerRadius: tileCornerRadius,
           borderWidth: tileBorderWidth,
           avatarSize,
-          tileGap: 5,
+          tileGap: 8,
           avatarOffset,
         };
       default:
@@ -143,135 +136,173 @@ const FriendGlimt = (
     );
   }
 
-  function renderGlimtImageTile(
-    photoUri: string,
-    avatarUri: string,
-    avatarInitials: string,
+  function renderAvatar(avatarUri: string, avatarInitials: string) {
+    const avatarModifiers = [
+      frame({ width: avatarSize, height: avatarSize }),
+      offset({ x: avatarOffset, y: avatarOffset }),
+      shadow({ radius: 2, color: "#777" }),
+    ];
+
+    if (avatarUri) {
+      return (
+        <ZStack modifiers={avatarModifiers}>
+          <Rectangle
+            modifiers={[foregroundStyle(photoBorderColor), cornerRadius(999)]}
+          />
+          <Image
+            uiImage={avatarUri}
+            modifiers={[
+              resizable(),
+              aspectRatio({ contentMode: "fill", ratio: 1 }),
+              cornerRadius(999),
+              padding({ all: 1 }),
+              widgetAccentedRenderingMode("fullColor"),
+            ]}
+          />
+        </ZStack>
+      );
+    }
+
+    return (
+      <ZStack modifiers={avatarModifiers}>
+        <Rectangle
+          modifiers={[foregroundStyle(photoBorderColor), cornerRadius(999)]}
+        />
+        <Rectangle
+          modifiers={[
+            foregroundStyle("#F5F0EB"),
+            cornerRadius(999),
+            padding({ all: 1 }),
+          ]}
+        />
+        <Text
+          modifiers={[
+            font({
+              weight: "semibold",
+              size: Math.max(10, Math.round(avatarSize * 0.36)),
+            }),
+            foregroundStyle("#6B6560"),
+          ]}
+        >
+          {avatarInitials}
+        </Text>
+      </ZStack>
+    );
+  }
+
+  function renderPhotoTile(
+    item: WidgetGlimtItem,
     metrics: ReturnType<typeof tileMetricsForFamily>,
-    tileModifiers: import("@expo/ui/swift-ui/modifiers").ViewModifier[] = [],
-    idx: number,
+    frameModifiers: import("@expo/ui/swift-ui/modifiers").ViewModifier[] = [],
   ) {
-    const { borderWidth } = metrics;
+    const innerRadius = metrics.cornerRadius - metrics.borderWidth;
 
     return (
       <ZStack
         alignment="bottomTrailing"
         modifiers={[
           resizable(),
+          aspectRatio({ contentMode: "fit", ratio: 1 }),
           cornerRadius(metrics.cornerRadius),
-          rotationEffect(parseFloat(tileRotation(idx))),
-          scaleEffect(0.95),
+          ...frameModifiers,
         ]}
       >
         <ZStack modifiers={[cornerRadius(metrics.cornerRadius)]}>
-          <Image
-            uiImage={props.whiteUri}
+          <Rectangle
             modifiers={[
               resizable(),
               aspectRatio({ contentMode: "fill", ratio: 1 }),
-              cornerRadius(metrics.cornerRadius - metrics.borderWidth),
-              widgetAccentedRenderingMode("fullColor"),
-              scaleEffect(10000),
+              cornerRadius(innerRadius),
+              foregroundStyle(photoBorderColor),
             ]}
           />
           <Image
-            uiImage={photoUri}
+            uiImage={item.photoUri}
             modifiers={[
               resizable(),
               aspectRatio({ contentMode: "fill", ratio: 1 }),
-              cornerRadius(metrics.cornerRadius - metrics.borderWidth),
-              padding({ all: borderWidth }),
+              cornerRadius(innerRadius),
+              padding({ all: metrics.borderWidth }),
               widgetAccentedRenderingMode("fullColor"),
             ]}
           />
         </ZStack>
 
-        {avatarUri ? (
-          <ZStack
-            modifiers={[
-              frame({ width: avatarSize, height: avatarSize }),
-              offset({ x: avatarOffset, y: avatarOffset }),
-              rotationEffect(parseFloat(tileRotation(idx))),
-              scaleEffect(tileScale),
-              shadow({ radius: 2, color: "#777" }),
-            ]}
-          >
-            <Rectangle
-              modifiers={[foregroundStyle(photoBorderColor), cornerRadius(999)]}
-            />
-            <Image
-              uiImage={avatarUri}
-              modifiers={[
-                resizable(),
-                aspectRatio({ contentMode: "fill", ratio: 1 }),
-                cornerRadius(999),
-                padding({ all: 1 }),
-                widgetAccentedRenderingMode("fullColor"),
-              ]}
-            />
-          </ZStack>
-        ) : (
-          <ZStack
-            modifiers={[
-              frame({ width: avatarSize, height: avatarSize }),
-              offset({ x: avatarOffset, y: avatarOffset }),
-              rotationEffect(parseFloat(tileRotation(idx))),
-              scaleEffect(tileScale),
-              shadow({ radius: 2, color: "#777" }),
-            ]}
-          >
-            <Rectangle
-              modifiers={[foregroundStyle(photoBorderColor), cornerRadius(999)]}
-            />
-            <Rectangle
-              modifiers={[
-                foregroundStyle("#F5F0EB"),
-                cornerRadius(999),
-                padding({ all: 1 }),
-              ]}
-            />
-            <Text
-              modifiers={[
-                font({
-                  weight: "semibold",
-                  size: Math.max(10, Math.round(avatarSize * 0.36)),
-                }),
-                foregroundStyle("#6B6560"),
-              ]}
-            >
-              {avatarInitials}
-            </Text>
-          </ZStack>
-        )}
+        {renderAvatar(item.avatarUri, item.avatarInitials)}
       </ZStack>
     );
   }
 
-  function renderTileRow(
+  function renderHorizontalRow(
     items: WidgetGlimtItem[],
-    metrics: ReturnType<typeof tileMetricsForFamily>,
     columns: number,
+    metrics: ReturnType<typeof tileMetricsForFamily>,
+    centerWhenPartial = false,
   ) {
+    if (items.length === 0) {
+      return null;
+    }
+
+    if (centerWhenPartial && items.length < columns && items.length === 1) {
+      const item = items[0];
+
+      return (
+        <HStack spacing={metrics.tileGap}>
+          <Spacer />
+          {renderPhotoTile(item, metrics, [
+            containerRelativeFrame({
+              axes: "horizontal",
+              count: columns,
+              span: 1,
+              spacing: metrics.tileGap,
+            }),
+          ])}
+          <Spacer />
+        </HStack>
+      );
+    }
+
     return (
       <HStack spacing={metrics.tileGap}>
         {items.map((item, idx) =>
-          renderGlimtImageTile(
-            item.photoUri,
-            item.avatarUri,
-            item.avatarInitials,
-            metrics,
-            [
-              containerRelativeFrame({
-                axes: "horizontal",
-                count: columns,
-                span: 1,
-                spacing: metrics.tileGap,
-              }),
-            ],
-            idx,
-          ),
+          renderPhotoTile(item, metrics, [
+            containerRelativeFrame({
+              axes: "horizontal",
+              count: columns,
+              span: 1,
+              spacing: metrics.tileGap,
+            }),
+          ]),
         )}
       </HStack>
+    );
+  }
+
+  function renderPhotoLayout(
+    items: WidgetGlimtItem[],
+    family: string,
+    metrics: ReturnType<typeof tileMetricsForFamily>,
+  ) {
+    if (family === "systemSmall") {
+      return renderPhotoTile(items[0], metrics, [
+        containerRelativeFrame({ axes: "both" }),
+      ]);
+    }
+
+    if (family === "systemMedium") {
+      return renderHorizontalRow(items, 2, metrics, true);
+    }
+
+    const topRow = items.slice(0, 2);
+    const bottomRow = items.slice(2, 4);
+
+    return (
+      <VStack spacing={metrics.tileGap}>
+        {renderHorizontalRow(topRow, 2, metrics)}
+        {bottomRow.length > 0
+          ? renderHorizontalRow(bottomRow, 2, metrics, true)
+          : null}
+      </VStack>
     );
   }
 
@@ -286,48 +317,11 @@ const FriendGlimt = (
     return <ZStack>{renderWidgetBackground()}</ZStack>;
   }
 
-  if (widgetFamily === "systemSmall") {
-    const item = visibleGlimts[0];
-    return (
-      <ZStack>
-        {renderWidgetBackground()}
-        <VStack modifiers={[padding({ all: metrics.outerPadding })]}>
-          {renderGlimtImageTile(
-            item.photoUri,
-            item.avatarUri,
-            item.avatarInitials,
-            metrics,
-            [containerRelativeFrame({ axes: "both" })],
-            0,
-          )}
-        </VStack>
-      </ZStack>
-    );
-  }
-
-  if (widgetFamily === "systemMedium") {
-    return (
-      <ZStack>
-        {renderWidgetBackground()}
-        <VStack modifiers={[padding({ all: metrics.outerPadding })]}>
-          {renderTileRow(visibleGlimts, metrics, 2)}
-        </VStack>
-      </ZStack>
-    );
-  }
-
-  const topRow = visibleGlimts.slice(0, 2);
-  const bottomRow = visibleGlimts.slice(2, 4);
-
   return (
     <ZStack>
       {renderWidgetBackground()}
-      <VStack
-        spacing={metrics.tileGap}
-        modifiers={[padding({ all: metrics.outerPadding })]}
-      >
-        {renderTileRow(topRow, metrics, 2)}
-        {bottomRow.length > 0 ? renderTileRow(bottomRow, metrics, 2) : null}
+      <VStack modifiers={[padding({ all: metrics.outerPadding })]}>
+        {renderPhotoLayout(visibleGlimts, widgetFamily, metrics)}
       </VStack>
     </ZStack>
   );
