@@ -96,7 +96,8 @@ async function cacheImageToAppGroup(
   }
 
   try {
-    if (copy) {
+    const shouldCopy = copy || url.startsWith("file://");
+    if (shouldCopy) {
       const sourceFile = new File(url);
       sourceFile.copy(destination);
       return destination.uri;
@@ -107,7 +108,7 @@ async function cacheImageToAppGroup(
       return downloaded.uri;
     }
   } catch (error) {
-    console.warn(`[FriendGlimt] failed to cache ${filename}:`, error);
+    console.warn(`[FriendGlimt] failed to cache ${url} ${filename}:`, error);
     return null;
   }
 }
@@ -139,7 +140,7 @@ async function buildWidgetGlimts(): Promise<WidgetGlimtItem[]> {
       const photoUri = await cacheImageToAppGroup(
         result.uri,
         `photo-${friendUserId}.jpg`,
-        false,
+        true,
         true,
       );
 
