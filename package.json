@@ -1,0 +1,39 @@
+{
+  "name": "glimt",
+  "private": true,
+  "packageManager": "pnpm@10.12.4",
+  "scripts": {
+    "glimt:dev": "bash ./glimt.sh dev expo",
+    "glimt:stage": "bash ./glimt.sh stage expo",
+    "glimt:prod": "bash ./glimt.sh prod expo",
+    "convex:dev": "bash ./glimt.sh dev convex dev",
+    "convex:stage": "bash ./glimt.sh stage convex dev",
+    "convex:prod": "bash ./glimt.sh prod convex dev",
+    "convex:deploy:stage": "bash ./glimt.sh stage convex deploy",
+    "convex:deploy:prod": "bash ./glimt.sh prod convex deploy",
+    "start": "pnpm --filter glimt-mobile start:dev",
+    "android": "pnpm --filter glimt-mobile android",
+    "ios": "pnpm --filter glimt-mobile ios",
+    "web": "pnpm --filter glimt-mobile web",
+    "lint": "pnpm --filter glimt-mobile lint",
+    "eas:build:dev": "bash ./glimt.sh dev build ios",
+    "eas:build:stage": "bash ./glimt.sh stage build ios",
+    "eas:build:prod": "bash ./glimt.sh prod build ios",
+    "eas:build:dev:android": "bash ./glimt.sh dev build android",
+    "eas:build:stage:android": "bash ./glimt.sh stage build android",
+    "eas:build:prod:android": "bash ./glimt.sh prod build android"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "convex": "^1.39.1",
+    "dotenv": "^17.4.2",
+    "dotenv-cli": "^11.0.0"
+  },
+  "dependencies": {
+    "@auth/core": "^0.37.0",
+    "@convex-dev/auth": "^0.0.92",
+    "@glimt/date": "workspace:*",
+    "jose": "^6.2.3",
+    "zod": "^4.4.3"
+  }
+}

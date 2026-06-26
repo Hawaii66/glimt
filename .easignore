@@ -1,0 +1,52 @@
+# EAS upload archive (repo root). When this file exists, .gitignore is NOT used.
+# https://expo.fyi/eas-build-archive
+
+# Dependencies — reinstalled on EAS workers (npm workspaces from repo root)
+node_modules/
+**/node_modules/
+
+# Caches & generated
+.convex/
+**/.expo/
+**/.metro-health-check*
+**/dist/
+**/web-build/
+*.tsbuildinfo
+expo-env.d.ts
+
+# Secrets & signing material
+.env*.local
+*.pem
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Native projects (CNG / prebuild on EAS)
+mobile/ios/
+mobile/android/
+**/.kotlin/
+
+# Convex backend — not used by the Expo native build
+convex/**
+.convex/**
+
+# Tooling tracked in git but unnecessary for builds
+.agents/**
+.claude/**
+.vscode/**
+.idea/**
+.git/**
+scripts/**
+apps/**
+
+# OS
+.DS_Store
+
+# Repo-only files
+glimt.sh
+example/
+AGENTS.md
+CLAUDE.md
+skills-lock.json

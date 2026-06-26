@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+
+# Convex local CLI cache
+.convex/
+
+# local env files
+.env*.local
+
+# macOS
+.DS_Store
+*.pem
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+pnpm-debug.log*
+
+# pnpm
+.pnpm-store/
+
+# typescript
+*.tsbuildinfo
+
+example
+node_modules

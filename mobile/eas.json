@@ -1,0 +1,48 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development",
+      "environment": "development",
+      "node": "22.13.0",
+      "env": {
+        "MOBILE_ENVIRONMENT": "dev",
+        "EAS_PROJECT_ID": "b92605ee-1590-47dd-a260-11dc4b24b3bf",
+        "EXPO_NO_DOTENV": "1",
+        "EXPO_PUBLIC_CONVEX_URL_DEV": "${EXPO_PUBLIC_CONVEX_URL_DEV}"
+      },
+    },
+    "staging": {
+      "distribution": "internal",
+      "channel": "staging",
+      "environment": "preview",
+      "node": "22.13.0",
+      "env": {
+        "MOBILE_ENVIRONMENT": "stage",
+        "EAS_PROJECT_ID": "b92605ee-1590-47dd-a260-11dc4b24b3bf",
+        "EXPO_NO_DOTENV": "1",
+        "EXPO_PUBLIC_CONVEX_URL_STAGE": "${EXPO_PUBLIC_CONVEX_URL_STAGE}"
+      }
+    },
+    "production": {
+      "channel": "production",
+      "environment": "production",
+      "autoIncrement": true,
+      "node": "22.13.0",
+      "env": {
+        "MOBILE_ENVIRONMENT": "prod",
+        "EAS_PROJECT_ID": "b92605ee-1590-47dd-a260-11dc4b24b3bf",
+        "EXPO_NO_DOTENV": "1",
+        "EXPO_PUBLIC_CONVEX_URL_PROD": "${EXPO_PUBLIC_CONVEX_URL_PROD}"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
