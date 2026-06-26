@@ -1,0 +1,5 @@
+packages:
+  - expo
+  - packages/*
+
+nodeLinker: hoisted

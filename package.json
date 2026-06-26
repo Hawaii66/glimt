@@ -1,0 +1,18 @@
+{
+  "name": "glimt-v2",
+  "private": true,
+  "packageManager": "pnpm@10.12.4",
+  "scripts": {
+    "glimt:dev": "bash ./glimt.sh dev expo",
+    "convex:dev": "bash ./glimt.sh dev convex dev",
+    "start": "pnpm --filter glimt-expo start:dev",
+    "android": "pnpm --filter glimt-expo android",
+    "ios": "pnpm --filter glimt-expo ios"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "convex": "^1.39.1",
+    "dotenv": "^17.4.2",
+    "dotenv-cli": "^11.0.0"
+  }
+}
