@@ -7,50 +7,45 @@ import { OnboardingScreen } from '@/components/onboarding/OnboardingScreen';
 import { useSession } from '@/hooks/useSession';
 import { APP_HOME } from '@/lib/routes';
 import { useAppColors } from '@/lib/theme';
-import { uploadAvatarToConvex } from '@/lib/uploadAvatar';
+import { uploadAvatarToStorage } from '@/lib/uploadAvatar';
 import { useOnboardingStore } from '@/stores/onboardingStore';
-import { useProfileStore } from '@/stores/profileStore';
 import { api } from 'convex/_generated/api';
 
 export default function ConfirmScreen() {
   const colors = useAppColors();
   const router = useRouter();
-  const { isReady, isAuthenticated, onboardingComplete } = useSession();
+  const { isReady, isAuthenticated, onboardingComplete, user } = useSession();
   const completeOnboarding = useMutation(api.users.completeOnboarding);
   const generateAvatarUploadUrl = useMutation(api.users.generateAvatarUploadUrl);
-  const saveLocalProfile = useProfileStore((state) => state.completeOnboarding);
   const displayName = useOnboardingStore((state) => state.displayName);
   const username = useOnboardingStore((state) => state.username);
   const localAvatarUri = useOnboardingStore((state) => state.localAvatarUri);
-  const accentTheme = useOnboardingStore((state) => state.accentTheme);
-  const pushToken = useOnboardingStore((state) => state.pushToken);
   const reset = useOnboardingStore((state) => state.reset);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleComplete = async () => {
+    if (!isAuthenticated || !user) {
+      setError('Your session expired. Please sign in again.');
+      return;
+    }
+
     setError(null);
     setLoading(true);
 
     try {
       let avatarStorageId;
       if (localAvatarUri) {
-        const uploadUrl = await generateAvatarUploadUrl();
-        avatarStorageId = await uploadAvatarToConvex(uploadUrl, localAvatarUri);
+        avatarStorageId = await uploadAvatarToStorage({
+          localUri: localAvatarUri,
+          generateUploadUrl: () => generateAvatarUploadUrl(),
+        });
       }
 
       await completeOnboarding({
         name: displayName.trim(),
         username: username.trim(),
         avatarStorageId,
-      });
-
-      saveLocalProfile({
-        displayName: displayName.trim(),
-        username: username.trim(),
-        localAvatarUri,
-        accentTheme,
-        pushToken: pushToken ?? null,
       });
 
       reset();
@@ -74,7 +69,7 @@ export default function ConfirmScreen() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || user === null) {
     return <Redirect href="/onboarding/sign-in" />;
   }
 

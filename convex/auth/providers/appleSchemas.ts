@@ -50,7 +50,6 @@ export const AppleIdTokenClaimsSchema = z
       .union([z.boolean(), z.literal("true"), z.literal("false")])
       .optional(),
   })
-  .loose();
 
 export type AppleIdTokenClaims = z.infer<typeof AppleIdTokenClaimsSchema>;
 
@@ -59,7 +58,6 @@ export const AppleDecodedIdentityTokenSchema = z
   .object({
     sub: z.string().min(1),
   })
-  .loose();
 
 export type AppleDecodedIdentityToken = z.infer<
   typeof AppleDecodedIdentityTokenSchema
@@ -77,7 +75,6 @@ const JsonWebKeySchema = z
     x: z.string().optional(),
     y: z.string().optional(),
   })
-  .loose();
 
 /** JWKS from GET https://appleid.apple.com/auth/keys. */
 export const AppleJwksSchema = z.object({

@@ -8,7 +8,14 @@
  * @module
  */
 
+import type * as auth from "../auth.js";
 import type * as auth_providers_apple from "../auth/providers/apple.js";
+import type * as auth_providers_appleProvider from "../auth/providers/appleProvider.js";
+import type * as auth_providers_appleSchemas from "../auth/providers/appleSchemas.js";
+import type * as http from "../http.js";
+import type * as lib_auth from "../lib/auth.js";
+import type * as lib_random from "../lib/random.js";
+import type * as lib_userError from "../lib/userError.js";
 import type * as messages from "../messages.js";
 import type * as users from "../users.js";
 
@@ -19,7 +26,14 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  auth: typeof auth;
   "auth/providers/apple": typeof auth_providers_apple;
+  "auth/providers/appleProvider": typeof auth_providers_appleProvider;
+  "auth/providers/appleSchemas": typeof auth_providers_appleSchemas;
+  http: typeof http;
+  "lib/auth": typeof lib_auth;
+  "lib/random": typeof lib_random;
+  "lib/userError": typeof lib_userError;
   messages: typeof messages;
   users: typeof users;
 }>;

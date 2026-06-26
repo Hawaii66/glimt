@@ -4,6 +4,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import {
   normalizeUsername,
+  requireAuthUserId,
   requireExistingUser,
   validateUsername,
 } from "./lib/auth";
@@ -18,10 +19,12 @@ export const current = query({
   args: {},
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
+    console.log("current userId", userId,await ctx.auth.getUserIdentity());
     if (!userId) {
       return null;
     }
     const user = await ctx.db.get(userId);
+    console.log("current user", user);
     if (!user) {
       return null;
     }
@@ -29,6 +32,8 @@ export const current = query({
     const avatarUrl = user.avatarStorageId
       ? await ctx.storage.getUrl(user.avatarStorageId)
       : null;
+
+console.log("current avatarUrl", avatarUrl);
 
     return {
       ...user,
@@ -61,7 +66,7 @@ export const isUsernameAvailable = query({
 export const generateAvatarUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
-    await requireExistingUser(ctx);
+    await requireAuthUserId(ctx);
     return await ctx.storage.generateUploadUrl();
   },
 });

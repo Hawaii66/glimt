@@ -13,6 +13,11 @@ export default function SetupScreen() {
   const router = useRouter();
   const { isReady, isAuthenticated, onboardingComplete, user } = useSession();
   const seedFromUser = useOnboardingStore((state) => state.seedFromUser);
+  const reset = useOnboardingStore((state) => state.reset);
+
+  useEffect(() => {
+    reset();
+  }, [reset]);
 
   useEffect(() => {
     if (user?.name) {

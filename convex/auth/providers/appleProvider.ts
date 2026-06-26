@@ -132,6 +132,8 @@ async function AppleSubjectFromAuthorizationCode(
     shouldLinkViaEmail: Boolean(claims.email),
   });
 
+  console.log("Apple sign in successful", accountResult);
+
   return { userId: accountResult.user._id };
 }
 

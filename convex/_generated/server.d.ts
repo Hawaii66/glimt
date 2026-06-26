@@ -22,6 +22,20 @@ import {
 import type { DataModel } from "./dataModel.js";
 
 /**
+ * Typesafe environment variables declared in `convex.config.ts`.
+ */
+type Env = {
+  readonly AUTH_APPLE_AUDIENCE: string;
+  readonly AUTH_APPLE_BUNDLE_ID: string;
+  readonly AUTH_APPLE_EXPIRATION: string;
+  readonly AUTH_APPLE_KID: string;
+  readonly AUTH_APPLE_PK8: string;
+  readonly AUTH_APPLE_TEAM_ID: string;
+  readonly JWKS: string;
+  readonly JWT_PRIVATE_KEY: string;
+};
+
+/**
  * Define a query in this Convex app's public API.
  *
  * This function will be allowed to read your Convex database and will be accessible from the client.
@@ -96,6 +110,11 @@ export declare const internalAction: ActionBuilder<DataModel, "internal">;
 export declare const httpAction: HttpActionBuilder;
 
 /**
+ * Typesafe environment variables declared in `convex.config.ts`.
+ */
+export declare const env: Env;
+
+/**
  * A set of services for use within Convex query functions.
  *
  * The query context is passed as the first argument to any Convex query
@@ -141,15 +160,3 @@ export type DatabaseReader = GenericDatabaseReader<DataModel>;
  * for the guarantees Convex provides your functions.
  */
 export type DatabaseWriter = GenericDatabaseWriter<DataModel>;
-
-export declare const env: {
-  AUTH_APPLE_ID: string;
-  AUTH_APPLE_PK8: string;
-  AUTH_APPLE_KID: string;
-  AUTH_APPLE_TEAM_ID: string;
-  AUTH_APPLE_BUNDLE_ID: string;
-  AUTH_APPLE_EXPIRATION: string;
-  AUTH_APPLE_AUDIENCE: string;
-  JWKS: string;
-  JWT_PRIVATE_KEY: string;
-};
