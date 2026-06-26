@@ -2,14 +2,14 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: $0 <dev|stage|prod> <convex|expo|build> [args...]"
+  echo "Usage: $0 <dev|prod> <convex|expo|build> [args...]"
   echo ""
   echo "Examples:"
   echo "  $0 dev convex              # convex dev (watcher)"
-  echo "  $0 stage convex deploy"
+  echo "  $0 prod convex deploy"
   echo "  $0 dev expo"
   echo "  $0 dev build ios           # EAS build"
-  echo "  $0 stage build ios --clear-cache"
+  echo "  $0 prod build ios --clear-cache"
   echo "  $0 prod build android"
 }
 
@@ -22,7 +22,7 @@ ENVIRONMENT="$1"
 SERVICE="$2"
 shift 2
 
-if [[ "$ENVIRONMENT" != "dev" && "$ENVIRONMENT" != "stage" && "$ENVIRONMENT" != "prod" ]]; then
+if [[ "$ENVIRONMENT" != "dev" && "$ENVIRONMENT" != "prod" ]]; then
   usage
   exit 1
 fi
@@ -89,7 +89,6 @@ fi
 eas_profile_for_env() {
   case "$ENVIRONMENT" in
     dev) echo "development" ;;
-    stage) echo "staging" ;;
     prod) echo "production" ;;
   esac
 }

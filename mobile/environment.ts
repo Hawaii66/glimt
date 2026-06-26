@@ -1,4 +1,4 @@
-export type MobileEnvironment = "dev" | "stage" | "prod";
+export type MobileEnvironment = "dev" | "prod";
 
 export type EnvInfo = {
   name: string;

@@ -2,7 +2,7 @@ import type { ConfigContext, ExpoConfig } from "expo/config";
 
 const { envToInfo, parseMobileEnvironment, resolveConvexUrl } =
   require("./environment.js") as {
-    envToInfo: (env: "dev" | "stage" | "prod") => {
+    envToInfo: (env: "dev" | "prod") => {
       name: string;
       icon: string;
       iconAndroid: string;
@@ -13,8 +13,8 @@ const { envToInfo, parseMobileEnvironment, resolveConvexUrl } =
     };
     parseMobileEnvironment: (
       value: string | undefined,
-    ) => "dev" | "stage" | "prod";
-    resolveConvexUrl: (env: "dev" | "stage" | "prod") => string | undefined;
+    ) => "dev" | "prod";
+    resolveConvexUrl: (env: "dev" | "prod") => string | undefined;
   };
 
 const DEFAULT_EAS_PROJECT_ID = "b92605ee-1590-47dd-a260-11dc4b24b3bf";

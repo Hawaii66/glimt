@@ -1,4 +1,4 @@
-/** @typedef {"dev" | "stage" | "prod"} MobileEnvironment */
+/** @typedef {"dev" | "prod"} MobileEnvironment */
 
 /** @typedef {{
  *   name: string;
@@ -18,7 +18,6 @@ function resolveConvexUrl(env) {
 
   const legacyVar = {
     dev: "EXPO_PUBLIC_CONVEX_URL_DEV",
-    stage: "EXPO_PUBLIC_CONVEX_URL_STAGE",
     prod: "EXPO_PUBLIC_CONVEX_URL_PROD",
   }[env];
 
@@ -29,16 +28,16 @@ function resolveConvexUrl(env) {
 function parseMobileEnvironment(value) {
   if (!value) {
     throw new Error(
-      "MOBILE_ENVIRONMENT is not set. Use dev, stage, or prod (see .env.example / Doppler).",
+      "MOBILE_ENVIRONMENT is not set. Use dev or prod (see .env.example / Doppler).",
     );
   }
 
-  if (value === "dev" || value === "stage" || value === "prod") {
+  if (value === "dev" || value === "prod") {
     return value;
   }
 
   throw new Error(
-    `Unknown MOBILE_ENVIRONMENT: ${value}. Expected dev, stage, or prod.`,
+    `Unknown MOBILE_ENVIRONMENT: ${value}. Expected dev or prod.`,
   );
 }
 
@@ -54,16 +53,6 @@ function envToInfo(env) {
         runtimeVersion: "0.0.11",
         scheme: "glimt-dev",
         bundleIdentifier: "com.hawaiidev.glimt.dev",
-      };
-    case "stage":
-      return {
-        name: "Glimt Stage",
-        icon: "./assets/images/icon-stage.png",
-        iconAndroid: "./assets/images/icon-android-stage.png",
-        version: "0.0.1",
-        runtimeVersion: "0.0.1",
-        scheme: "glimt-stage",
-        bundleIdentifier: "com.hawaiidev.glimt.stage",
       };
     case "prod":
       return {

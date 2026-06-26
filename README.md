@@ -95,7 +95,7 @@ Secrets live in [Doppler](https://www.doppler.com/) instead of local `.env` file
    doppler setup
    ```
 
-2. Create Doppler configs `dev`, `stage`, and `prod` if they do not exist yet.
+2. Create Doppler configs `dev` and `prod` if they do not exist yet.
 
 3. Add secrets to each config. See `.env.example` for variable names. Each config should set at least:
 
@@ -122,14 +122,13 @@ doppler run --config dev -- pnpm exec convex dev
 | Doppler config | Used by |
 |----------------|---------|
 | `dev` | `./glimt.sh dev …`, local development |
-| `stage` | `./glimt.sh stage …`, staging builds |
 | `prod` | `./glimt.sh prod …`, production builds |
 
 Each config holds that environment's `CONVEX_DEPLOYMENT`, `EXPO_PUBLIC_CONVEX_URL`, and related values.
 
 ### Convex backend (cloud per environment)
 
-Glimt uses **three Convex cloud deployments** aligned with `MOBILE_ENVIRONMENT` (`dev`, `stage`, `prod`).
+Glimt uses **two Convex cloud deployments** aligned with `MOBILE_ENVIRONMENT` (`dev`, `prod`).
 
 1. In the [Convex dashboard](https://dashboard.convex.dev), create or pick a **cloud** deployment for each environment.
 2. Paste each deployment name and `.convex.cloud` URL into the matching Doppler config.
@@ -137,14 +136,12 @@ Glimt uses **three Convex cloud deployments** aligned with `MOBILE_ENVIRONMENT` 
 
 ```bash
 pnpm run convex:dev          # Doppler config: dev
-pnpm run convex:stage        # Doppler config: stage
 pnpm run convex:prod         # Doppler config: prod
 ```
 
-Deploy backend code to stage/prod:
+Deploy backend code to prod:
 
 ```bash
-pnpm run convex:deploy:stage
 pnpm run convex:deploy:prod
 ```
 
@@ -156,7 +153,7 @@ pnpm run convex:dev -- env set AUTH_APPLE_ID app.glimt.mobile.dev
 
 (`pnpm run convex:dev --` forwards extra args to the Convex CLI.)
 
-`MOBILE_ENVIRONMENT=dev|stage|prod` selects app name, icons, bundle id, scheme, and which Convex URL the mobile app uses.
+`MOBILE_ENVIRONMENT=dev|prod` selects app name, icons, bundle id, scheme, and which Convex URL the mobile app uses.
 
 ### Run the mobile app
 
@@ -184,15 +181,15 @@ doppler run --config dev -- pnpm start
 | Command | Description |
 |--------|-------------|
 | `pnpm run convex:dev` | Convex dev → **dev** cloud deployment |
-| `pnpm run convex:stage` / `convex:prod` | Convex dev → stage / prod deployment |
-| `pnpm run convex:deploy:stage` / `convex:deploy:prod` | Push backend to stage / prod |
+| `pnpm run convex:prod` | Convex dev → prod deployment |
+| `pnpm run convex:deploy:prod` | Push backend to prod |
 | `pnpm start` | Expo + **dev** Convex URL (Doppler config: `dev`) |
-| `pnpm run glimt:stage` / `glimt:prod` | Expo with matching Convex URL |
+| `pnpm run glimt:prod` | Expo with prod Convex URL |
 | `pnpm run android` / `ios` / `web` | Platform shortcuts |
 
 ## EAS Update (OTA)
 
-Three channels: **development**, **staging**, **production** (see `mobile/eas.json`).
+Two channels: **development** and **production** (see `mobile/eas.json`).
 
 EAS detects **pnpm** from `pnpm-lock.yaml` at the repo root and runs `pnpm install` on the build worker.
 
@@ -210,11 +207,10 @@ EAS detects **pnpm** from `pnpm-lock.yaml` at the repo root and runs `pnpm insta
 
    ```bash
    ./glimt.sh dev build ios
-   ./glimt.sh stage build ios
    ./glimt.sh prod build ios
    ```
 
-   Same via pnpm: `pnpm run eas:build:dev`, `eas:build:stage`, `eas:build:prod`. Extra EAS flags go after the platform, e.g. `./glimt.sh dev build ios --clear-cache`.
+   Same via pnpm: `pnpm run eas:build:dev`, `eas:build:prod`. Extra EAS flags go after the platform, e.g. `./glimt.sh dev build ios --clear-cache`.
 
    Or from `mobile/`: `pnpm run build:ios:development` (no Doppler injection from root).
 
@@ -238,11 +234,8 @@ EAS detects **pnpm** from `pnpm-lock.yaml` at the repo root and runs `pnpm insta
 
    ```bash
    pnpm --filter glimt-mobile run update:development -- --message "your message"
-   pnpm --filter glimt-mobile run update:staging -- --message "your message"
    pnpm --filter glimt-mobile run update:production -- --message "your message"
    ```
-
-   Staging builds use the **preview** EAS environment for secrets; the OTA channel is still `staging`.
 
 ### Device builds and Convex
 
@@ -251,7 +244,6 @@ EAS cloud builds read `EXPO_PUBLIC_CONVEX_URL` from the matching EAS environment
 ```bash
 cd mobile
 pnpm exec eas env:create --name EXPO_PUBLIC_CONVEX_URL --value "https://YOUR-DEV.convex.cloud" --environment development
-pnpm exec eas env:create --name EXPO_PUBLIC_CONVEX_URL --value "https://YOUR-STAGE.convex.cloud" --environment preview
 pnpm exec eas env:create --name EXPO_PUBLIC_CONVEX_URL --value "https://YOUR-PROD.convex.cloud" --environment production
 ```
 

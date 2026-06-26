@@ -68,18 +68,15 @@
   "scripts": {
     "start": "pnpm run start:dev",
     "start:dev": "cross-env MOBILE_ENVIRONMENT=dev expo start",
-    "start:stage": "cross-env MOBILE_ENVIRONMENT=stage expo start",
     "start:prod": "cross-env MOBILE_ENVIRONMENT=prod expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
     "update:development": "eas update --channel development --environment development",
-    "update:staging": "eas update --channel staging --environment preview",
     "update:production": "eas update --channel production --environment production",
     "eas:build": "eas build",
     "build:ios:development": "eas build --profile development --platform ios --clear-cache",
-    "build:ios:staging": "eas build --profile staging --platform ios --clear-cache",
     "build:ios:production": "eas build --profile production --platform ios --clear-cache",
     "fingerprint": "pnpm exec @expo/fingerprint fingerprint:generate",
     "fingerprint:diff": "pnpm exec @expo/fingerprint fingerprint:diff"
