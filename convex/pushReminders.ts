@@ -5,7 +5,6 @@ import { internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import {
   localHour,
-  localMinute,
   resolveUserTimezone,
   startOfLocalDayTimestamp,
   todayIsoDate,
@@ -15,12 +14,7 @@ import {
 const REMINDER_HOUR_START = 9;
 const REMINDER_HOUR_END = 21;
 const REMINDER_CHANCE_PERCENT = 25;
-const REMINDER_SLOT_MINUTES = 15;
-const REMINDER_SLOTS_PER_HOUR = 60 / REMINDER_SLOT_MINUTES;
-
-function currentReminderSlot(minute: number): number {
-  return Math.floor(minute / REMINDER_SLOT_MINUTES);
-}
+const ONE_HOUR_MS = 60 * 60 * 1000;
 
 function stableHash(input: string): number {
   let hash = 2166136261;
@@ -29,6 +23,25 @@ function stableHash(input: string): number {
     hash = Math.imul(hash, 16777619);
   }
   return hash >>> 0;
+}
+
+function randomDelayMs(maxDelayMs: number): number {
+  if (maxDelayMs <= 0) {
+    return 0;
+  }
+  return Math.floor(Math.random() * maxDelayMs);
+}
+
+function maxDelayWithinReminderWindow(
+  now: number,
+  timezone: string,
+): number {
+  const today = todayIsoDate(now, timezone);
+  const windowEndMs =
+    startOfLocalDayTimestamp(today, timezone) + REMINDER_HOUR_END * ONE_HOUR_MS;
+  const nextHourEndMs = now + ONE_HOUR_MS;
+  const sendDeadlineMs = Math.min(windowEndMs, nextHourEndMs);
+  return Math.max(0, Math.min(ONE_HOUR_MS, sendDeadlineMs - now));
 }
 
 async function userHasFriends(
@@ -62,38 +75,31 @@ async function userSentGlimtToday(
   return entry !== null;
 }
 
-function shouldSendDailyReminder(
+function shouldPlanDailyReminder(
   userId: Id<"users">,
   timezone: string,
   now: number,
   lastDailyReminderDate: string | undefined,
-): { shouldSend: boolean; today: string } {
+): { shouldPlan: boolean; today: string; localHour: number } {
   const today = todayIsoDate(now, timezone);
   if (lastDailyReminderDate === today) {
-    return { shouldSend: false, today };
+    return { shouldPlan: false, today, localHour: localHour(now, timezone) };
   }
 
   const hour = localHour(now, timezone);
   if (hour < REMINDER_HOUR_START || hour >= REMINDER_HOUR_END) {
-    return { shouldSend: false, today };
+    return { shouldPlan: false, today, localHour: hour };
   }
 
   const roll = stableHash(`${userId}:${today}:${hour}`) % 100;
   if (roll >= REMINDER_CHANCE_PERCENT) {
-    return { shouldSend: false, today };
+    return { shouldPlan: false, today, localHour: hour };
   }
 
-  const targetSlot =
-    stableHash(`${userId}:${today}:${hour}:slot`) % REMINDER_SLOTS_PER_HOUR;
-  const minute = localMinute(now, timezone);
-  if (currentReminderSlot(minute) !== targetSlot) {
-    return { shouldSend: false, today };
-  }
-
-  return { shouldSend: true, today };
+  return { shouldPlan: true, today, localHour: hour };
 }
 
-export const runDailyReminderChecks = internalMutation({
+export const planDailyReminders = internalMutation({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();
@@ -107,14 +113,14 @@ export const runDailyReminderChecks = internalMutation({
       }
 
       const timezone = resolveUserTimezone(user.timezone);
-      const { shouldSend, today } = shouldSendDailyReminder(
+      const { shouldPlan, today, localHour: hour } = shouldPlanDailyReminder(
         userId,
         timezone,
         now,
         user.lastDailyReminderDate,
       );
 
-      if (!shouldSend) {
+      if (!shouldPlan) {
         continue;
       }
 
@@ -126,15 +132,66 @@ export const runDailyReminderChecks = internalMutation({
         continue;
       }
 
-      await ctx.scheduler.runAfter(0, internal.pushNotifications.sendToUser, {
-        userId,
-        source: "cron:daily_reminder",
-        title: "Send today's glimt",
-        body: "Share a moment with your friends before the day ends.",
-        data: { type: "daily_reminder" },
-      });
+      const maxDelayMs = maxDelayWithinReminderWindow(now, timezone);
+      if (maxDelayMs <= 0) {
+        continue;
+      }
 
-      await ctx.db.patch(userId, { lastDailyReminderDate: today });
+      const delayMs = randomDelayMs(maxDelayMs);
+      await ctx.scheduler.runAfter(
+        delayMs,
+        internal.pushReminders.sendDailyReminderToUser,
+        { userId, plannedDate: today, plannedHour: hour },
+      );
     }
+  },
+});
+
+export const sendDailyReminderToUser = internalMutation({
+  args: {
+    userId: v.id("users"),
+    plannedDate: v.string(),
+    plannedHour: v.number(),
+  },
+  handler: async (ctx, { userId, plannedDate }) => {
+    const user = await ctx.db.get(userId);
+    if (!user?.onboardingComplete) {
+      return;
+    }
+
+    const timezone = resolveUserTimezone(user.timezone);
+    const now = Date.now();
+    const today = todayIsoDate(now, timezone);
+
+    if (user.lastDailyReminderDate === today) {
+      return;
+    }
+
+    if (today !== plannedDate) {
+      return;
+    }
+
+    const hour = localHour(now, timezone);
+    if (hour < REMINDER_HOUR_START || hour >= REMINDER_HOUR_END) {
+      return;
+    }
+
+    if (!(await userHasFriends(ctx, userId))) {
+      return;
+    }
+
+    if (await userSentGlimtToday(ctx, userId, timezone, now)) {
+      return;
+    }
+
+    await ctx.scheduler.runAfter(0, internal.pushNotifications.sendToUser, {
+      userId,
+      source: "cron:daily_reminder",
+      title: "Send today's glimt",
+      body: "Share a moment with your friends before the day ends.",
+      data: { type: "daily_reminder" },
+    });
+
+    await ctx.db.patch(userId, { lastDailyReminderDate: today });
   },
 });

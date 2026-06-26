@@ -13,8 +13,8 @@ crons.interval(
 
 crons.interval(
   "daily glimt reminders",
-  { minutes: 15 },
-  internal.pushReminders.runDailyReminderChecks,
+  { hours: 1 },
+  internal.pushReminders.planDailyReminders,
   {},
 );
 
