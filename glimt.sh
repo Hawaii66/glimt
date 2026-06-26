@@ -34,6 +34,20 @@ fi
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EXPO_DIR="$ROOT_DIR/expo"
+DOPPLER_PROJECT="${DOPPLER_PROJECT:-glimt}"
+
+ensure_doppler() {
+  if ! command -v doppler >/dev/null 2>&1; then
+    echo "[glimt] Doppler CLI required. Install: https://docs.doppler.com/docs/install-cli"
+    exit 1
+  fi
+}
+
+if [ -z "${GLIMT_DOPPLER_LOADED:-}" ]; then
+  ensure_doppler
+  export GLIMT_DOPPLER_LOADED=1
+  exec doppler run --project "$DOPPLER_PROJECT" --config "$ENVIRONMENT" -- "$0" "$ENVIRONMENT" "$SERVICE" "$@"
+fi
 
 # Git Bash on Windows often resolves `pnpm` to AppData\Local\pnpm\pnpm (not runnable).
 # Prefer pnpm.cmd from `npm install -g pnpm`.
@@ -64,39 +78,10 @@ glimt_pnpm() {
   npx pnpm@10.12.4 "$@"
 }
 
-ENV_PRIMARY="$ROOT_DIR/.env.${ENVIRONMENT}.local"
-ENV_FALLBACK="$ROOT_DIR/.env.${ENVIRONMENT}"
-ENV_GLOBAL="$ROOT_DIR/.env.local"
-
-load_env_file() {
-  local f="$1"
-  if [ -f "$f" ]; then
-    set -a
-    # shellcheck disable=SC1090
-    source "$f"
-    set +a
-  fi
-}
-
-# Load env in order: env-specific → global
-if [ -f "$ENV_PRIMARY" ]; then
-  load_env_file "$ENV_PRIMARY"
-elif [ -f "$ENV_FALLBACK" ]; then
-  load_env_file "$ENV_FALLBACK"
-else
-  echo "[glimt] Missing $ENV_PRIMARY (or $ENV_FALLBACK). Create it from .env.example"
-fi
-load_env_file "$ENV_GLOBAL"
-
 export MOBILE_ENVIRONMENT="$ENVIRONMENT"
 
-DEPLOYMENT_VAR="CONVEX_DEPLOYMENT_${ENVIRONMENT^^}"
-if [ -n "${!DEPLOYMENT_VAR:-}" ]; then
-  export CONVEX_DEPLOYMENT="${!DEPLOYMENT_VAR}"
-fi
-
 if [ -z "${CONVEX_DEPLOYMENT:-}" ] && [ "$SERVICE" = "convex" ]; then
-  echo "[glimt] Missing $DEPLOYMENT_VAR (or CONVEX_DEPLOYMENT) in $ENV_PRIMARY / $ENV_FALLBACK"
+  echo "[glimt] Missing CONVEX_DEPLOYMENT in Doppler config '${ENVIRONMENT}'"
   echo "[glimt] Set it to the deployment name from Convex dashboard (Settings → Deployment name)."
   exit 1
 fi

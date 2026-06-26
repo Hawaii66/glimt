@@ -29,9 +29,9 @@
   },
   "scripts": {
     "start": "pnpm run start:dev",
-    "start:dev": "dotenv -e ../.env.dev.local -- cross-env MOBILE_ENVIRONMENT=dev expo start",
-    "start:stage": "dotenv -e ../.env.stage.local -- cross-env MOBILE_ENVIRONMENT=stage expo start",
-    "start:prod": "dotenv -e ../.env.prod.local -- cross-env MOBILE_ENVIRONMENT=prod expo start",
+    "start:dev": "cross-env MOBILE_ENVIRONMENT=dev expo start",
+    "start:stage": "cross-env MOBILE_ENVIRONMENT=stage expo start",
+    "start:prod": "cross-env MOBILE_ENVIRONMENT=prod expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web"

@@ -19,7 +19,7 @@ export default function TabOneScreen() {
         </Text>
       ) : (
         <Text style={styles.subtitle}>
-          Set EXPO_PUBLIC_CONVEX_URL_DEV in .env.dev.local to connect Convex.
+          Set EXPO_PUBLIC_CONVEX_URL in Doppler (dev config) to connect Convex.
         </Text>
       )}
       <EditScreenInfo path="app/(tabs)/index.tsx" />
