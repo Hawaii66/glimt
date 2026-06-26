@@ -4,8 +4,9 @@ node_modules/
 # Convex local CLI cache
 .convex/
 
-# local env files
+# local env files (legacy; secrets are in Doppler)
 .env*.local
+.env
 
 # macOS
 .DS_Store

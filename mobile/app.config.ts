@@ -130,7 +130,7 @@ function buildPlugins(
 }
 
 export default ({ config }: ConfigContext): ExpoConfig => {
-  // Default to dev so tooling (eas init, expo config) works without .env.local loaded.
+  // Default to dev so tooling (eas init, expo config) works without Doppler loaded.
   const mobileEnvironment = parseMobileEnvironment(
     process.env.MOBILE_ENVIRONMENT ?? "dev",
   );

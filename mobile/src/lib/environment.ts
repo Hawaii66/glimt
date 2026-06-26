@@ -7,7 +7,6 @@ import {
 
 export type { MobileEnvironment, EnvInfo } from "../../environment";
 export {
-  convexUrlEnvVarName,
   envToInfo,
   parseMobileEnvironment,
   resolveConvexUrl,

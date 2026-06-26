@@ -25,8 +25,7 @@ export default function RootLayout() {
       <View style={styles.missingConfig}>
         <Text style={styles.missingTitle}>Convex not configured</Text>
         <Text style={styles.missingBody}>
-          Set EXPO_PUBLIC_CONVEX_URL_DEV (or _STAGE / _PROD) in .env.*.local or
-          EAS.
+          Set EXPO_PUBLIC_CONVEX_URL in Doppler (or EAS for device builds).
         </Text>
       </View>
     );

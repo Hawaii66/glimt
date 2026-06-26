@@ -10,39 +10,26 @@
  *   bundleIdentifier: string;
  * }} EnvInfo */
 
-/** @param {MobileEnvironment} env */
-function convexUrlEnvVarName(env) {
-  switch (env) {
-    case "dev":
-      return "EXPO_PUBLIC_CONVEX_URL_DEV";
-    case "stage":
-      return "EXPO_PUBLIC_CONVEX_URL_STAGE";
-    case "prod":
-      return "EXPO_PUBLIC_CONVEX_URL_PROD";
-  }
-}
-
 /** @param {MobileEnvironment} env @returns {string | undefined} */
 function resolveConvexUrl(env) {
-  const envVar = convexUrlEnvVarName(env);
-  const fromEnv = process.env[envVar];
-  if (fromEnv) {
-    return fromEnv;
-  }
-
-  // Back-compat: single URL when only running dev.
-  if (env === "dev" && process.env.EXPO_PUBLIC_CONVEX_URL) {
+  if (process.env.EXPO_PUBLIC_CONVEX_URL) {
     return process.env.EXPO_PUBLIC_CONVEX_URL;
   }
 
-  return undefined;
+  const legacyVar = {
+    dev: "EXPO_PUBLIC_CONVEX_URL_DEV",
+    stage: "EXPO_PUBLIC_CONVEX_URL_STAGE",
+    prod: "EXPO_PUBLIC_CONVEX_URL_PROD",
+  }[env];
+
+  return legacyVar ? process.env[legacyVar] : undefined;
 }
 
 /** @param {string | undefined} value @returns {MobileEnvironment} */
 function parseMobileEnvironment(value) {
   if (!value) {
     throw new Error(
-      "MOBILE_ENVIRONMENT is not set. Use dev, stage, or prod (see mobile/.env.example).",
+      "MOBILE_ENVIRONMENT is not set. Use dev, stage, or prod (see .env.example / Doppler).",
     );
   }
 
@@ -94,6 +81,5 @@ function envToInfo(env) {
 module.exports = {
   parseMobileEnvironment,
   envToInfo,
-  convexUrlEnvVarName,
   resolveConvexUrl,
 };

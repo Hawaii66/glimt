@@ -11,7 +11,7 @@
     "convex:prod": "bash ./glimt.sh prod convex dev",
     "convex:deploy:stage": "bash ./glimt.sh stage convex deploy",
     "convex:deploy:prod": "bash ./glimt.sh prod convex deploy",
-    "start": "pnpm --filter glimt-mobile start:dev",
+    "start": "bash ./glimt.sh dev expo",
     "android": "pnpm --filter glimt-mobile android",
     "ios": "pnpm --filter glimt-mobile ios",
     "web": "pnpm --filter glimt-mobile web",
@@ -25,9 +25,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.9.1",
-    "convex": "^1.39.1",
-    "dotenv": "^17.4.2",
-    "dotenv-cli": "^11.0.0"
+    "convex": "^1.39.1"
   },
   "dependencies": {
     "@auth/core": "^0.37.0",

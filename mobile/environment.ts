@@ -14,11 +14,9 @@ export type EnvInfo = {
 const environment = require("./environment.js") as {
   parseMobileEnvironment(value: string | undefined): MobileEnvironment;
   envToInfo(env: MobileEnvironment): EnvInfo;
-  convexUrlEnvVarName(env: MobileEnvironment): string;
   resolveConvexUrl(env: MobileEnvironment): string | undefined;
 };
 
 export const parseMobileEnvironment = environment.parseMobileEnvironment;
 export const envToInfo = environment.envToInfo;
-export const convexUrlEnvVarName = environment.convexUrlEnvVarName;
 export const resolveConvexUrl = environment.resolveConvexUrl;

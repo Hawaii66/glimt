@@ -14,7 +14,7 @@
         "MOBILE_ENVIRONMENT": "dev",
         "EAS_PROJECT_ID": "b92605ee-1590-47dd-a260-11dc4b24b3bf",
         "EXPO_NO_DOTENV": "1",
-        "EXPO_PUBLIC_CONVEX_URL_DEV": "${EXPO_PUBLIC_CONVEX_URL_DEV}"
+        "EXPO_PUBLIC_CONVEX_URL": "${EXPO_PUBLIC_CONVEX_URL}"
       },
     },
     "staging": {
@@ -26,7 +26,7 @@
         "MOBILE_ENVIRONMENT": "stage",
         "EAS_PROJECT_ID": "b92605ee-1590-47dd-a260-11dc4b24b3bf",
         "EXPO_NO_DOTENV": "1",
-        "EXPO_PUBLIC_CONVEX_URL_STAGE": "${EXPO_PUBLIC_CONVEX_URL_STAGE}"
+        "EXPO_PUBLIC_CONVEX_URL": "${EXPO_PUBLIC_CONVEX_URL}"
       }
     },
     "production": {
@@ -38,7 +38,7 @@
         "MOBILE_ENVIRONMENT": "prod",
         "EAS_PROJECT_ID": "b92605ee-1590-47dd-a260-11dc4b24b3bf",
         "EXPO_NO_DOTENV": "1",
-        "EXPO_PUBLIC_CONVEX_URL_PROD": "${EXPO_PUBLIC_CONVEX_URL_PROD}"
+        "EXPO_PUBLIC_CONVEX_URL": "${EXPO_PUBLIC_CONVEX_URL}"
       }
     }
   },

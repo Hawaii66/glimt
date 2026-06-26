@@ -12,12 +12,15 @@ glimt/                    # pnpm workspaces monorepo (Expo + Convex)
   mobile/                 # Expo React Native app (EAS project root)
   packages/
     date/                 # Shared @glimt/date package (mobile + convex)
+  doppler.yaml            # Doppler project/config defaults
+  glimt.sh                # Environment-aware dev orchestrator (loads Doppler)
 ```
 
 ## Prerequisites
 
 - Node.js **^20.19.4**, **^22.13.0**, or newer
 - [pnpm](https://pnpm.io/) 10.x
+- [Doppler CLI](https://docs.doppler.com/docs/install-cli)
 
 ## Setup
 
@@ -81,24 +84,61 @@ Test-Path "$env:APPDATA\npm\pnpm.cmd"   # should be True
 where.exe pnpm.cmd
 ```
 
+### Secrets (Doppler)
+
+Secrets live in [Doppler](https://www.doppler.com/) instead of local `.env` files.
+
+1. Log in and link this repo (uses `doppler.yaml` — project `glimt`, default config `dev`):
+
+   ```bash
+   doppler login
+   doppler setup
+   ```
+
+2. Create Doppler configs `dev`, `stage`, and `prod` if they do not exist yet.
+
+3. Add secrets to each config. See `.env.example` for variable names. Each config should set at least:
+
+   ```bash
+   doppler secrets set CONVEX_DEPLOYMENT "dev:your-deployment-name" --config dev
+   doppler secrets set EXPO_PUBLIC_CONVEX_URL "https://your-deployment.convex.cloud" --config dev
+   ```
+
+   For local-only development (after `pnpm exec convex init`):
+
+   ```bash
+   CONVEX_DEPLOYMENT=anonymous:anonymous-glimt-v2
+   EXPO_PUBLIC_CONVEX_URL=http://127.0.0.1:3210
+   ```
+
+`glimt.sh` injects secrets from Doppler automatically (`doppler run --config <env>`).
+
+To run a one-off command with secrets:
+
+```bash
+doppler run --config dev -- pnpm exec convex dev
+```
+
+| Doppler config | Used by |
+|----------------|---------|
+| `dev` | `./glimt.sh dev …`, local development |
+| `stage` | `./glimt.sh stage …`, staging builds |
+| `prod` | `./glimt.sh prod …`, production builds |
+
+Each config holds that environment's `CONVEX_DEPLOYMENT`, `EXPO_PUBLIC_CONVEX_URL`, and related values.
+
 ### Convex backend (cloud per environment)
 
-Glimt uses **three Convex cloud deployments** aligned with `MOBILE_ENVIRONMENT`:
+Glimt uses **three Convex cloud deployments** aligned with `MOBILE_ENVIRONMENT` (`dev`, `stage`, `prod`).
 
-| App env | Convex CLI file | Deployment var | Expo URL var |
-|--------|-----------------|----------------|--------------|
-| `dev` | `.env.dev.local` | `CONVEX_DEPLOYMENT_DEV` | `EXPO_PUBLIC_CONVEX_URL_DEV` |
-| `stage` | `.env.stage.local` | `CONVEX_DEPLOYMENT_STAGE` | `EXPO_PUBLIC_CONVEX_URL_STAGE` |
-| `prod` | `.env.prod.local` | `CONVEX_DEPLOYMENT_PROD` | `EXPO_PUBLIC_CONVEX_URL_PROD` |
-
-1. Copy `.env.example` → `.env.dev.local`, `.env.stage.local`, `.env.prod.local`
-2. In the [Convex dashboard](https://dashboard.convex.dev), create or pick a **cloud** deployment for each (e.g. shared dev deployment + separate stage/prod). Paste each deployment name and `.convex.cloud` URL into the matching file.
+1. In the [Convex dashboard](https://dashboard.convex.dev), create or pick a **cloud** deployment for each environment.
+2. Paste each deployment name and `.convex.cloud` URL into the matching Doppler config.
 3. Run the backend for the environment you are working on:
 
 ```bash
-pnpm run convex:dev          # uses .env.dev.local
-pnpm run convex:stage      # uses .env.stage.local
-pnpm run convex:prod       # uses .env.prod.local
+pnpm run convex:dev          # Doppler config: dev
+pnpm run convex:stage        # Doppler config: stage
+pnpm run convex:prod         # Doppler config: prod
 ```
 
 Deploy backend code to stage/prod:
@@ -123,14 +163,20 @@ pnpm run convex:dev -- env set AUTH_APPLE_ID app.glimt.mobile.dev
 In a second terminal, from the repo root:
 
 ```bash
-pnpm start
+pnpm start                   # runs ./glimt.sh dev expo (Doppler config: dev)
 ```
 
-Or from `mobile/`:
+Or use glimt directly:
+
+```bash
+./glimt.sh dev expo
+```
+
+From `mobile/` (requires secrets already in the shell — use glimt.sh from repo root instead):
 
 ```bash
 cd mobile
-pnpm start
+doppler run --config dev -- pnpm start
 ```
 
 ## Scripts (repo root)
@@ -140,8 +186,8 @@ pnpm start
 | `pnpm run convex:dev` | Convex dev → **dev** cloud deployment |
 | `pnpm run convex:stage` / `convex:prod` | Convex dev → stage / prod deployment |
 | `pnpm run convex:deploy:stage` / `convex:deploy:prod` | Push backend to stage / prod |
-| `pnpm start` | Expo + **dev** Convex URL (`.env.dev.local`) |
-| `pnpm --filter glimt-mobile run start:stage` / `start:prod` | Expo with matching Convex URL |
+| `pnpm start` | Expo + **dev** Convex URL (Doppler config: `dev`) |
+| `pnpm run glimt:stage` / `glimt:prod` | Expo with matching Convex URL |
 | `pnpm run android` / `ios` / `web` | Platform shortcuts |
 
 ## EAS Update (OTA)
@@ -158,9 +204,9 @@ EAS detects **pnpm** from `pnpm-lock.yaml` at the repo root and runs `pnpm insta
    pnpm exec eas update:configure
    ```
 
-   Add `EAS_PROJECT_ID` to `mobile/.env.local` (or let `eas init` write it into the config).
+   Add `EAS_PROJECT_ID` to Doppler (optional — default is in `mobile/app.config.ts`) or let `eas init` write it into the config.
 
-2. Build per channel (from **repo root** — loads `.env.<env>.local` and sets `MOBILE_ENVIRONMENT`):
+2. Build per channel (from **repo root** — loads Doppler config and sets `MOBILE_ENVIRONMENT`):
 
    ```bash
    ./glimt.sh dev build ios
@@ -170,7 +216,7 @@ EAS detects **pnpm** from `pnpm-lock.yaml` at the repo root and runs `pnpm insta
 
    Same via pnpm: `pnpm run eas:build:dev`, `eas:build:stage`, `eas:build:prod`. Extra EAS flags go after the platform, e.g. `./glimt.sh dev build ios --clear-cache`.
 
-   Or from `mobile/`: `pnpm run build:ios:development` (no env files from root).
+   Or from `mobile/`: `pnpm run build:ios:development` (no Doppler injection from root).
 
    Verify fingerprint locally before building:
 
@@ -200,14 +246,16 @@ EAS detects **pnpm** from `pnpm-lock.yaml` at the repo root and runs `pnpm insta
 
 ### Device builds and Convex
 
-EAS builds read the URL for the active `MOBILE_ENVIRONMENT` (`EXPO_PUBLIC_CONVEX_URL_DEV`, `_STAGE`, or `_PROD`). Set each in the matching EAS environment before building:
+EAS cloud builds read `EXPO_PUBLIC_CONVEX_URL` from the matching EAS environment. Set each before building:
 
 ```bash
 cd mobile
-pnpm exec eas env:create --name EXPO_PUBLIC_CONVEX_URL_DEV --value "https://YOUR-DEV.convex.cloud" --environment development
-pnpm exec eas env:create --name EXPO_PUBLIC_CONVEX_URL_STAGE --value "https://YOUR-STAGE.convex.cloud" --environment preview
-pnpm exec eas env:create --name EXPO_PUBLIC_CONVEX_URL_PROD --value "https://YOUR-PROD.convex.cloud" --environment production
+pnpm exec eas env:create --name EXPO_PUBLIC_CONVEX_URL --value "https://YOUR-DEV.convex.cloud" --environment development
+pnpm exec eas env:create --name EXPO_PUBLIC_CONVEX_URL --value "https://YOUR-STAGE.convex.cloud" --environment preview
+pnpm exec eas env:create --name EXPO_PUBLIC_CONVEX_URL --value "https://YOUR-PROD.convex.cloud" --environment production
 ```
+
+Local EAS builds via `./glimt.sh <env> build …` inject secrets from Doppler instead.
 
 Without the correct variable, the app shows a configuration screen.
 
@@ -253,7 +301,6 @@ pnpm run convex:dev
 Terminal 2:
 
 ```bash
-cd mobile
 pnpm start
 ```
 
