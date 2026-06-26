@@ -4,26 +4,21 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { AppleSignInButton } from '@/components/AppleSignInButton';
 import { OnboardingScreen } from '@/components/onboarding/OnboardingScreen';
-import { useStoresHydrated } from '@/hooks/useStoresHydrated';
+import { useSession } from '@/hooks/useSession';
 import { APP_HOME } from '@/lib/routes';
 import { useAppColors } from '@/lib/theme';
-import { useAuthStore } from '@/stores/authStore';
 import { useOnboardingStore } from '@/stores/onboardingStore';
-import { useProfileStore } from '@/stores/profileStore';
 
 export default function SignInScreen() {
   const colors = useAppColors();
   const router = useRouter();
-  const hydrated = useStoresHydrated();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const authName = useAuthStore((state) => state.name);
-  const onboardingComplete = useProfileStore((state) => state.onboardingComplete);
+  const { isReady, isAuthenticated, onboardingComplete, user } = useSession();
   const seedFromUser = useOnboardingStore((state) => state.seedFromUser);
   const reset = useOnboardingStore((state) => state.reset);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!hydrated || !isAuthenticated) {
+    if (!isReady || !isAuthenticated) {
       return;
     }
 
@@ -33,11 +28,19 @@ export default function SignInScreen() {
       return;
     }
 
-    seedFromUser({ name: authName });
+    seedFromUser({ name: user?.name ?? null });
     router.replace('/onboarding/setup');
-  }, [hydrated, isAuthenticated, onboardingComplete, authName, seedFromUser, reset, router]);
+  }, [
+    isReady,
+    isAuthenticated,
+    onboardingComplete,
+    user?.name,
+    seedFromUser,
+    reset,
+    router,
+  ]);
 
-  if (!hydrated) {
+  if (!isReady) {
     return (
       <View style={[styles.loading, { backgroundColor: colors.background }]}>
         <ActivityIndicator color={colors.text} />

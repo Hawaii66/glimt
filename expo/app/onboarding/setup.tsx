@@ -3,29 +3,24 @@ import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { OnboardingScreen } from '@/components/onboarding/OnboardingScreen';
-import { useStoresHydrated } from '@/hooks/useStoresHydrated';
+import { useSession } from '@/hooks/useSession';
 import { APP_HOME } from '@/lib/routes';
 import { useAppColors } from '@/lib/theme';
-import { useAuthStore } from '@/stores/authStore';
 import { useOnboardingStore } from '@/stores/onboardingStore';
-import { useProfileStore } from '@/stores/profileStore';
 
 export default function SetupScreen() {
   const colors = useAppColors();
   const router = useRouter();
-  const hydrated = useStoresHydrated();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const authName = useAuthStore((state) => state.name);
-  const onboardingComplete = useProfileStore((state) => state.onboardingComplete);
+  const { isReady, isAuthenticated, onboardingComplete, user } = useSession();
   const seedFromUser = useOnboardingStore((state) => state.seedFromUser);
 
   useEffect(() => {
-    if (authName) {
-      seedFromUser({ name: authName });
+    if (user?.name) {
+      seedFromUser({ name: user.name });
     }
-  }, [authName, seedFromUser]);
+  }, [user?.name, seedFromUser]);
 
-  if (!hydrated) {
+  if (!isReady) {
     return (
       <View style={[styles.loading, { backgroundColor: colors.background }]}>
         <ActivityIndicator color={colors.text} />

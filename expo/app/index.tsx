@@ -1,19 +1,15 @@
 import { Redirect } from 'expo-router';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { useStoresHydrated } from '@/hooks/useStoresHydrated';
+import { useSession } from '@/hooks/useSession';
 import { APP_HOME } from '@/lib/routes';
 import { useAppColors } from '@/lib/theme';
-import { useAuthStore } from '@/stores/authStore';
-import { useProfileStore } from '@/stores/profileStore';
 
 export default function Index() {
   const colors = useAppColors();
-  const hydrated = useStoresHydrated();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const onboardingComplete = useProfileStore((state) => state.onboardingComplete);
+  const { isReady, isAuthenticated, onboardingComplete } = useSession();
 
-  if (!hydrated) {
+  if (!isReady) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ActivityIndicator color={colors.text} />

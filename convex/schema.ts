@@ -5,19 +5,17 @@ import { v } from "convex/values";
 const authTables = {
   ...defaultAuthTables,
   users: defineTable({
-    username: v.string(),
-    name: v.string(),
+    username: v.optional(v.string()),
+    name: v.optional(v.string()),
     avatarStorageId: v.optional(v.id("_storage")),
-    email: v.string(),
+    email: v.optional(v.string()),
   })
     .index("email", ["email"])
     .index("username", ["username"]),
   authVerifiers: defineTable({
-    sessionId: v.id("authSessions"),
-    signature: v.string(),
     nonce: v.string(),
     expirationTime: v.number(),
-  }).index("signature", ["signature"]),
+  }),
 };
 
 export default defineSchema({

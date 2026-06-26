@@ -141,3 +141,15 @@ export type DatabaseReader = GenericDatabaseReader<DataModel>;
  * for the guarantees Convex provides your functions.
  */
 export type DatabaseWriter = GenericDatabaseWriter<DataModel>;
+
+export declare const env: {
+  AUTH_APPLE_ID: string;
+  AUTH_APPLE_PK8: string;
+  AUTH_APPLE_KID: string;
+  AUTH_APPLE_TEAM_ID: string;
+  AUTH_APPLE_BUNDLE_ID: string;
+  AUTH_APPLE_EXPIRATION: string;
+  AUTH_APPLE_AUDIENCE: string;
+  JWKS: string;
+  JWT_PRIVATE_KEY: string;
+};

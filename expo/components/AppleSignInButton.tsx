@@ -1,4 +1,6 @@
+import { useAuthActions } from '@convex-dev/auth/react';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { useMutation } from 'convex/react';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -8,8 +10,9 @@ import {
   View,
 } from 'react-native';
 
+import { convex } from '@/lib/convex';
 import { useAppColors } from '@/lib/theme';
-import { useAuthStore } from '@/stores/authStore';
+import { api } from 'convex/_generated/api';
 
 type AppleSignInButtonProps = {
   onError?: (message: string) => void;
@@ -21,8 +24,17 @@ export function AppleSignInButton({
   onSuccess,
 }: AppleSignInButtonProps) {
   const colors = useAppColors();
-  const signIn = useAuthStore((state) => state.signIn);
+  const { signIn } = useAuthActions();
+  const initSignIn = useMutation(api.auth.providers.apple.initSignIn);
   const [loading, setLoading] = useState(false);
+
+  if (!convex) {
+    return (
+      <Text style={[styles.unavailable, { color: colors.textMuted }]}>
+        Set EXPO_PUBLIC_CONVEX_URL to enable sign in.
+      </Text>
+    );
+  }
 
   if (Platform.OS !== 'ios') {
     return (
@@ -40,17 +52,31 @@ export function AppleSignInButton({
         throw new Error('Sign in with Apple is not available on this device.');
       }
 
+      const { verifierId, nonce } = await initSignIn();
       const credential = await AppleAuthentication.signInAsync({
+        nonce,
         requestedScopes: [
           AppleAuthentication.AppleAuthenticationScope.EMAIL,
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
         ],
       });
+
+      if (!credential.authorizationCode) {
+        throw new Error('Apple did not return an authorization code.');
+      }
+
       const givenName = credential.fullName?.givenName?.trim();
       const familyName = credential.fullName?.familyName?.trim();
       const name = [givenName, familyName].filter(Boolean).join(' ');
 
-      signIn(name || null);
+      await signIn('apple', {
+        verifierId,
+        authorizationCode: credential.authorizationCode,
+        additionalFields: {
+          ...(name ? { name } : {}),
+        },
+      });
+
       onSuccess?.();
     } catch (error) {
       const code =

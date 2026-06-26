@@ -1,22 +1,24 @@
 import { Redirect, useRouter } from 'expo-router';
+import { useMutation } from 'convex/react';
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { OnboardingScreen } from '@/components/onboarding/OnboardingScreen';
-import { useStoresHydrated } from '@/hooks/useStoresHydrated';
+import { useSession } from '@/hooks/useSession';
 import { APP_HOME } from '@/lib/routes';
 import { useAppColors } from '@/lib/theme';
-import { useAuthStore } from '@/stores/authStore';
+import { uploadAvatarToConvex } from '@/lib/uploadAvatar';
 import { useOnboardingStore } from '@/stores/onboardingStore';
 import { useProfileStore } from '@/stores/profileStore';
+import { api } from 'convex/_generated/api';
 
 export default function ConfirmScreen() {
   const colors = useAppColors();
   const router = useRouter();
-  const hydrated = useStoresHydrated();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const onboardingComplete = useProfileStore((state) => state.onboardingComplete);
-  const completeOnboarding = useProfileStore((state) => state.completeOnboarding);
+  const { isReady, isAuthenticated, onboardingComplete } = useSession();
+  const completeOnboarding = useMutation(api.users.completeOnboarding);
+  const generateAvatarUploadUrl = useMutation(api.users.generateAvatarUploadUrl);
+  const saveLocalProfile = useProfileStore((state) => state.completeOnboarding);
   const displayName = useOnboardingStore((state) => state.displayName);
   const username = useOnboardingStore((state) => state.username);
   const localAvatarUri = useOnboardingStore((state) => state.localAvatarUri);
@@ -31,7 +33,19 @@ export default function ConfirmScreen() {
     setLoading(true);
 
     try {
-      completeOnboarding({
+      let avatarStorageId;
+      if (localAvatarUri) {
+        const uploadUrl = await generateAvatarUploadUrl();
+        avatarStorageId = await uploadAvatarToConvex(uploadUrl, localAvatarUri);
+      }
+
+      await completeOnboarding({
+        name: displayName.trim(),
+        username: username.trim(),
+        avatarStorageId,
+      });
+
+      saveLocalProfile({
         displayName: displayName.trim(),
         username: username.trim(),
         localAvatarUri,
@@ -52,7 +66,7 @@ export default function ConfirmScreen() {
     }
   };
 
-  if (!hydrated) {
+  if (!isReady) {
     return (
       <View style={[styles.loading, { backgroundColor: colors.background }]}>
         <ActivityIndicator color={colors.text} />
