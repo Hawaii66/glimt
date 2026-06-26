@@ -12,5 +12,11 @@
   "devDependencies": {
     "@types/node": "^25.9.1",
     "convex": "^1.39.1"
+  },
+  "dependencies": {
+    "@auth/core": "^0.37.0",
+    "@convex-dev/auth": "^0.0.92",
+    "jose": "^6.2.3",
+    "zod": "^4.4.3"
   }
 }
