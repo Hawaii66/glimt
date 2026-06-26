@@ -3,18 +3,14 @@ import { SymbolView } from 'expo-symbols';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import Colors from '@/constants/Colors';
-import { useStoresHydrated } from '@/hooks/useStoresHydrated';
+import { useSession } from '@/hooks/useSession';
 import { useAppColors } from '@/lib/theme';
-import { useAuthStore } from '@/stores/authStore';
-import { useProfileStore } from '@/stores/profileStore';
 
 export default function TabLayout() {
   const colors = useAppColors();
-  const hydrated = useStoresHydrated();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const onboardingComplete = useProfileStore((state) => state.onboardingComplete);
+  const { isReady, isAuthenticated, onboardingComplete } = useSession();
 
-  if (!hydrated) {
+  if (!isReady) {
     return (
       <View style={[styles.loading, { backgroundColor: colors.background }]}>
         <ActivityIndicator color={colors.text} />

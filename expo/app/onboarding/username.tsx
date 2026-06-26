@@ -7,15 +7,15 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useQuery } from 'convex/react';
 
 import { OnboardingScreen } from '@/components/onboarding/OnboardingScreen';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { useStoresHydrated } from '@/hooks/useStoresHydrated';
+import { useSession } from '@/hooks/useSession';
 import { APP_HOME } from '@/lib/routes';
 import { useAppColors } from '@/lib/theme';
-import { useAuthStore } from '@/stores/authStore';
 import { useOnboardingStore } from '@/stores/onboardingStore';
-import { useProfileStore } from '@/stores/profileStore';
+import { api } from 'convex/_generated/api';
 
 const USERNAME_PATTERN = /^[a-z0-9_]{3,20}$/;
 const USERNAME_CHECK_DEBOUNCE_MS = 400;
@@ -27,9 +27,7 @@ function normalizeUsernameInput(text: string) {
 export default function UsernameScreen() {
   const colors = useAppColors();
   const router = useRouter();
-  const hydrated = useStoresHydrated();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const onboardingComplete = useProfileStore((state) => state.onboardingComplete);
+  const { isReady, isAuthenticated, onboardingComplete } = useSession();
   const username = useOnboardingStore((state) => state.username);
   const setUsername = useOnboardingStore((state) => state.setUsername);
   const displayName = useOnboardingStore((state) => state.displayName);
@@ -41,6 +39,12 @@ export default function UsernameScreen() {
   );
   const isDebouncing = normalizedUsername !== debouncedUsername;
   const hasValidFormat = USERNAME_PATTERN.test(normalizedUsername);
+  const shouldCheckAvailability =
+    isAuthenticated && hasValidFormat && !isDebouncing && debouncedUsername.length > 0;
+  const isAvailable = useQuery(
+    api.users.isUsernameAvailable,
+    shouldCheckAvailability ? { username: debouncedUsername } : 'skip',
+  );
 
   const validationMessage = useMemo(() => {
     if (!normalizedUsername || isDebouncing) {
@@ -49,10 +53,13 @@ export default function UsernameScreen() {
     if (!hasValidFormat) {
       return 'Use 3–20 lowercase letters, numbers, or underscores.';
     }
+    if (isAvailable === false) {
+      return 'That username is already taken.';
+    }
     return null;
-  }, [normalizedUsername, hasValidFormat, isDebouncing]);
+  }, [normalizedUsername, hasValidFormat, isDebouncing, isAvailable]);
 
-  if (!hydrated) {
+  if (!isReady) {
     return (
       <View style={[styles.loading, { backgroundColor: colors.background }]}>
         <ActivityIndicator color={colors.text} />
@@ -73,7 +80,10 @@ export default function UsernameScreen() {
   }
 
   const canContinue =
-    hasValidFormat && !isDebouncing && !validationMessage;
+    hasValidFormat &&
+    !isDebouncing &&
+    !validationMessage &&
+    isAvailable === true;
 
   return (
     <OnboardingScreen
@@ -103,7 +113,7 @@ export default function UsernameScreen() {
         <Text style={[styles.error, { color: '#ef4444' }]}>
           {validationMessage}
         </Text>
-      ) : isDebouncing ? (
+      ) : isDebouncing || (shouldCheckAvailability && isAvailable === undefined) ? (
         <Text style={[styles.hint, { color: colors.textMuted }]}>
           Checking...
         </Text>

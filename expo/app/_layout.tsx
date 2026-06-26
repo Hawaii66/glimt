@@ -1,15 +1,15 @@
 import 'react-native-gesture-handler';
 
+import { ConvexAuthProvider } from '@convex-dev/auth/react';
 import { useFonts } from 'expo-font';
 import { Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 
-import { ConvexProvider } from 'convex/react';
-
 import { navigationTheme } from '@/constants/theme';
 import { convex } from '@/lib/convex';
+import { secureStorage } from '@/lib/secureStorage';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -62,5 +62,9 @@ function RootLayoutNav() {
     return content;
   }
 
-  return <ConvexProvider client={convex}>{content}</ConvexProvider>;
+  return (
+    <ConvexAuthProvider client={convex} storage={secureStorage}>
+      {content}
+    </ConvexAuthProvider>
+  );
 }

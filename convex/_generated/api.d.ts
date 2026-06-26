@@ -8,7 +8,9 @@
  * @module
  */
 
+import type * as auth_providers_apple from "../auth/providers/apple.js";
 import type * as messages from "../messages.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -17,7 +19,9 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "auth/providers/apple": typeof auth_providers_apple;
   messages: typeof messages;
+  users: typeof users;
 }>;
 
 /**
