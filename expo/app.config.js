@@ -129,7 +129,7 @@ module.exports = ({ config }) => {
     orientation: "portrait",
     icon: envInfo.icon,
     scheme: envInfo.scheme,
-    userInterfaceStyle: "automatic",
+    userInterfaceStyle: "dark",
     ios: {
       ...config.ios,
       icon: "./assets/expo.icon",
@@ -150,10 +150,6 @@ module.exports = ({ config }) => {
         monochromeImage: "./assets/images/android-icon-monochrome.png",
       },
       predictiveBackGestureEnabled: false,
-    },
-    web: {
-      output: "static",
-      favicon: "./assets/images/favicon.png",
     },
     plugins: buildPlugins(envInfo.icon, envInfo.bundleIdentifier),
     experiments: {

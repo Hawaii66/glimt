@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native';
 
 import EditScreenInfo from '@/components/EditScreenInfo';
 import { Text, View } from '@/components/Themed';
+import Colors from '@/constants/Colors';
 import { convex } from '@/lib/convex';
 import { api } from 'convex/_generated/api';
 
@@ -12,7 +13,7 @@ export default function TabOneScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Glimt</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
+      <View style={styles.separator} backgroundColor={Colors.separator} />
       {convex ? (
         <Text style={styles.subtitle}>
           {message === undefined ? 'Loading from Convex…' : message}
