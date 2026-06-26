@@ -4,10 +4,11 @@ const { envToInfo, parseMobileEnvironment, resolveConvexUrl } =
 const DEFAULT_EAS_PROJECT_ID = "b92605ee-1590-47dd-a260-11dc4b24b3bf";
 const easProjectId = process.env.EAS_PROJECT_ID ?? DEFAULT_EAS_PROJECT_ID;
 
-/** @param {string} envIcon */
-function buildPlugins(envIcon) {
+/** @param {string} envIcon @param {string} bundleIdentifier */
+function buildPlugins(envIcon, bundleIdentifier) {
   return [
     "expo-router",
+    "expo-apple-authentication",
     [
       "expo-splash-screen",
       {
@@ -21,6 +22,92 @@ function buildPlugins(envIcon) {
         },
       },
     ],
+    "expo-updates",
+    [
+      "expo-notifications",
+      {
+        enableBackgroundRemoteNotifications: true,
+      },
+    ],
+    "expo-background-task",
+    [
+      "expo-camera",
+      {
+        cameraPermission:
+          "Allow $(PRODUCT_NAME) to access your camera to capture glimts.",
+        microphonePermission: false,
+        recordAudioAndroid: false,
+        barcodeScannerEnabled: true,
+      },
+    ],
+    [
+      "expo-image-picker",
+      {
+        photosPermission:
+          "Allow $(PRODUCT_NAME) to access your photos to share glimts.",
+        cameraPermission:
+          "Allow $(PRODUCT_NAME) to access your camera to capture glimts.",
+        microphonePermission: false,
+      },
+    ],
+    [
+      "expo-media-library",
+      {
+        photosPermission:
+          "Allow $(PRODUCT_NAME) to access your photos to save and share glimts.",
+        savePhotosPermission:
+          "Allow $(PRODUCT_NAME) to save photos to your library.",
+        isAccessMediaLocationEnabled: true,
+      },
+    ],
+    [
+      "expo-location",
+      {
+        locationAlwaysAndWhenInUsePermission:
+          "Allow $(PRODUCT_NAME) to use your location when tagging glimts.",
+        locationWhenInUsePermission:
+          "Allow $(PRODUCT_NAME) to use your location when tagging glimts.",
+      },
+    ],
+    [
+      "expo-sharing",
+      {
+        ios: {
+          enabled: true,
+          activationRule: {
+            supportsImageWithMaxCount: 5,
+          },
+        },
+        android: {
+          enabled: true,
+          singleShareMimeTypes: ["image/*"],
+          multipleShareMimeTypes: ["image/*"],
+        },
+      },
+    ],
+    [
+      "expo-widgets",
+      {
+        groupIdentifier: `group.${bundleIdentifier}`,
+        widgets: [
+          {
+            name: "FriendGlimt",
+            displayName: "Glimt",
+            description: "A random friend's latest moment.",
+            supportedFamilies: ["systemSmall", "systemMedium", "systemLarge"],
+            contentMarginsDisabled: true,
+          },
+          {
+            name: "FriendGlimtCamera",
+            displayName: "Glimt Camera",
+            description: "Take a photo.",
+            supportedFamilies: ["systemSmall"],
+            contentMarginsDisabled: true,
+          },
+        ],
+      },
+    ],
+    "./plugins/withIosExtensionVersions",
   ];
 }
 
@@ -47,8 +134,10 @@ module.exports = ({ config }) => {
       ...config.ios,
       icon: "./assets/expo.icon",
       bundleIdentifier: envInfo.bundleIdentifier,
+      usesAppleSignIn: true,
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
+        UIBackgroundModes: ["remote-notification"],
       },
     },
     android: {
@@ -66,7 +155,7 @@ module.exports = ({ config }) => {
       output: "static",
       favicon: "./assets/images/favicon.png",
     },
-    plugins: buildPlugins(envInfo.icon),
+    plugins: buildPlugins(envInfo.icon, envInfo.bundleIdentifier),
     experiments: {
       typedRoutes: true,
       reactCompiler: true,
