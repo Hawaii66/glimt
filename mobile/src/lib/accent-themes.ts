@@ -10,7 +10,7 @@ export const ACCENT_THEMES: AccentTheme[] = [
   {
     id: "midnight",
     label: "Midnight",
-    gradientColors: ["#0E0D0C", "#1B1817", "#5E2B00"],
+    gradientColors: ["#0E0D0C", "#1B1817", "#262220"],
   },
 ];
 
