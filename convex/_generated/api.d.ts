@@ -16,6 +16,15 @@ import type * as http from "../http.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_random from "../lib/random.js";
 import type * as lib_userError from "../lib/userError.js";
+import type * as schema_auth from "../schema/auth.js";
+import type * as schema_capsules from "../schema/capsules.js";
+import type * as schema_daily from "../schema/daily.js";
+import type * as schema_friendships from "../schema/friendships.js";
+import type * as schema_glimts from "../schema/glimts.js";
+import type * as schema_groups from "../schema/groups.js";
+import type * as schema_index from "../schema/index.js";
+import type * as schema_notifications from "../schema/notifications.js";
+import type * as schema_validators from "../schema/validators.js";
 import type * as users from "../users.js";
 
 import type {
@@ -33,6 +42,15 @@ declare const fullApi: ApiFromModules<{
   "lib/auth": typeof lib_auth;
   "lib/random": typeof lib_random;
   "lib/userError": typeof lib_userError;
+  "schema/auth": typeof schema_auth;
+  "schema/capsules": typeof schema_capsules;
+  "schema/daily": typeof schema_daily;
+  "schema/friendships": typeof schema_friendships;
+  "schema/glimts": typeof schema_glimts;
+  "schema/groups": typeof schema_groups;
+  "schema/index": typeof schema_index;
+  "schema/notifications": typeof schema_notifications;
+  "schema/validators": typeof schema_validators;
   users: typeof users;
 }>;
 
