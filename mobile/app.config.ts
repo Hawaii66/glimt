@@ -33,7 +33,7 @@ function buildPlugins(
         image: envIcon,
         imageWidth: 100,
         resizeMode: "contain",
-        backgroundColor: "#208AEF",
+        backgroundColor: "#0E0D0C",
         android: {
           image: "./assets/images/splash-icon.png",
           imageWidth: 76,
@@ -146,7 +146,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     orientation: "portrait",
     icon: envInfo.icon,
     scheme: envInfo.scheme,
-    userInterfaceStyle: "automatic",
+    userInterfaceStyle: "dark",
     ios: {
       ...config.ios,
       icon: "./assets/expo.icon",

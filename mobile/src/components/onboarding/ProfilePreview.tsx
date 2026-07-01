@@ -40,15 +40,13 @@ export function ProfilePreview({
   const showUsername = (username ?? "").trim().length > 0;
   const showName = (displayName ?? "").trim().length > 0;
 
-  const usernameColor = onGradientBackground
-    ? "rgba(255, 255, 255, 0.85)"
-    : colors.textMuted;
-  const displayNameColor = onGradientBackground ? "#FFFFFF" : colors.text;
+  const usernameColor = colors.textMuted;
+  const displayNameColor = colors.text;
   const avatarBackground = onGradientBackground
-    ? "rgba(255, 255, 255, 0.25)"
+    ? "rgba(242, 239, 234, 0.15)"
     : colors.fill;
-  const avatarBorder = onGradientBackground ? "#FFFFFF" : colors.surfaceBorder;
-  const avatarInitialsColor = onGradientBackground ? "#FFFFFF" : colors.textMuted;
+  const avatarBorder = onGradientBackground ? colors.text : colors.surfaceBorder;
+  const avatarInitialsColor = onGradientBackground ? colors.text : colors.textMuted;
   const avatarSize = embedded ? 88 : 96;
   const editIconVisible = showEditIcon && onAvatarPress != null;
 
@@ -84,13 +82,17 @@ export function ProfilePreview({
             <View
               style={[
                 styles.editBadge,
-                { bottom: embedded ? 2 : 6 },
+                {
+                  bottom: embedded ? 2 : 6,
+                  backgroundColor: colors.textOnAccent,
+                  borderColor: colors.text,
+                },
               ]}
             >
               <SymbolView
                 name="pencil"
                 size={12}
-                tintColor="#FFFFFF"
+                tintColor={colors.text}
                 weight="semibold"
               />
             </View>
@@ -135,11 +137,9 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: "#000000",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: "#FFFFFF",
   },
   username: {
     fontSize: 15,

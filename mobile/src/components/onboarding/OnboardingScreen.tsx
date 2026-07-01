@@ -16,7 +16,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ProfilePreview } from "@/components/onboarding/ProfilePreview";
-import { getAccentTheme } from "@/lib/accent-themes";
+import { DEFAULT_ACCENT_THEME_ID, getAccentTheme } from "@/lib/accent-themes";
 import { useAppColors } from "@/lib/theme";
 
 const PREVIEW_HEIGHT_COMPACT = 200;
@@ -90,7 +90,7 @@ export function OnboardingScreen({
                 ]}
               >
                 <LinearGradient
-                  colors={[...getAccentTheme("midnight").gradientColors]}
+                  colors={[...getAccentTheme(DEFAULT_ACCENT_THEME_ID).gradientColors]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.previewGradient}
@@ -118,16 +118,16 @@ export function OnboardingScreen({
               styles.nextButton,
               keyboardVisible && styles.nextButtonKeyboard,
               {
-                backgroundColor: nextDisabled ? colors.textMuted : colors.text,
+                backgroundColor: nextDisabled ? colors.surfaceBorder : colors.accent,
               },
             ]}
             disabled={nextDisabled || loading}
             onPress={onNext}
           >
             {loading ? (
-              <ActivityIndicator color={colors.background} />
+              <ActivityIndicator color={colors.textOnAccent} />
             ) : (
-              <Text style={[styles.nextLabel, { color: colors.background }]}>
+              <Text style={[styles.nextLabel, { color: colors.textOnAccent }]}>
                 {actionLabel}
               </Text>
             )}

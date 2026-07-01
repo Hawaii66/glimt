@@ -1,32 +1,28 @@
-import { useColorScheme } from "react-native";
-
 export type AppColors = {
   background: string;
+  surface: string;
   text: string;
   textMuted: string;
-  surface: string;
   surfaceBorder: string;
   fill: string;
+  accent: string;
+  accentSecondary: string;
+  textOnAccent: string;
 };
 
-const light: AppColors = {
-  background: "#FFFFFF",
-  text: "#111111",
-  textMuted: "rgba(17, 17, 17, 0.65)",
-  surface: "#F5F0EB",
-  surfaceBorder: "#E5DDD4",
-  fill: "#EDE8E2",
-};
-
-const dark: AppColors = {
-  background: "#000000",
-  text: "#FFFFFF",
-  textMuted: "rgba(255, 255, 255, 0.65)",
-  surface: "#1C1917",
-  surfaceBorder: "#2E2926",
-  fill: "#262320",
+/** Analog darkroom palette from IDEA.md — dark mode only. */
+export const APP_COLORS: AppColors = {
+  background: "#0E0D0C",
+  surface: "#1B1817",
+  text: "#F2EFEA",
+  textMuted: "#8C847E",
+  surfaceBorder: "#262220",
+  fill: "#1B1817",
+  accent: "#FF7F00",
+  accentSecondary: "#E65C00",
+  textOnAccent: "#12100F",
 };
 
 export function useAppColors(): AppColors {
-  return useColorScheme() === "dark" ? dark : light;
+  return APP_COLORS;
 }
