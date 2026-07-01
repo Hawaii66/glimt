@@ -153,7 +153,7 @@ export function resolveAccentThemeId(
   return normalizeAccentThemeId(accentTheme) ?? DEFAULT_ACCENT_THEME_ID;
 }
 
-export function getAccentTheme(id: AccentThemeId | string): AccentTheme {
+export function getAccentTheme(id: AccentThemeId | (string&{})): AccentTheme {
   const resolvedId = resolveAccentThemeId(id);
   return (
     ACCENT_THEMES.find((theme) => theme.id === resolvedId) ??

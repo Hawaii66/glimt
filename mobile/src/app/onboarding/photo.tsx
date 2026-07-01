@@ -11,8 +11,8 @@ import {
 
 import { OnboardingScreen } from "@/components/onboarding/OnboardingScreen";
 import { useAvatarPicker } from "@/hooks/useAvatarPicker";
-import { useAppColors } from "@/lib/theme";
 import { APP_HOME } from "@/lib/routes";
+import { useAppColors } from "@/lib/theme";
 import { useOnboardingStore } from "@/stores/onboardingStore";
 import { api } from "convex/_generated/api";
 
@@ -63,7 +63,7 @@ export default function PhotoScreen() {
   return (
     <OnboardingScreen
       onNext={() => {
-        router.push("/onboarding/theme");
+        router.push("/onboarding/confirm");
       }}
     >
       <Text style={[styles.label, { color: colors.text }]}>Profile photo</Text>
@@ -96,7 +96,7 @@ export default function PhotoScreen() {
       <Pressable
         onPress={() => {
           setLocalAvatarUri(null);
-          router.push("/onboarding/theme");
+          router.push("/onboarding/confirm");
         }}
       >
         <Text style={[styles.skip, { color: colors.textMuted }]}>Skip</Text>

@@ -18,7 +18,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ProfilePreview } from "@/components/onboarding/ProfilePreview";
 import { getAccentTheme } from "@/lib/accent-themes";
 import { useAppColors } from "@/lib/theme";
-import { useOnboardingStore } from "@/stores/onboardingStore";
 
 const PREVIEW_HEIGHT_COMPACT = 200;
 
@@ -42,8 +41,6 @@ export function OnboardingScreen({
   header,
 }: OnboardingScreenProps) {
   const colors = useAppColors();
-  const accentTheme = useOnboardingStore((state) => state.accentTheme);
-  const gradientColors = getAccentTheme(accentTheme).gradientColors;
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
@@ -93,7 +90,7 @@ export function OnboardingScreen({
                 ]}
               >
                 <LinearGradient
-                  colors={[...gradientColors]}
+                  colors={[...getAccentTheme("midnight").gradientColors]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.previewGradient}

@@ -11,8 +11,8 @@ import {
 } from "react-native";
 
 import { OnboardingScreen } from "@/components/onboarding/OnboardingScreen";
-import { useAppColors } from "@/lib/theme";
 import { APP_HOME } from "@/lib/routes";
+import { useAppColors } from "@/lib/theme";
 import { useOnboardingStore } from "@/stores/onboardingStore";
 import { api } from "convex/_generated/api";
 
