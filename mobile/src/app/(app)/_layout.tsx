@@ -48,6 +48,8 @@ function AppShell() {
           }}
         />
         <Stack.Screen name="settings" />
+        <Stack.Screen name="capture" />
+        <Stack.Screen name="compose" />
       </Stack>
     </View>
   );
