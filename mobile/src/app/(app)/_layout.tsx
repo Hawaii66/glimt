@@ -47,6 +47,7 @@ function AppShell() {
             contentStyle: { backgroundColor: "transparent" },
           }}
         />
+        <Stack.Screen name="settings" />
       </Stack>
     </View>
   );
